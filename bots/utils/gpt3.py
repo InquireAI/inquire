@@ -9,7 +9,7 @@ class GPT3:
   def __init__(self): 
     # Enable logging
     logging.basicConfig(
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
+        format="%(asctime)s - %(module)s - %(levelname)s - %(message)s", level=logging.INFO
     )
     self.logger = logging.getLogger(__name__)
 
@@ -17,12 +17,13 @@ class GPT3:
 
   def ask(self, query):
     # @TODO: add error handling / timeout exceptions here
+    self.logger.info("GPT3 API: " + query)
     try:
       openai.api_key = self.OPENAI_API_KEY
       response = openai.Completion.create(model="text-davinci-003",
           prompt=query,
           temperature=0.9,
-          max_tokens=4000,
+          max_tokens=2000,
           top_p=1,
           frequency_penalty=0,
           presence_penalty=0.6)

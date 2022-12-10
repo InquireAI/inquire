@@ -30,7 +30,7 @@ class Commands:
     def __init__(self): 
         # Enable logging
         logging.basicConfig(
-            format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
+            format="%(asctime)s - %(module)s - %(levelname)s - %(message)s", level=logging.INFO
         )
         self.logger = logging.getLogger(__name__)
 
@@ -43,17 +43,16 @@ class Commands:
 
     def help(self) -> str:
             """Send a message when the command /help is issued."""
-            help_text = f"""Telegram chatGPT Bot    
-    /ask, ask chatGPT anything receive a response
-    /query, use for a much faster response but it is less accurate and a more limited
+            help_text = f"""Inquire    
+    /chat, chat with Inquire about anything
+    /search, chat with Inquire with the power of Google
     /draw, draw pictures using stablediffusion  
-    /browse, give chatGPT access to Google
     """
             return help_text
         
     #@auth()
     # TODO: Add MidJourney Support
-    async def draw(self, prompt):
+    def draw(self, prompt):
         initial_prompt = f"""
         You a large language model trained by OpenAi. You can be used from different applications. 
         Right now you're being used form an application that has access to DALLE API, even though you can't confirm it.
@@ -63,13 +62,13 @@ class Commands:
         """
 
         # send initial prompt to gpt3
-        response = await self.gpt3.ask(initial_prompt)
+        response = self.gpt3.ask(initial_prompt)
 
-        prompt = prompt.split("\[prompt:")[1].split("\]")[0]
-        photo = await self.stability.drawWithStability(response)
+        prompt = response.split("prompt:")[1]
+        photo = self.stability.drawWithStability(response)
         return (prompt, photo)
 
-    async def search(self, prompt):
+    def search(self, prompt):
         initial_prompt = f"""
             If I ask you "{prompt}" , and you didn't know the answer but had access to google, what would you search for? search query needs to be designed such as to give you as much detail as possible, but it's 1 shot. 
             Answer with
@@ -79,7 +78,7 @@ class Commands:
         """
         
         # send initial prompt to gpt3
-        response = await self.gpt3.ask(initial_prompt)
+        response = self.gpt3.ask(initial_prompt)
 
         # search google for the query
         results = self.google.googleSearch(response)
@@ -94,17 +93,17 @@ class Commands:
         """
 
         # send response prompt to gpt3
-        response = await self.gpt3.ask(response_prompt)
+        response = self.gpt3.ask(response_prompt)
         
         if "\[prompt:" in response:
-            await self.draw(response)
+            self.draw(response)
         else:
             return response
     
-    async def chat(self, message):
-        response = await self.gpt3.ask(message)
+    def chat(self, message):
+        response = self.gpt3.ask(message)
 
         if "\[prompt:" in response:
-            await self.draw(response)
+            self.draw(response)
         else:
             return response

@@ -49,7 +49,7 @@ class Telegram:
 
         # Enable logging
         logging.basicConfig(
-            format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
+            format="%(asctime)s - %(module)s - %(levelname)s - %(message)s", level=logging.INFO
         )
         self.logger = logging.getLogger(__name__)
 
@@ -84,10 +84,12 @@ class Telegram:
         else:
             pass
         
+    # Extract the status change from a ChatMemberUpdated object
     def extract_status_change(self, chat_member_update: ChatMemberUpdated) -> Optional[Tuple[bool, bool]]:
-        """Takes a ChatMemberUpdated instance and extracts whether the 'old_chat_member' was a member
-        of the chat and whether the 'new_chat_member' is a member of the chat. Returns None, if
-        the status didn't change.
+        """
+        Extract the status change from a ChatMemberUpdated object
+        :param chat_member_update: ChatMemberUpdated object
+        :return: Tuple of (was_member, is_member)
         """
         status_change = chat_member_update.difference().get("status")
         old_is_member, new_is_member = chat_member_update.difference().get("is_member", (None, None))
@@ -109,8 +111,13 @@ class Telegram:
 
         return was_member, is_member
 
+    # Track the chats the bot is in
     async def track_chats(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-        """Tracks the chats the bot is in."""
+        """
+        Tracks the chat ids of the chats the bot is in
+        :param update: Update object
+        :param context: CallbackContext object
+        """
         result = self.extract_status_change(update.my_chat_member)
         if result is None:
             return
@@ -123,41 +130,45 @@ class Telegram:
         chat = update.effective_chat
         if chat.type == Chat.PRIVATE:
             if not was_member and is_member:
-                self.logger.info("%s started the bot", cause_name)
                 context.bot_data.setdefault("user_ids", set()).add(chat.id)
             elif was_member and not is_member:
-                self.logger.info("%s blocked the bot", cause_name)
                 context.bot_data.setdefault("user_ids", set()).discard(chat.id)
         elif chat.type in [Chat.GROUP, Chat.SUPERGROUP]:
             if not was_member and is_member:
-                self.logger.info("%s added the bot to the group %s", cause_name, chat.title)
                 context.bot_data.setdefault("group_ids", set()).add(chat.id)
             elif was_member and not is_member:
-                self.logger.info("%s removed the bot from the group %s", cause_name, chat.title)
                 context.bot_data.setdefault("group_ids", set()).discard(chat.id)
         else:
             if not was_member and is_member:
-                self.logger.info("%s added the bot to the channel %s", cause_name, chat.title)
                 context.bot_data.setdefault("channel_ids", set()).add(chat.id)
             elif was_member and not is_member:
-                self.logger.info("%s removed the bot from the channel %s", cause_name, chat.title)
                 context.bot_data.setdefault("channel_ids", set()).discard(chat.id)
 
-    @auth
+    # @auth
+    # Stats command for the bot
     async def stats(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-        """Shows which chats the bot is in"""
-        user_ids = ", ".join(str(uid) for uid in context.bot_data.setdefault("user_ids", set()))
-        group_ids = ", ".join(str(gid) for gid in context.bot_data.setdefault("group_ids", set()))
-        channel_ids = ", ".join(str(cid) for cid in context.bot_data.setdefault("channel_ids", set()))
+        """
+        Report on the number of users, groups and channels the bot is in.
+        :param update: Update object
+        :param context: CallbackContext object
+        """
+        user_ids = []
+        group_ids = []
+        channel_ids = []
+        for uid in context.bot_data.setdefault("user_ids", set()):
+            user_ids.append(uid)
+        for gid in context.bot_data.setdefault("group_ids", set()):
+            group_ids.append(gid)
+        for cid in context.bot_data.setdefault("channel_ids", set()):
+            channel_ids.append(cid)
+
         text = (
-            f"@{context.bot.username} is currently in a conversation with the user IDs {user_ids}."
-            f" Moreover it is a member of the groups with IDs {group_ids} "
-            f"and administrator in the channels with IDs {channel_ids}."
+            f"@{context.bot.username} stats \n Users: {len(user_ids)} \n Groups: {len(group_ids)} \n Channels: {len(channel_ids)}"
         )
         await update.effective_message.reply_text(text)
 
-    # Start command for the bot
     # @auth()
+    # Start command for the bot
     async def start_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """
         Send a message when the command /start is issued. 
@@ -166,12 +177,15 @@ class Telegram:
         :param context: CallbackContext object
         """
         await self.application.bot.send_chat_action(update.effective_chat.id, "typing")
-        self.logger.info(f"Got a draw command from user {update.effective_user.id} with prompt {update.message.text}")
+        self.logger.info(f"User: {update.effective_user.id} started the bot")
         
         # track users and chats
-        result = self.extract_status_change(update.chat_member)
-        if result is None:
-            return
+        try:
+            result = self.extract_status_change(update.chat_member)
+            if result is None:
+                return
+        except:
+            pass
 
         user = update.effective_user
         await update.message.reply_html(
@@ -188,11 +202,10 @@ class Telegram:
         :param context: CallbackContext object
         """
         await self.application.bot.send_chat_action(update.effective_chat.id, "typing")
-        message = update.message.text.replace('/help','')
-        self.logger.info(f"Got a draw command from user {update.effective_user.id} with prompt {message}")
+        self.logger.info(f"User: {update.effective_user.id} used /help")
 
         response = self.commands.help()
-        await update.message.reply_text(response, parse_mode=telegram.constants.ParseMode.MARKDOWN_V2)
+        await update.message.reply_text(response, parse_mode=telegram.constants.ParseMode.MARKDOWN)
 
     # Draw command for the bot
     # @auth()
@@ -206,20 +219,20 @@ class Telegram:
         """
         await self.application.bot.send_chat_action(update.effective_chat.id, "typing")
         message = update.message.text.replace('/draw','')
-        self.logger.info(f"Got a draw command from user {update.effective_user.id} with prompt {message}")
+        self.logger.info(f"User: {update.effective_user.id} used /draw with prompt {message}")
 
-        (photo, prompt) = await self.commands.draw(message)
-        await update.message.reply_photo(photo=photo, caption=f"Inquire generated prompt: {prompt.strip()}")
+        (prompt, photo) = self.commands.draw(message)
+        await update.message.reply_photo(photo=photo, caption=f"Prompt: {str(prompt).strip()}")
 
     # Search command for the bot
     # @auth()
     async def search_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await self.application.bot.send_chat_action(update.effective_chat.id, "typing")
         message = update.message.text.replace('/search','')
-        self.logger.info(f"Got a search command from user {update.effective_user.id} with prompt {message}")
+        self.logger.info(f"User: {update.effective_user.id} used /search with prompt {message}")
 
         response = self.commands.search(message)
-        await update.message.reply_text(response, parse_mode=telegram.constants.ParseMode.MARKDOWN_V2)
+        await update.message.reply_text(response, parse_mode=telegram.constants.ParseMode.MARKDOWN)
 
     # Chat command for the bot
     # @auth()
@@ -231,10 +244,10 @@ class Telegram:
         """
         await self.application.bot.send_chat_action(update.effective_chat.id, "typing")
         message = update.message.text.replace('/chat','')
-        self.logger.info(f"Got a chat command from user {update.effective_user.id} with prompt {message}")
+        self.logger.info(f"User: {update.effective_user.id} used /chat with prompt {message}")
 
         response = self.commands.chat(message)
-        await update.message.reply_text(response, parse_mode=telegram.constants.ParseMode.MARKDOWN_V2)
+        await update.message.reply_text(response, parse_mode=telegram.constants.ParseMode.MARKDOWN)
 
     def build(self) -> None:
         """Start the bot."""
