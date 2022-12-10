@@ -48,7 +48,7 @@ TELEGRAM_API_KEY=# (required) used to identify and control your bot
 #TELEGRAM_USER_ID=# (optional) used to authenticate access to your bot to just a given account
 
 OPENAI_EMAIL=# (required) email to access the openai account that is being used for chatgpt
-OPENAI_PASSWORD=#(required) password to access the openai account that is being used for chatgpt
+OPENAI_PASSWORD=# (required) password to access the openai account that is being used for chatgpt
 
 STABILITY_API_KEY=# (required) API key for stablediffusion to generate drawings
 SERP_API_KEY=# (required) API key for google searches
@@ -72,6 +72,13 @@ docker run -d --name inquire inquire
 ```
 
 You will also need to go the bot that you created via `@Botfather`, start a chat with it, and click start. 
+
+## Documentation
+```
+# generate pydoc documentation
+chmod +x scripts/docs.sh
+./scripts/docs.sh
+```
 
 ## Credits and Libraries Used
 - [OpenAI](https://openai.com/)

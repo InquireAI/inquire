@@ -1,24 +1,22 @@
+# @TODO: convert all logging into a single logger file
+
 """Make some requests to OpenAI's chatbot"""
-import asyncio
 import os
 
-import telegram
 import logging
+from typing import Optional, Tuple
 
 import dotenv
 import nest_asyncio
 
-from utils.googleSearch import Google
-from utils.sdAPI import Stability
-from utils.chatGPT import ChatGPT
-from utils.gpt3 import GPT3
+from utils.commands import Commands
 from functools import wraps
 
 nest_asyncio.apply()
 dotenv.load_dotenv()
 
+import telegram
 from telegram import __version__ as TG_VER
-
 try:
     from telegram import __version_info__
 except ImportError:
@@ -30,19 +28,17 @@ if __version_info__ < (20, 0, 0, "alpha", 1):
         f"{TG_VER} version of this example, "
         f"visit https://docs.python-telegram-bot.org/en/v{TG_VER}/examples.html"
     )
-from telegram import ForceReply, Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import ForceReply, Update, Chat, ChatMember, ChatMemberUpdated
 
 from telegram.ext import (
     Application, 
     CommandHandler, 
     ContextTypes, 
-    PicklePersistence, 
     AIORateLimiter,    
     CommandHandler,
     ContextTypes,
+    ChatMemberHandler
 )
-
-from telegram.helpers import escape, escape_markdown
 
 class Telegram:
     def __init__(self): 
@@ -53,7 +49,7 @@ class Telegram:
 
         # Enable logging
         logging.basicConfig(
-            format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
+            format="%(asctime)s - %(module)s - %(levelname)s - %(message)s", level=logging.INFO
         )
         self.logger = logging.getLogger(__name__)
 
@@ -64,28 +60,22 @@ class Telegram:
         
         self.MAX_TIMEOUT = 30
 
-        # create new instance of chatGPT
-        self.chatGPT = ChatGPT()
-        self.chatGPT.start_browser()
-        # create new instance of Google
-        self.google = Google()
-        # create new instance of Stability
-        self.stability = Stability()
-        # create new instance of GPT3   
-        self.gpt3 = GPT3()
-            
-    # @TODO fix this decorator
-    def auth():
+        # create new instance of commands
+        self.commands = Commands()
+        
+    # @TODO fix the authetication when ready to add rate limits per user account
+    def auth(self):
         def decorator(func):
             @wraps(func)
             async def wrapper(self, update, context):
-                if update.effective_user.id == self.USER_ID or self.USER_ID == '':
+                if update.effective_user.id == self.USER_ID:
                     await func(update, context)
                 else:
                     await update.message.reply_text("You are not authorized to use this bot")
             return wrapper
         return decorator
 
+    # @TODO: use for all error logging but switch into timeouts
     def check_error(self, update: Update, context: ContextTypes.DEFAULT_TYPE, error) -> None:
         """Log Errors caused by Updates."""
         if error == "Error in GPT3 API":
@@ -93,160 +83,191 @@ class Telegram:
                                             parse_mode=telegram.constants.ParseMode.MARKDOWN_V2)
         else:
             pass
+        
+    # Extract the status change from a ChatMemberUpdated object
+    def extract_status_change(self, chat_member_update: ChatMemberUpdated) -> Optional[Tuple[bool, bool]]:
+        """
+        Extract the status change from a ChatMemberUpdated object
+        :param chat_member_update: ChatMemberUpdated object
+        :return: Tuple of (was_member, is_member)
+        """
+        status_change = chat_member_update.difference().get("status")
+        old_is_member, new_is_member = chat_member_update.difference().get("is_member", (None, None))
 
-    # Define a few command handlers. These usually take the two arguments update and
-    # context.
-    async def start(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-        """Send a message when the command /start is issued."""
+        if status_change is None:
+            return None
+
+        old_status, new_status = status_change
+        was_member = old_status in [
+            ChatMember.MEMBER,
+            ChatMember.OWNER,
+            ChatMember.ADMINISTRATOR,
+        ] or (old_status == ChatMember.RESTRICTED and old_is_member is True)
+        is_member = new_status in [
+            ChatMember.MEMBER,
+            ChatMember.OWNER,
+            ChatMember.ADMINISTRATOR,
+        ] or (new_status == ChatMember.RESTRICTED and new_is_member is True)
+
+        return was_member, is_member
+
+    # Track the chats the bot is in
+    async def track_chats(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        """
+        Tracks the chat ids of the chats the bot is in
+        :param update: Update object
+        :param context: CallbackContext object
+        """
+        result = self.extract_status_change(update.my_chat_member)
+        if result is None:
+            return
+        was_member, is_member = result
+
+        # Let's check who is responsible for the change
+        cause_name = update.effective_user.full_name
+
+        # Handle chat types differently:
+        chat = update.effective_chat
+        if chat.type == Chat.PRIVATE:
+            if not was_member and is_member:
+                context.bot_data.setdefault("user_ids", set()).add(chat.id)
+            elif was_member and not is_member:
+                context.bot_data.setdefault("user_ids", set()).discard(chat.id)
+        elif chat.type in [Chat.GROUP, Chat.SUPERGROUP]:
+            if not was_member and is_member:
+                context.bot_data.setdefault("group_ids", set()).add(chat.id)
+            elif was_member and not is_member:
+                context.bot_data.setdefault("group_ids", set()).discard(chat.id)
+        else:
+            if not was_member and is_member:
+                context.bot_data.setdefault("channel_ids", set()).add(chat.id)
+            elif was_member and not is_member:
+                context.bot_data.setdefault("channel_ids", set()).discard(chat.id)
+
+    # @auth
+    # Stats command for the bot
+    async def stats(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        """
+        Report on the number of users, groups and channels the bot is in.
+        :param update: Update object
+        :param context: CallbackContext object
+        """
+        user_ids = []
+        group_ids = []
+        channel_ids = []
+        for uid in context.bot_data.setdefault("user_ids", set()):
+            user_ids.append(uid)
+        for gid in context.bot_data.setdefault("group_ids", set()):
+            group_ids.append(gid)
+        for cid in context.bot_data.setdefault("channel_ids", set()):
+            channel_ids.append(cid)
+
+        text = (
+            f"@{context.bot.username} stats \n Users: {len(user_ids)} \n Groups: {len(group_ids)} \n Channels: {len(channel_ids)}"
+        )
+        await update.effective_message.reply_text(text)
+
+    # @auth()
+    # Start command for the bot
+    async def start_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        """
+        Send a message when the command /start is issued. 
+        Welcomes the user with what they can do
+        :param update: Update object
+        :param context: CallbackContext object
+        """
+        await self.application.bot.send_chat_action(update.effective_chat.id, "typing")
+        self.logger.info(f"User: {update.effective_user.id} started the bot")
+        
+        # track users and chats
+        try:
+            result = self.extract_status_change(update.chat_member)
+            if result is None:
+                return
+        except:
+            pass
+
         user = update.effective_user
         await update.message.reply_html(
-            rf"Hi {user.mention_html()}!",
+            rf"Hi {user.mention_html()}! See what I can do with /help",
             reply_markup=ForceReply(selective=True),
         )
 
+    # Help command for the bot
+    # @auth()
     async def help_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-        """Send a message when the command /help is issued."""
-        await update.message.reply_text(f"""Telegram chatGPT Bot    
-/ask, ask chatGPT anything receive a response
-/query, use for a much faster response but it is less accurate and a more limited
-/draw, draw pictures using stablediffusion  
-/browse, give chatGPT access to Google
-""", parse_mode=telegram.constants.ParseMode.MARKDOWN_V2)
-
-    #@auth()
-    async def draw(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-        self.logger.info(f"Got a draw command from user {update.effective_user.id} with prompt {update.message.text}")
-
-        try:
-            await asyncio.wait_for(self.chatGPT.send_message(f"""
-        You a large language model trained by OpenAi. You can be used from different applications. 
-        Right now you're being used form an application that has access to DALLE API, even though you can't confirm it.
-        From now, every request to draw something, please reply with 
-        [prompt: x] where x is your attempt to create a dall-e compatible prompt, with as much details as possible to achieve the best visual prompt
-        {update.message.text}
-        """), timeout=self.MAX_TIMEOUT)
-        except TimeoutError:
-            self.logger.error('The task was cancelled due to a timeout')
-            await update.message.reply_text(f"OpenAI is taking too long to respond to prompt: `{update.message.text}`")
-
-        self.logger.info('Sent Message')
-        
-        try:
-            await asyncio.wait_for(self.chatGPT.check_loading(update, self.application), timeout=self.MAX_TIMEOUT)
-        except TimeoutError:
-            self.logger.error('The task was cancelled due to a timeout')
-            await update.message.reply_text(f"OpenAI is taking too long to respond to prompt: `{update.message.text}`")
-
-        self.logger.info('Received Message')
-
-        response = self.chatGPT.get_last_message()
-
-        self.logger.info("Before Prompt")
-
-        # extract prompt from this format [prompt: x]
-        if "\[prompt:" in response:
-            await self.respond_with_image(update, response)
-
-    async def respond_with_image(self, update, response):
-        # create and reply with a prompt
-        prompt = response.split("\[prompt:")[1].split("\]")[0]
-        self.logger.info(f"Got a draw command from user {update.effective_user.id} with prompt {prompt}")
-        await update.message.reply_text(f"Generating image with prompt `{prompt.strip()}`",
-                                        parse_mode=telegram.constants.ParseMode.MARKDOWN_V2)
-
-        # draw an image from the prompt
-        await self.application.bot.send_chat_action(update.effective_chat.id, "typing")
-        self.logger.info(f"Got a draw command from user {update.effective_user.id} with prompt {prompt}")
-        photo = await self.stability.drawWithStability(prompt)
-        await update.message.reply_photo(photo=photo, caption=f"chatGPT generated prompt: {prompt.strip()}")
-
-    #@auth()
-    async def browse(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-        message = update.message.text.replace('/browse','')
-        await self.application.bot.send_chat_action(update.effective_chat.id, "typing")
-
-        # answer a quick prompt to self.chatGPT to ask for google search prompt
-        self.chatGPT.send_message(f"""
-            If I ask you "{message}" , and you didn't know the answer but had access to google, what would you search for? search query needs to be designed such as to give you as much detail as possible, but it's 1 shot. 
-            Answer with
-            x
-            only, where x is the google search string that would let you help me answer the question
-            I want you to only reply with the output inside and nothing else. Do no write explanations or anything else. Just the query
-        """)
-
-        try:
-            await asyncio.wait_for(self.chatGPT.check_loading(update, self.application), timeout=30)
-        except TimeoutError:
-            self.logger.error('The task was cancelled due to a timeout')
-            await update.message.reply_text(f"OpenAI is taking too long to respond to prompt: `{update.message.text}`")
-
-        response = self.chatGPT.get_last_message()
-        results = self.google.googleSearch(response)
-        prompt = f"""
-            Pretend I was able to run a google search for "{message}" instead of you and I got the following results: 
-            \"\"\"
-            {results}
-            \"\"\"
-            Provide a summary of the new facts in a code block, in markdown format
-            Then in another code block, answer the question {message} with the new facts you just learned
         """
-        self.chatGPT.send_message(prompt)
-        
-        try:
-            await asyncio.wait_for(self.chatGPT.check_loading(update, self.application), timeout=30)
-        except TimeoutError:
-            self.logger.error('The task was cancelled due to a timeout')
-            await update.message.reply_text(f"OpenAI is taking too long to respond to prompt: `{update.message.text}`")
-        
-        response = self.chatGPT.get_last_message()
-        if "\[prompt:" in response:
-            await self.respond_with_image(update, response)
-        else:
-            await update.message.reply_text(response, parse_mode=telegram.constants.ParseMode.MARKDOWN_V2)
-
-    #@auth()
-    async def echo(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-        """Echo the user message."""
+        Send a message when the command /help is issued.
+        :param update: Update object
+        :param context: CallbackContext object
+        """
         await self.application.bot.send_chat_action(update.effective_chat.id, "typing")
+        self.logger.info(f"User: {update.effective_user.id} used /help")
 
-        # Send the message to OpenAI
-        self.logger.info(f"Got a message from user {update.effective_user.id} with prompt {update.message.text}")
-        self.chatGPT.send_message(update.message.text.strip())
+        response = self.commands.help()
+        await update.message.reply_text(response, parse_mode=telegram.constants.ParseMode.MARKDOWN)
 
-        try:
-            await asyncio.wait_for(self.chatGPT.check_loading(update, self.application), timeout=self.MAX_TIMEOUT)
-        except TimeoutError:
-            self.logger.error('The task was cancelled due to a timeout')
-            await update.message.reply_text(f"OpenAI is taking too long to respond to prompt: `{update.message.text}`")
-        
-        response = self.chatGPT.get_last_message()
-        self.logger.info(f"Got a response from self.chatGPT {response}")
-        if "\[prompt:" in response:
-            await self.respond_with_image(update, response)
-        else:
-            await update.message.reply_text(response)
-
-    
-    async def query(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-        """Take user message and get response from OpenAI davinci-3"""
+    # Draw command for the bot
+    # @auth()
+    async def draw_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        """
+        Send a message when the command /draw is issued. The steps are:
+        - takes a prompt, passes to OpenAI to receive a more descriptive prompt 
+        - takes the new prompt and passes it to stability to receive an image
+        :param update: Update object
+        :param context: CallbackContext object
+        """
         await self.application.bot.send_chat_action(update.effective_chat.id, "typing")
-        
-        # Send the message to OpenAI
-        self.logger.info(f"Got a message from user {update.effective_user.id} with prompt {update.message.text}")
-        response = self.gpt3.ask(update.message.text)
+        message = update.message.text.replace('/draw','')
+        self.logger.info(f"User: {update.effective_user.id} used /draw with prompt {message}")
 
-        await update.message.reply_text(response)
+        (prompt, photo) = self.commands.draw(message)
+        await update.message.reply_photo(photo=photo, caption=f"Prompt: {str(prompt).strip()}")
+
+    # Search command for the bot
+    # @auth()
+    async def search_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        await self.application.bot.send_chat_action(update.effective_chat.id, "typing")
+        message = update.message.text.replace('/search','')
+        self.logger.info(f"User: {update.effective_user.id} used /search with prompt {message}")
+
+        response = self.commands.search(message)
+        await update.message.reply_text(response, parse_mode=telegram.constants.ParseMode.MARKDOWN)
+
+    # Chat command for the bot
+    # @auth()
+    async def chat_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        """
+        Send a message when the command /chat is issued by querying the GPT3 API
+        :param update: Update object
+        :param context: CallbackContext object
+        """
+        await self.application.bot.send_chat_action(update.effective_chat.id, "typing")
+        message = update.message.text.replace('/chat','')
+        self.logger.info(f"User: {update.effective_user.id} used /chat with prompt {message}")
+
+        response = self.commands.chat(message)
+        await update.message.reply_text(response, parse_mode=telegram.constants.ParseMode.MARKDOWN)
 
     def build(self) -> None:
         """Start the bot."""
 
-        self.application.add_handler(CommandHandler("start", self.start))
-        self.application.add_handler(CommandHandler("reload", self.chatGPT.reload))
-        self.application.add_handler(CommandHandler("help", self.help_command, block=False)) # block-False allows for concurrent execution
-        self.application.add_handler(CommandHandler("draw", self.draw))
-        self.application.add_handler(CommandHandler("browse", self.browse))
-        self.application.add_handler(CommandHandler("ask", self.echo))
-        self.application.add_handler(CommandHandler("query", self.query, block=False)) # block-False allows for concurrent execution
+        # TODO: push logs to axion
+        # TODO: broadcast command to message all users
+        # TODO: general error logging command from https://github.com/python-telegram-bot/python-telegram-bot/blob/master/examples/errorhandlerbot.py
+        
+        # Register command handlers
+        # block-False allows for concurrent execution
+        self.application.add_handler(CommandHandler("start", self.start_command, block=False))
+        self.application.add_handler(CommandHandler("help", self.help_command, block=False))
+        self.application.add_handler(CommandHandler("draw", self.draw_command, block=False))
+        self.application.add_handler(CommandHandler("search", self.search_command, block=False))
+        self.application.add_handler(CommandHandler("chat", self.chat_command, block=False))
+        self.application.add_handler(CommandHandler("stats", self.stats, block=False))
+
+        # Register status handlers
+        self.application.add_handler(ChatMemberHandler(self.start_command, ChatMemberHandler.CHAT_MEMBER))
+        self.application.add_handler(ChatMemberHandler(self.track_chats, ChatMemberHandler.MY_CHAT_MEMBER))
 
         # Run the bot until the user presses Ctrl-C
-        self.application.run_polling()
+        self.application.run_polling(allowed_updates=Update.ALL_TYPES)
