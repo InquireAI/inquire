@@ -1,0 +1,8 @@
+[Unit]
+Description=Run Inquire
+
+[Service]
+ExecStart=/root/inquire/bots/.venv/bin/python /root/inquire/server.py
+
+[Install]
+WantedBy=multi-user.target
