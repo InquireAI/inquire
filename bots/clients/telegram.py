@@ -221,8 +221,8 @@ class Telegram:
         message = update.message.text.replace('/draw','')
         self.logger.info(f"User: {update.effective_user.id} used /draw with prompt {message}")
 
-        (prompt, photo) = self.commands.draw(message)
-        await update.message.reply_photo(photo=photo, caption=f"Prompt: {str(prompt).strip()}")
+        (prompt, photo) = await self.commands.draw(message)
+        await update.message.reply_photo(photo=photo, caption=f"Prompt: {prompt}")
 
     # Search command for the bot
     # @auth()
@@ -231,7 +231,7 @@ class Telegram:
         message = update.message.text.replace('/search','')
         self.logger.info(f"User: {update.effective_user.id} used /search with prompt {message}")
 
-        response = self.commands.search(message)
+        response = await self.commands.search(message)
         await update.message.reply_text(response, parse_mode=telegram.constants.ParseMode.MARKDOWN)
 
     # Chat command for the bot
@@ -246,7 +246,7 @@ class Telegram:
         message = update.message.text.replace('/chat','')
         self.logger.info(f"User: {update.effective_user.id} used /chat with prompt {message}")
 
-        response = self.commands.chat(message)
+        response = await self.commands.chat(message)
         await update.message.reply_text(response, parse_mode=telegram.constants.ParseMode.MARKDOWN)
 
     def build(self) -> None:
