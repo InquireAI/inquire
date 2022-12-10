@@ -14,5 +14,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+    - name: Change Directory
+      run: cd bots
     - name: Build the Docker image
-      run: docker build . --file bots/Dockerfile --tag inquireai:$(date +%s)
+      run: docker build . --file Dockerfile --tag inquireai:$(date +%s)
