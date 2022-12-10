@@ -22,6 +22,9 @@ export const serverSchema = z.object({
   GOOGLE_CLIENT_ID: z.string(),
   GOOGLE_CLIENT_SECRET: z.string(),
   TELEGRAM_SECRET_KEY: z.string(),
+  STRIPE_API_KEY: z.string(),
+  STRIPE_PRICE_ID: z.string(),
+  STRIPE_WH_SECRET: z.string(),
 });
 
 /**
@@ -30,7 +33,7 @@ export const serverSchema = z.object({
  * To expose them to the client, prefix them with `NEXT_PUBLIC_`.
  */
 export const clientSchema = z.object({
-  // NEXT_PUBLIC_CLIENTVAR: z.string(),
+  NEXT_PUBLIC_STRIPE_PUB_KEY: z.string(),
 });
 
 /**
@@ -40,5 +43,5 @@ export const clientSchema = z.object({
  * @type {{ [k in keyof z.infer<typeof clientSchema>]: z.infer<typeof clientSchema>[k] | undefined }}
  */
 export const clientEnv = {
-  // NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
+  NEXT_PUBLIC_STRIPE_PUB_KEY: process.env.NEXT_PUBLIC_STRIPE_PUB_KEY,
 };

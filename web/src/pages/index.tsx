@@ -29,6 +29,7 @@ const Home: NextPage = () => {
             {sessionDate && (
               <ConnectTelegram telegramId={user?.telegramId ?? undefined} />
             )}
+            <Subscribe />
           </div>
         </div>
       </main>
@@ -82,6 +83,32 @@ const ConnectTelegram: React.FC<{ telegramId?: string }> = ({ telegramId }) => {
         disabled={!!telegramId || !sessionData}
       >
         {telegramId ? "Telegram Connected" : "Connect Telegram"}
+      </button>
+    </div>
+  );
+};
+
+const Subscribe: React.FC = () => {
+  const { data: sessionData } = useSession();
+
+  const { mutate: getPaymentLink } = trpc.stripe.getPaymentLink.useMutation({
+    onSuccess(data) {
+      window.location.replace(data.url);
+    },
+  });
+
+  return (
+    <div className="flex flex-col items-center justify-center gap-4">
+      <button
+        className="rounded-full bg-white/10 px-10 py-3 font-semibold text-white no-underline transition hover:bg-white/20"
+        onClick={() =>
+          getPaymentLink({
+            redirectUrl: "http://localhost:3000/subscribed",
+          })
+        }
+        disabled={!sessionData}
+      >
+        {"Subscribe"}
       </button>
     </div>
   );
