@@ -16,6 +16,7 @@ class GPT3:
     self.OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
   def ask(self, query):
+    # @TODO: add error handling / timeout exceptions here
     try:
       openai.api_key = self.OPENAI_API_KEY
       response = openai.Completion.create(model="text-davinci-003",
