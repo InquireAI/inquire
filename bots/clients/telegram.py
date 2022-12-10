@@ -12,6 +12,8 @@ import nest_asyncio
 from utils.commands import Commands
 from functools import wraps
 
+import axiom
+
 nest_asyncio.apply()
 dotenv.load_dotenv()
 
@@ -55,8 +57,11 @@ class Telegram:
 
         # set the USER_ID for Telegram for Auth controls
         self.USER_ID = ''
-        if os.environ.get('TELEGRAM_self.USER_ID'):
-            self.USER_ID = int(os.environ.get('TELEGRAM_self.USER_ID'))
+        if os.environ.get('TELEGRAM_USER_ID'):
+            self.USER_ID = int(os.environ.get('TELEGRAM_USER_ID'))
+
+        # create instance of axiom client
+        self.client = axiom.Client(os.environ.get('AXIOM_TOKEN'))
         
         self.MAX_TIMEOUT = 30
 
@@ -221,6 +226,8 @@ class Telegram:
         message = update.message.text.replace('/draw','')
         self.logger.info(f"User: {update.effective_user.id} used /draw with prompt {message}")
 
+        self.client.ingest_events('query_data', [{"draw": message}])
+
         (prompt, photo) = await self.commands.draw(message)
         await update.message.reply_photo(photo=photo, caption=f"Prompt: {prompt}")
 
@@ -230,6 +237,8 @@ class Telegram:
         await self.application.bot.send_chat_action(update.effective_chat.id, "typing")
         message = update.message.text.replace('/search','')
         self.logger.info(f"User: {update.effective_user.id} used /search with prompt {message}")
+
+        self.client.ingest_events('query_data', [{"search": message}])
 
         response = await self.commands.search(message)
         await update.message.reply_text(response, parse_mode=telegram.constants.ParseMode.MARKDOWN)
@@ -245,6 +254,8 @@ class Telegram:
         await self.application.bot.send_chat_action(update.effective_chat.id, "typing")
         message = update.message.text.replace('/chat','')
         self.logger.info(f"User: {update.effective_user.id} used /chat with prompt {message}")
+
+        self.client.ingest_events('query_data', [{"chat": message}])
 
         response = await self.commands.chat(message)
         await update.message.reply_text(response, parse_mode=telegram.constants.ParseMode.MARKDOWN)
