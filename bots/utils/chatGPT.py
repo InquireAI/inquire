@@ -33,7 +33,7 @@ class ChatGPT:
 
         # Enable logging
         logging.basicConfig(
-            format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
+            format="%(asctime)s - %(module)s - %(levelname)s - %(message)s", level=logging.INFO
         )
         self.logger = logging.getLogger(__name__)
 
