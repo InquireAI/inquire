@@ -57,6 +57,7 @@ model User {
   email         String?   @unique
   emailVerified DateTime?
   image         String?
+  telegramId    String?
   accounts      Account[]
   sessions      Session[]
 }
