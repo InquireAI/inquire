@@ -78,6 +78,5 @@ You will also need to go the bot that you created via `@Botfather`, start a chat
 - [StableDiffusion](https://github.com/Stability-AI/StableDiffusion)
 - [SerpAPI](https://serpapi.com/)
 - [PTB](https://docs.python-telegram-bot.org/en/stable/index.html)
-
 - Original Creator [@Altryne](https://twitter.com/altryne/status/1598902799625961472) on Twitter
 - Based on [Daniel Gross's whatsapp gpt](https://github.com/danielgross/whatsapp-gpt) package.
