@@ -3,9 +3,9 @@ FROM python:3.8
 WORKDIR /app
 
 # Create the environment:
-COPY server.py .
-COPY requirements.txt .
-COPY .env .
+COPY ./server.py .
+COPY ./requirements.txt .
+COPY ./.env .
 COPY ./utils /app/utils/ 
 COPY ./clients /app/clients/
 
