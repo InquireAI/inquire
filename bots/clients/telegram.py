@@ -214,7 +214,11 @@ class Telegram:
 
         user = update.effective_user
         await update.message.reply_html(
-            rf"Hi {user.mention_html()}! See what I can do with /help",
+            f"Hi {user.mention_html()}! Welcome to Inquire. Get started by using the following commands:\n\n"
+f"/chat, chat with Inquire about anything\n"
+f"/search, chat with Inquire with the power of Google\n"
+f"/draw, draw pictures using StableDiffusion\n\n"
+f"inquire.run\n",
             reply_markup=ForceReply(selective=True),
         )
 
@@ -287,7 +291,6 @@ class Telegram:
         """Start the bot."""
 
         # TODO: switch tiers based on tokens not reqs
-        # TODO: greeting msg to talk ab limits and what you can do
         # TODO: broadcast command to message all users
         # TODO: github actions to publish container (https://docs.github.com/en/actions/publishing-packages/publishing-docker-images)
         
