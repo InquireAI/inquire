@@ -1,16 +1,16 @@
 import os
 import requests
+import axiom
 
 class Stability:
-  def __init__(self): 
-    pass
+  def __init__(self):
+    # create instance of axiom client
+    self.client = axiom.Client(os.environ.get('AXIOM_TOKEN'))
 
   async def drawWithStability(self, prompt):
     engine_id = "stable-diffusion-512-v2-0"
     api_host = os.getenv('API_HOST', 'https://api.stability.ai')
     url = f"{api_host}/v1alpha/generation/{engine_id}/text-to-image"
-
-    output_file = os.getenv('OUT_DIR', '.') + "/text_to_image.png"
 
     apiKey = os.getenv("STABILITY_API_KEY")
     if apiKey is None:
@@ -42,7 +42,8 @@ class Stability:
     response = requests.post(url, json=payload, headers=headers)
 
     if response.status_code != 200:
-      raise Exception("Non-200 response: " + str(response.text))
+       self.client.ingest_events('query_data', [{"error": response.text}])
+       return "I'm sorry, I'm having trouble understanding you. Please try again later."
 
     # Write the bytes from response.content to a file
     return response.content

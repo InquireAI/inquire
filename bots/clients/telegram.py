@@ -150,9 +150,6 @@ class Telegram:
             return
         was_member, is_member = result
 
-        # Let's check who is responsible for the change
-        cause_name = update.effective_user.full_name
-
         # Handle chat types differently:
         chat = update.effective_chat
         if chat.type == Chat.PRIVATE:
@@ -171,14 +168,7 @@ class Telegram:
             elif was_member and not is_member:
                 context.bot_data.setdefault("channel_ids", set()).discard(chat.id)
 
-    # @auth
-    # Stats command for the bot
-    async def stats(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-        """
-        Report on the number of users, groups and channels the bot is in.
-        :param update: Update object
-        :param context: CallbackContext object
-        """
+        # Log users to axiom 
         user_ids = []
         group_ids = []
         channel_ids = []
@@ -188,11 +178,6 @@ class Telegram:
             group_ids.append(gid)
         for cid in context.bot_data.setdefault("channel_ids", set()):
             channel_ids.append(cid)
-
-        text = (
-            f"@{context.bot.username} stats \n Users: {len(user_ids)} \n Groups: {len(group_ids)} \n Channels: {len(channel_ids)}"
-        )
-        await update.effective_message.reply_text(text)
 
     # @auth()
     # Start command for the bot
@@ -205,6 +190,19 @@ class Telegram:
         """
         await self.application.bot.send_chat_action(update.effective_chat.id, "typing")
         self.logger.info(f"User: {update.effective_user.id} started the bot")
+
+        # Log new users to axiom
+        self.client.ingest_events('user_data', [
+            {
+                "user_id": int(update.effective_user.id), 
+                "is_bot": update.effective_user.is_bot,
+                "first_name": update.effective_user.first_name,
+                "last_name": update.effective_user.last_name,
+                "username": update.effective_user.username,
+                "language_code": update.effective_user.language_code,
+                "is_premium": update.effective_user.is_premium
+            }
+        ])
         
         # track users and chats
         try:
@@ -251,7 +249,10 @@ class Telegram:
         self.client.ingest_events('query_data', [{"draw": message}])
 
         (prompt, photo) = await self.commands.draw(message)
-        await update.message.reply_photo(photo=photo, caption=f"Prompt: {prompt}")
+        if photo is None:
+            await update.message.reply_text(prompt)
+        else:
+            await update.message.reply_photo(photo=photo, caption=f"Prompt: {prompt}")
 
     # Search command for the bot
     # @auth()
@@ -285,10 +286,10 @@ class Telegram:
     def build(self) -> None:
         """Start the bot."""
 
-        # TODO: push user # queries into planet scale for auth
         # TODO: switch tiers based on tokens not reqs
         # TODO: greeting msg to talk ab limits and what you can do
         # TODO: broadcast command to message all users
+        # TODO: github actions to publish container (https://docs.github.com/en/actions/publishing-packages/publishing-docker-images)
         
         # Register command handlers
         # block-False allows for concurrent execution
@@ -297,7 +298,6 @@ class Telegram:
         self.application.add_handler(CommandHandler("draw", self.draw_command, block=False))
         self.application.add_handler(CommandHandler("search", self.search_command, block=False))
         self.application.add_handler(CommandHandler("chat", self.chat_command, block=False))
-        self.application.add_handler(CommandHandler("stats", self.stats, block=False))
 
         # Register status handlers
         self.application.add_handler(ChatMemberHandler(self.start_command, ChatMemberHandler.CHAT_MEMBER))
