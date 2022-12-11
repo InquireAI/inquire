@@ -91,8 +91,7 @@ class Commands:
             \"\"\"
             {results}
             \"\"\"
-            Provide a summary of the new facts in a code block, in markdown format
-            Then in another code block, answer the question {prompt} with the new facts you just learned
+            Answer the question {prompt} with the new facts you just learned
         """
 
         # send response prompt to gpt3

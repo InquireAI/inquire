@@ -290,8 +290,8 @@ f"inquire.run\n",
     def build(self) -> None:
         """Start the bot."""
 
-        # TODO: switch tiers based on tokens not reqs
         # TODO: broadcast command to message all users
+        # TODO: fix typing on all commands, it periodically stops working for /draw and /search
         # TODO: github actions to publish container (https://docs.github.com/en/actions/publishing-packages/publishing-docker-images)
         
         # Register command handlers
