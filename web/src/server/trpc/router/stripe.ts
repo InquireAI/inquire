@@ -1,3 +1,4 @@
+import { TRPCError } from "@trpc/server";
 import type Stripe from "stripe";
 import { z } from "zod";
 import { env } from "../../../env/server.mjs";
@@ -12,6 +13,31 @@ export const stripeRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
+      const user = await ctx.prisma.user.findUnique({
+        where: {
+          id: ctx.session.user.id,
+        },
+        include: {
+          customer: {
+            select: {
+              id: true,
+            },
+          },
+        },
+      });
+
+      if (!user)
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Invalid user",
+        });
+
+      if (user.customer)
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "User already has customer cannot",
+        });
+
       const link: Stripe.PaymentLink = await stripe.paymentLinks.create({
         after_completion: {
           type: "redirect",

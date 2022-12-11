@@ -1,9 +1,4 @@
 import { PrismaClient } from "@prisma/client";
-export {
-  type Prisma,
-  type Subscription,
-  SubscriptionStatus,
-} from "@prisma/client";
 import { env } from "../../env/server.mjs";
 
 declare global {
@@ -21,3 +16,5 @@ export const prisma =
 if (env.NODE_ENV !== "production") {
   global.prisma = prisma;
 }
+
+export * from "@prisma/client";

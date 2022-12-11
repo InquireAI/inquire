@@ -62,6 +62,16 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         return res.status(400).json({});
       }
 
+      const paymentLink = checkoutSession.payment_link as string;
+
+      if (!paymentLink) {
+        return res.status(400).json({});
+      }
+
+      await stripe.paymentLinks.update(paymentLink, {
+        active: false,
+      });
+
       const customer = await stripe.customers.retrieve(
         checkoutSession.customer as string,
         {
