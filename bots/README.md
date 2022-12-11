@@ -70,7 +70,7 @@ python server.py
 
 ### Docker
 ```bash
-docker run -d --name inquire inquire
+docker run -d --name inquire inquire --env-file .env
 ```
 
 You will also need to go the bot that you created via `@Botfather`, start a chat with it, and click start. 
