@@ -5,12 +5,16 @@ import os
 
 import logging
 from typing import Optional, Tuple
+import traceback
+import json
 
 import dotenv
 import nest_asyncio
 
 from utils.commands import Commands
 from functools import wraps
+
+import axiom
 
 nest_asyncio.apply()
 dotenv.load_dotenv()
@@ -55,8 +59,11 @@ class Telegram:
 
         # set the USER_ID for Telegram for Auth controls
         self.USER_ID = ''
-        if os.environ.get('TELEGRAM_self.USER_ID'):
-            self.USER_ID = int(os.environ.get('TELEGRAM_self.USER_ID'))
+        if os.environ.get('TELEGRAM_USER_ID'):
+            self.USER_ID = int(os.environ.get('TELEGRAM_USER_ID'))
+
+        # create instance of axiom client
+        self.client = axiom.Client(os.environ.get('AXIOM_TOKEN'))
         
         self.MAX_TIMEOUT = 30
 
@@ -75,14 +82,34 @@ class Telegram:
             return wrapper
         return decorator
 
-    # @TODO: use for all error logging but switch into timeouts
-    def check_error(self, update: Update, context: ContextTypes.DEFAULT_TYPE, error) -> None:
-        """Log Errors caused by Updates."""
-        if error == "Error in GPT3 API":
-            update.message.reply_text(f"Error in Query `{error}`",
-                                            parse_mode=telegram.constants.ParseMode.MARKDOWN_V2)
-        else:
-            pass
+    # Error handler to capture errors
+    async def error_handler(self, update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
+        """
+        Error handler for the bot to log errors
+        :param update: Update object
+        :param context: CallbackContext object
+        """
+
+        # traceback.format_exception returns the usual python message about an exception, but as a
+        # list of strings rather than a single string, so we have to join them together.
+        tb_list = traceback.format_exception(None, context.error, context.error.__traceback__)
+        tb_string = "".join(tb_list)
+
+        # Build the message with some markup and additional information about what happened.
+        # You might need to add some logic to deal with messages longer than the 4096 character limit.
+        update_str = update.to_dict() if isinstance(update, Update) else str(update)
+        message = (
+            f"An exception was raised while handling an update\n"
+            f"update = {json.dumps(update_str, indent=2, ensure_ascii=False)}"
+            f"context.chat_data = {str(context.chat_data)}\n\n"
+            f"context.user_data = {str(context.user_data)}\n\n"
+            f"{tb_string}"
+        )
+        
+        # Log errors
+        self.logger.error(msg="Exception while handling an update:", exc_info=context.error)
+        self.logger.error(msg=message)
+        self.client.ingest_events('query_data', [{"error": message}])
         
     # Extract the status change from a ChatMemberUpdated object
     def extract_status_change(self, chat_member_update: ChatMemberUpdated) -> Optional[Tuple[bool, bool]]:
@@ -221,8 +248,10 @@ class Telegram:
         message = update.message.text.replace('/draw','')
         self.logger.info(f"User: {update.effective_user.id} used /draw with prompt {message}")
 
-        (prompt, photo) = self.commands.draw(message)
-        await update.message.reply_photo(photo=photo, caption=f"Prompt: {str(prompt).strip()}")
+        self.client.ingest_events('query_data', [{"draw": message}])
+
+        (prompt, photo) = await self.commands.draw(message)
+        await update.message.reply_photo(photo=photo, caption=f"Prompt: {prompt}")
 
     # Search command for the bot
     # @auth()
@@ -231,7 +260,9 @@ class Telegram:
         message = update.message.text.replace('/search','')
         self.logger.info(f"User: {update.effective_user.id} used /search with prompt {message}")
 
-        response = self.commands.search(message)
+        self.client.ingest_events('query_data', [{"search": message}])
+
+        response = await self.commands.search(message)
         await update.message.reply_text(response, parse_mode=telegram.constants.ParseMode.MARKDOWN)
 
     # Chat command for the bot
@@ -246,15 +277,18 @@ class Telegram:
         message = update.message.text.replace('/chat','')
         self.logger.info(f"User: {update.effective_user.id} used /chat with prompt {message}")
 
-        response = self.commands.chat(message)
+        self.client.ingest_events('query_data', [{"chat": message}])
+
+        response = await self.commands.chat(message)
         await update.message.reply_text(response, parse_mode=telegram.constants.ParseMode.MARKDOWN)
 
     def build(self) -> None:
         """Start the bot."""
 
-        # TODO: push logs to axion
+        # TODO: push user # queries into planet scale for auth
+        # TODO: switch tiers based on tokens not reqs
+        # TODO: greeting msg to talk ab limits and what you can do
         # TODO: broadcast command to message all users
-        # TODO: general error logging command from https://github.com/python-telegram-bot/python-telegram-bot/blob/master/examples/errorhandlerbot.py
         
         # Register command handlers
         # block-False allows for concurrent execution
@@ -268,6 +302,9 @@ class Telegram:
         # Register status handlers
         self.application.add_handler(ChatMemberHandler(self.start_command, ChatMemberHandler.CHAT_MEMBER))
         self.application.add_handler(ChatMemberHandler(self.track_chats, ChatMemberHandler.MY_CHAT_MEMBER))
+
+        # Register error handlers
+        self.application.add_error_handler(self.error_handler)
 
         # Run the bot until the user presses Ctrl-C
         self.application.run_polling(allowed_updates=Update.ALL_TYPES)

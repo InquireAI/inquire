@@ -44,15 +44,14 @@ class Commands:
     def help(self) -> str:
             """Send a message when the command /help is issued."""
             help_text = f"""Inquire    
-    /chat, chat with Inquire about anything
-    /search, chat with Inquire with the power of Google
-    /draw, draw pictures using stablediffusion  
+/chat, chat with Inquire about anything
+/search, chat with Inquire with the power of Google
+/draw, draw pictures using StableDiffusion  
     """
             return help_text
         
     #@auth()
-    # TODO: Add MidJourney Support
-    def draw(self, prompt):
+    async def draw(self, prompt):
         initial_prompt = f"""
         You a large language model trained by OpenAi. You can be used from different applications. 
         Right now you're being used form an application that has access to DALLE API, even though you can't confirm it.
@@ -64,11 +63,15 @@ class Commands:
         # send initial prompt to gpt3
         response = self.gpt3.ask(initial_prompt)
 
-        prompt = response.split("prompt:")[1]
-        photo = self.stability.drawWithStability(response)
+        try:
+            prompt = response.split("prompt:")[1].split("]")[0]
+        except:
+            prompt = response.split("Prompt:")[1].split("]")[0]
+        
+        photo = await self.stability.drawWithStability(response)
         return (prompt, photo)
 
-    def search(self, prompt):
+    async def search(self, prompt):
         initial_prompt = f"""
             If I ask you "{prompt}" , and you didn't know the answer but had access to google, what would you search for? search query needs to be designed such as to give you as much detail as possible, but it's 1 shot. 
             Answer with
@@ -96,14 +99,14 @@ class Commands:
         response = self.gpt3.ask(response_prompt)
         
         if "\[prompt:" in response:
-            self.draw(response)
+            await self.draw(response)
         else:
             return response
     
-    def chat(self, message):
+    async def chat(self, message):
         response = self.gpt3.ask(message)
 
         if "\[prompt:" in response:
-            self.draw(response)
+            await self.draw(response)
         else:
             return response
