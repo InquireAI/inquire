@@ -52,6 +52,8 @@ OPENAI_PASSWORD=# (required) password to access the openai account that is being
 
 STABILITY_API_KEY=# (required) API key for stablediffusion to generate drawings
 SERP_API_KEY=# (required) API key for google searches
+
+AXIOM_TOKEN==# (required) for pushing to axiom for logging
 ```
 
 You can obtain the required API Keys below
