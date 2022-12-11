@@ -52,6 +52,8 @@ OPENAI_PASSWORD=# (required) password to access the openai account that is being
 
 STABILITY_API_KEY=# (required) API key for stablediffusion to generate drawings
 SERP_API_KEY=# (required) API key for google searches
+
+AXIOM_TOKEN==# (required) for pushing to axiom for logging
 ```
 
 You can obtain the required API Keys below
@@ -68,7 +70,7 @@ python server.py
 
 ### Docker
 ```bash
-docker run -d --name inquire inquire
+docker run -d --name inquire inquire --env-file .env
 ```
 
 You will also need to go the bot that you created via `@Botfather`, start a chat with it, and click start. 
