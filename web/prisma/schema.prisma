@@ -15,10 +15,42 @@ datasource db {
   relationMode = "prisma"
 }
 
-model Example {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+enum SubscriptionStatus {
+  INCOMPLETE
+  INCOMPLETE_EXPIRED
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  UNPAID
+}
+
+model Subscription {
+  id         String             @id
+  customerId String
+  customer   Customer           @relation(fields: [customerId], references: [id])
+  status     SubscriptionStatus
+
+  @@index([customerId])
+}
+
+model Customer {
+  id            String         @id
+  userId        String?        @unique
+  user          User?          @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  subscriptions Subscription[]
+
+  @@index([userId])
+}
+
+model PaymentLink {
+  id     String  @id
+  active Boolean
+  url    String
+  userId String
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 // Necessary for Next auth
@@ -52,14 +84,16 @@ model Session {
 }
 
 model User {
-  id            String    @id @default(cuid())
+  id            String        @id @default(cuid())
   name          String?
-  email         String?   @unique
+  email         String?       @unique
   emailVerified DateTime?
   image         String?
   telegramId    String?
   accounts      Account[]
   sessions      Session[]
+  paymentLink   PaymentLink[]
+  customer      Customer?
 }
 
 model VerificationToken {

@@ -1,5 +1,9 @@
 import { PrismaClient } from "@prisma/client";
-
+export {
+  type Prisma,
+  type Subscription,
+  SubscriptionStatus,
+} from "@prisma/client";
 import { env } from "../../env/server.mjs";
 
 declare global {

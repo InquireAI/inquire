@@ -1,3 +1,4 @@
+import type Stripe from "stripe";
 import { z } from "zod";
 import { env } from "../../../env/server.mjs";
 import { stripe } from "../../stripe/client";
@@ -11,7 +12,7 @@ export const stripeRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
-      const link = await stripe.paymentLinks.create({
+      const link: Stripe.PaymentLink = await stripe.paymentLinks.create({
         after_completion: {
           type: "redirect",
           redirect: { url: input.redirectUrl },
@@ -25,6 +26,15 @@ export const stripeRouter = router({
             quantity: 1,
           },
         ],
+      });
+
+      await ctx.prisma.paymentLink.create({
+        data: {
+          id: link.id,
+          active: link.active,
+          url: link.url,
+          userId: ctx.session.user.id,
+        },
       });
 
       return link;
