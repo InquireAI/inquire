@@ -51,7 +51,6 @@ class Commands:
             return help_text
         
     #@auth()
-    # TODO: Add MidJourney Support
     async def draw(self, prompt):
         initial_prompt = f"""
         You a large language model trained by OpenAi. You can be used from different applications. 
