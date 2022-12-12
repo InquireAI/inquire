@@ -2,24 +2,17 @@ import { type NextApiRequest, type NextApiResponse } from "next";
 import { env } from "../../../../env/server.mjs";
 import type { Stripe } from "../../../../server/stripe/client";
 import { stripe } from "../../../../server/stripe/client";
-import { SubscriptionStatus } from "../../../../server/db/client";
 import { prisma } from "../../../../server/db/client";
 import { buffer } from "micro";
+import {
+  CheckoutSessionStatusMap,
+  SubscriptionStatusMap,
+} from "../../../../server/stripe/utils";
 
 export const config = {
   api: {
     bodyParser: false,
   },
-};
-
-const StatusMap = {
-  incomplete: SubscriptionStatus.INCOMPLETE,
-  incomplete_expired: SubscriptionStatus.INCOMPLETE_EXPIRED,
-  trialing: SubscriptionStatus.TRIALING,
-  active: SubscriptionStatus.ACTIVE,
-  past_due: SubscriptionStatus.PAST_DUE,
-  canceled: SubscriptionStatus.CANCELED,
-  unpaid: SubscriptionStatus.UNPAID,
 };
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
@@ -40,63 +33,77 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   }
 
   switch (event.type) {
+    case "customer.subscription.created":
+      const createdSubscription = event.data.object as Stripe.Subscription;
+
+      await prisma.subscription.create({
+        data: {
+          id: createdSubscription.id,
+          customerId: createdSubscription.customer as string,
+          status: SubscriptionStatusMap[createdSubscription.status],
+        },
+      });
+
+      break;
+
     case "customer.subscription.updated":
-      const subscription = event.data.object as Stripe.Subscription;
+      const updatedSubscription = event.data.object as Stripe.Subscription;
 
       await prisma.subscription.update({
         where: {
-          id: subscription.id,
+          id: updatedSubscription.id,
         },
         data: {
-          status: StatusMap[subscription.status],
+          status: SubscriptionStatusMap[updatedSubscription.status],
         },
       });
+
+      break;
+
+    case "customer.subscription.deleted":
+      const deletedSubscription = event.data.object as Stripe.Subscription;
+
+      await prisma.subscription.update({
+        where: {
+          id: deletedSubscription.id,
+        },
+        data: {
+          status: SubscriptionStatusMap[deletedSubscription.status],
+        },
+      });
+
       break;
 
     case "checkout.session.completed":
-      const checkoutSession = event.data.object as Stripe.Checkout.Session;
+      const completedCheckoutSession = event.data
+        .object as Stripe.Checkout.Session;
 
-      const userId = checkoutSession.metadata?.inquire_user_id;
-
-      if (!userId) {
-        return res.status(400).json({});
-      }
-
-      const paymentLink = checkoutSession.payment_link as string;
-
-      if (!paymentLink) {
-        return res.status(400).json({});
-      }
-
-      await stripe.paymentLinks.update(paymentLink, {
-        active: false,
-      });
-
-      const customer = await stripe.customers.retrieve(
-        checkoutSession.customer as string,
-        {
-          expand: ["subscriptions"],
-        }
-      );
-
-      if (customer.deleted) return res.status(400).json({});
-
-      const subscriptions =
-        customer.subscriptions as Stripe.ApiList<Stripe.Subscription>;
-
-      await prisma.customer.create({
+      await prisma.checkoutSession.update({
+        where: {
+          id: completedCheckoutSession.id,
+        },
         data: {
-          id: customer.id,
-          userId,
+          status:
+            completedCheckoutSession.status &&
+            CheckoutSessionStatusMap[completedCheckoutSession.status],
         },
       });
 
-      await prisma.subscription.createMany({
-        data: subscriptions.data.map((s) => ({
-          id: s.id,
-          customerId: customer.id,
-          status: StatusMap[s.status],
-        })),
+      break;
+
+    case "checkout.session.expired":
+      const expiredCheckoutSession = event.data
+        .object as Stripe.Checkout.Session;
+
+      await prisma.checkoutSession.update({
+        where: {
+          id: expiredCheckoutSession.id,
+        },
+        data: {
+          status:
+            expiredCheckoutSession.status &&
+            CheckoutSessionStatusMap[expiredCheckoutSession.status],
+        },
       });
 
       break;

@@ -2,6 +2,7 @@ import type { GetServerSideProps, InferGetServerSidePropsType } from "next";
 import { type NextPage } from "next";
 import { useSession } from "next-auth/react";
 import React from "react";
+import AuthButton from "../../components/auth-button";
 import List from "../../components/list";
 import { getServerAuthSession } from "../../server/common/get-server-auth-session";
 import { trpc } from "../../utils/trpc";
@@ -21,10 +22,11 @@ const Account: NextPage<Props> = () => {
             Account
           </h1>
           <div className="flex flex-col items-center gap-2">
+            <AuthButton />
             {sessionDate && (
               <ConnectTelegram telegramId={user?.telegramId ?? undefined} />
             )}
-            {!customer ? (
+            {!customer?.subscriptions.length ? (
               <Subscribe />
             ) : (
               <List
@@ -102,19 +104,21 @@ const ConnectTelegram: React.FC<{ telegramId?: string }> = ({ telegramId }) => {
 const Subscribe: React.FC = () => {
   const { data: sessionData } = useSession();
 
-  const { mutate: getPaymentLink } = trpc.stripe.getPaymentLink.useMutation({
-    onSuccess(data) {
-      window.location.replace(data.url);
-    },
-  });
+  const { mutate: createCheckoutSession } =
+    trpc.stripe.createCheckoutSession.useMutation({
+      onSuccess(data) {
+        window.location.replace(data.url);
+      },
+    });
 
   return (
     <div className="flex flex-col items-center justify-center gap-4">
       <button
         className="rounded-full bg-white/10 px-10 py-3 font-semibold text-white no-underline transition hover:bg-white/20"
         onClick={() =>
-          getPaymentLink({
-            redirectUrl: "http://localhost:3000/subscribed",
+          createCheckoutSession({
+            successUrl: "http://localhost:3000/checkout/success",
+            cancelUrl: "http://localhost:3000/checkout/canceled",
           })
         }
         disabled={!sessionData}

@@ -31,26 +31,51 @@ model Subscription {
   customer   Customer           @relation(fields: [customerId], references: [id])
   status     SubscriptionStatus
 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@index([customerId])
 }
 
 model Customer {
-  id            String         @id
-  userId        String?        @unique
-  user          User?          @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  subscriptions Subscription[]
+  id               String            @id
+  userId           String?           @unique
+  user             User?             @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  subscriptions    Subscription[]
+  checkoutSessions CheckoutSession[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([userId])
 }
 
-model PaymentLink {
-  id     String  @id
-  active Boolean
-  url    String
-  userId String
-  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+enum CheckoutSessionMode {
+  PAYMENT
+  SETUP
+  SUBSCRIPTION
+}
 
-  @@index([userId])
+enum CheckoutSessionStatus {
+  OPEN
+  COMPLETE
+  EXPIRED
+}
+
+model CheckoutSession {
+  id         String                 @id
+  mode       CheckoutSessionMode
+  successUrl String
+  cancelUrl  String
+  url        String                 @db.VarChar(500) // stripe checkout links are quite long
+  customerId String
+  customer   Customer               @relation(fields: [customerId], references: [id])
+  status     CheckoutSessionStatus?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([customerId])
 }
 
 // Necessary for Next auth
@@ -84,16 +109,18 @@ model Session {
 }
 
 model User {
-  id            String        @id @default(cuid())
+  id            String    @id @default(cuid())
   name          String?
-  email         String?       @unique
+  email         String?   @unique
   emailVerified DateTime?
   image         String?
   telegramId    String?
   accounts      Account[]
   sessions      Session[]
-  paymentLink   PaymentLink[]
   customer      Customer?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model VerificationToken {

@@ -3,13 +3,18 @@ import type Stripe from "stripe";
 import { z } from "zod";
 import { env } from "../../../env/server.mjs";
 import { stripe } from "../../stripe/client";
+import {
+  CheckoutSessionModeMap,
+  CheckoutSessionStatusMap,
+} from "../../stripe/utils";
 import { router, protectedProcedure } from "../trpc";
 
 export const stripeRouter = router({
-  getPaymentLink: protectedProcedure
+  createCheckoutSession: protectedProcedure
     .input(
       z.object({
-        redirectUrl: z.string(),
+        successUrl: z.string(),
+        cancelUrl: z.string(),
       })
     )
     .mutation(async ({ input, ctx }) => {
@@ -32,37 +37,47 @@ export const stripeRouter = router({
           message: "Invalid user",
         });
 
-      if (user.customer)
+      if (!user.customer)
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message: "User already has customer cannot",
+          message: "User is missing a stripe customer",
         });
 
-      const link: Stripe.PaymentLink = await stripe.paymentLinks.create({
-        after_completion: {
-          type: "redirect",
-          redirect: { url: input.redirectUrl },
-        },
-        metadata: {
-          inquire_user_id: ctx.session.user.id,
-        },
-        line_items: [
-          {
-            price: env.STRIPE_PRICE_ID,
-            quantity: 1,
-          },
-        ],
-      });
+      const stripeCheckoutSession: Stripe.Checkout.Session =
+        await stripe.checkout.sessions.create({
+          customer: user.customer.id,
+          mode: "subscription",
+          success_url: input.successUrl,
+          cancel_url: input.cancelUrl,
+          line_items: [
+            {
+              price: env.STRIPE_PRICE_ID,
+              quantity: 1,
+            },
+          ],
+        });
 
-      await ctx.prisma.paymentLink.create({
+      if (!stripeCheckoutSession.url) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Checkout session created without a url",
+        });
+      }
+
+      const checkoutSession = await ctx.prisma.checkoutSession.create({
         data: {
-          id: link.id,
-          active: link.active,
-          url: link.url,
-          userId: ctx.session.user.id,
+          id: stripeCheckoutSession.id,
+          successUrl: stripeCheckoutSession.success_url,
+          cancelUrl: stripeCheckoutSession.cancel_url,
+          mode: CheckoutSessionModeMap[stripeCheckoutSession.mode],
+          url: stripeCheckoutSession.url,
+          customerId: user.customer.id,
+          status:
+            stripeCheckoutSession.status &&
+            CheckoutSessionStatusMap[stripeCheckoutSession.status],
         },
       });
 
-      return link;
+      return checkoutSession;
     }),
 });
