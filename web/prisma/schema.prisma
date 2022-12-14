@@ -25,11 +25,42 @@ enum SubscriptionStatus {
   UNPAID
 }
 
+model Price {
+  id        String  @id
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+
+  createdAt DateTime
+
+  @@index([productId])
+}
+
+model Product {
+  id          String  @id
+  name        String
+  description String?
+  prices      Price[]
+
+  createdAt DateTime
+}
+
+model SubscriptionItem {
+  id             String       @id
+  subscriptionId String
+  priceId        String
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id])
+
+  createdAt DateTime
+
+  @@index([subscriptionId])
+}
+
 model Subscription {
-  id         String             @id
-  customerId String
-  customer   Customer           @relation(fields: [customerId], references: [id])
-  status     SubscriptionStatus
+  id                String             @id
+  customerId        String
+  customer          Customer           @relation(fields: [customerId], references: [id])
+  status            SubscriptionStatus
+  subscriptionItems SubscriptionItem[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

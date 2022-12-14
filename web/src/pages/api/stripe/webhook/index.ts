@@ -4,10 +4,11 @@ import type { Stripe } from "../../../../server/stripe/client";
 import { stripe } from "../../../../server/stripe/client";
 import { prisma } from "../../../../server/db/client";
 import { buffer } from "micro";
-import {
-  CheckoutSessionStatusMap,
-  SubscriptionStatusMap,
-} from "../../../../server/stripe/utils";
+import { handleCustomerSubscriptionCreated } from "../../../../server/stripe/webhook/customer-subscription-created.js";
+import { handleCustomerSubscriptionUpdated } from "../../../../server/stripe/webhook/customer-subscription-updated.js";
+import { handleCustomerSubscriptionDeleted } from "../../../../server/stripe/webhook/customer-subscription-deleted.js";
+import { handleCheckoutSessionCompleted } from "../../../../server/stripe/webhook/checkout-session-completed.js";
+import { handleCheckoutSessionExpired } from "../../../../server/stripe/webhook/checkout-session-expired.js";
 
 export const config = {
   api: {
@@ -34,76 +35,39 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
   switch (event.type) {
     case "customer.subscription.created":
-      const createdSubscription = event.data.object as Stripe.Subscription;
-
-      await prisma.subscription.create({
-        data: {
-          id: createdSubscription.id,
-          customerId: createdSubscription.customer as string,
-          status: SubscriptionStatusMap[createdSubscription.status],
-        },
+      await handleCustomerSubscriptionCreated(event, {
+        prisma,
+        stripe,
       });
 
-      break;
-
     case "customer.subscription.updated":
-      const updatedSubscription = event.data.object as Stripe.Subscription;
-
-      await prisma.subscription.update({
-        where: {
-          id: updatedSubscription.id,
-        },
-        data: {
-          status: SubscriptionStatusMap[updatedSubscription.status],
-        },
+      await handleCustomerSubscriptionUpdated(event, {
+        prisma,
+        stripe,
       });
 
       break;
 
     case "customer.subscription.deleted":
-      const deletedSubscription = event.data.object as Stripe.Subscription;
-
-      await prisma.subscription.update({
-        where: {
-          id: deletedSubscription.id,
-        },
-        data: {
-          status: SubscriptionStatusMap[deletedSubscription.status],
-        },
+      await handleCustomerSubscriptionDeleted(event, {
+        prisma,
+        stripe,
       });
 
       break;
 
     case "checkout.session.completed":
-      const completedCheckoutSession = event.data
-        .object as Stripe.Checkout.Session;
-
-      await prisma.checkoutSession.update({
-        where: {
-          id: completedCheckoutSession.id,
-        },
-        data: {
-          status:
-            completedCheckoutSession.status &&
-            CheckoutSessionStatusMap[completedCheckoutSession.status],
-        },
+      await handleCheckoutSessionCompleted(event, {
+        stripe,
+        prisma,
       });
 
       break;
 
     case "checkout.session.expired":
-      const expiredCheckoutSession = event.data
-        .object as Stripe.Checkout.Session;
-
-      await prisma.checkoutSession.update({
-        where: {
-          id: expiredCheckoutSession.id,
-        },
-        data: {
-          status:
-            expiredCheckoutSession.status &&
-            CheckoutSessionStatusMap[expiredCheckoutSession.status],
-        },
+      await handleCheckoutSessionExpired(event, {
+        stripe,
+        prisma,
       });
 
       break;
