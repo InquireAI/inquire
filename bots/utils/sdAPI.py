@@ -8,7 +8,7 @@ class Stability:
     self.client = axiom.Client(os.environ.get('AXIOM_TOKEN'))
 
   async def drawWithStability(self, prompt):
-    engine_id = "stable-diffusion-512-v2-0"
+    engine_id = "stable-diffusion-768-v2-0"
     api_host = os.getenv('API_HOST', 'https://api.stability.ai')
     url = f"{api_host}/v1alpha/generation/{engine_id}/text-to-image"
 
