@@ -155,29 +155,80 @@ class Telegram:
         if chat.type == Chat.PRIVATE:
             if not was_member and is_member:
                 context.bot_data.setdefault("user_ids", set()).add(chat.id)
+
+                # Log new users to axiom
+                self.client.ingest_events('user_data', [
+                    {
+                        "user_id": update.effective_user.id, 
+                        "is_bot": update.effective_user.is_bot,
+                        "first_name": update.effective_user.first_name,
+                        "last_name": update.effective_user.last_name,
+                        "username": update.effective_user.username,
+                        "language_code": update.effective_user.language_code,
+                        "is_premium": update.effective_user.is_premium,
+                        "removed": False
+                    }
+                ])
+
+                self.logger.info(f"New user: {update.effective_user.id}")
             elif was_member and not is_member:
                 context.bot_data.setdefault("user_ids", set()).discard(chat.id)
+
+                # Remove users to axiom
+                self.client.ingest_events('user_data', [
+                    {
+                        "user_id": update.effective_user.id, 
+                        "is_bot": update.effective_user.is_bot,
+                        "first_name": update.effective_user.first_name,
+                        "last_name": update.effective_user.last_name,
+                        "username": update.effective_user.username,
+                        "language_code": update.effective_user.language_code,
+                        "is_premium": update.effective_user.is_premium,
+                        "removed": True,
+                        "group_id": -1
+                    }
+                ])
+
+                self.logger.info(f"Removed user: {update.effective_user.id}")
         elif chat.type in [Chat.GROUP, Chat.SUPERGROUP]:
             if not was_member and is_member:
                 context.bot_data.setdefault("group_ids", set()).add(chat.id)
+                
+                # Log new groups to axiom
+                self.client.ingest_events('user_data', [
+                    {
+                        "user_id": update.effective_user.id, 
+                        "is_bot": update.effective_user.is_bot,
+                        "first_name": update.effective_user.first_name,
+                        "last_name": update.effective_user.last_name,
+                        "username": update.effective_user.username,
+                        "language_code": update.effective_user.language_code,
+                        "is_premium": update.effective_user.is_premium,
+                        "removed": False,
+                        "group_id": chat.id,
+                    }
+                ])
+
+                self.logger.info(f"New group: {chat.id}")
             elif was_member and not is_member:
                 context.bot_data.setdefault("group_ids", set()).discard(chat.id)
-        else:
-            if not was_member and is_member:
-                context.bot_data.setdefault("channel_ids", set()).add(chat.id)
-            elif was_member and not is_member:
-                context.bot_data.setdefault("channel_ids", set()).discard(chat.id)
 
-        # Log users to axiom 
-        user_ids = []
-        group_ids = []
-        channel_ids = []
-        for uid in context.bot_data.setdefault("user_ids", set()):
-            user_ids.append(uid)
-        for gid in context.bot_data.setdefault("group_ids", set()):
-            group_ids.append(gid)
-        for cid in context.bot_data.setdefault("channel_ids", set()):
-            channel_ids.append(cid)
+                # Remvove groups to axiom
+                self.client.ingest_events('user_data', [
+                    {
+                        "user_id": update.effective_user.id, 
+                        "is_bot": update.effective_user.is_bot,
+                        "first_name": update.effective_user.first_name,
+                        "last_name": update.effective_user.last_name,
+                        "username": update.effective_user.username,
+                        "language_code": update.effective_user.language_code,
+                        "is_premium": update.effective_user.is_premium,
+                        "removed": True,
+                        "group_id": chat.id,
+                    }
+                ])
+
+                self.logger.info(f"Removed group: {chat.id}")
 
     # @auth()
     # Start command for the bot
@@ -191,19 +242,6 @@ class Telegram:
         await self.application.bot.send_chat_action(update.effective_chat.id, "typing")
         self.logger.info(f"User: {update.effective_user.id} started the bot")
 
-        # Log new users to axiom
-        self.client.ingest_events('user_data', [
-            {
-                "user_id": int(update.effective_user.id), 
-                "is_bot": update.effective_user.is_bot,
-                "first_name": update.effective_user.first_name,
-                "last_name": update.effective_user.last_name,
-                "username": update.effective_user.username,
-                "language_code": update.effective_user.language_code,
-                "is_premium": update.effective_user.is_premium
-            }
-        ])
-        
         # track users and chats
         try:
             result = self.extract_status_change(update.chat_member)
@@ -293,6 +331,8 @@ f"inquire.run\n",
         # TODO: broadcast command to message all users
         # TODO: fix typing on all commands, it periodically stops working for /draw and /search
         # TODO: github actions to publish container (https://docs.github.com/en/actions/publishing-packages/publishing-docker-images)
+        # TODO: integrate with dust.tt
+        # TODO: raiise type errors all the way back to return a message to the user
         
         # Register command handlers
         # block-False allows for concurrent execution
