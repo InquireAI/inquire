@@ -4,11 +4,15 @@ import type { Stripe } from "../../../../server/stripe/client";
 import { stripe } from "../../../../server/stripe/client";
 import { prisma } from "../../../../server/db/client";
 import { buffer } from "micro";
-import { handleCustomerSubscriptionCreated } from "../../../../server/stripe/webhook/customer-subscription-created.js";
-import { handleCustomerSubscriptionUpdated } from "../../../../server/stripe/webhook/customer-subscription-updated.js";
-import { handleCustomerSubscriptionDeleted } from "../../../../server/stripe/webhook/customer-subscription-deleted.js";
-import { handleCheckoutSessionCompleted } from "../../../../server/stripe/webhook/checkout-session-completed.js";
-import { handleCheckoutSessionExpired } from "../../../../server/stripe/webhook/checkout-session-expired.js";
+import { handleCustomerSubscriptionCreated } from "../../../../server/stripe/webhook/customer-subscription-created";
+import { handleCustomerSubscriptionUpdated } from "../../../../server/stripe/webhook/customer-subscription-updated";
+import { handleCustomerSubscriptionDeleted } from "../../../../server/stripe/webhook/customer-subscription-deleted";
+import { handleCheckoutSessionCompleted } from "../../../../server/stripe/webhook/checkout-session-completed";
+import { handleCheckoutSessionExpired } from "../../../../server/stripe/webhook/checkout-session-expired";
+import { handleProductCreated } from "../../../../server/stripe/webhook/product-created";
+import { handleProductUpdated } from "../../../../server/stripe/webhook/product-updated";
+import { handlePriceCreated } from "../../../../server/stripe/webhook/price-created";
+import { handlePriceUpdated } from "../../../../server/stripe/webhook/price-updated";
 
 export const config = {
   api: {
@@ -39,13 +43,13 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         prisma,
         stripe,
       });
+      break;
 
     case "customer.subscription.updated":
       await handleCustomerSubscriptionUpdated(event, {
         prisma,
         stripe,
       });
-
       break;
 
     case "customer.subscription.deleted":
@@ -61,7 +65,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         stripe,
         prisma,
       });
-
       break;
 
     case "checkout.session.expired":
@@ -69,7 +72,41 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         stripe,
         prisma,
       });
+      break;
 
+    case "product.created":
+      await handleProductCreated(event, {
+        stripe,
+        prisma,
+      });
+      break;
+
+    case "product.updated":
+      await handleProductUpdated(event, {
+        stripe,
+        prisma,
+      });
+      break;
+
+    case "product.deleted":
+      await handleProductUpdated(event, {
+        stripe,
+        prisma,
+      });
+      break;
+
+    case "price.created":
+      await handlePriceCreated(event, {
+        stripe,
+        prisma,
+      });
+      break;
+
+    case "price.updated":
+      await handlePriceUpdated(event, {
+        stripe,
+        prisma,
+      });
       break;
   }
 

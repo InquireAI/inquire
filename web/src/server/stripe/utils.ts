@@ -2,6 +2,8 @@ import {
   CheckoutSessionMode,
   CheckoutSessionStatus,
   SubscriptionStatus,
+  PriceType,
+  RecurringPriceDataInterval,
 } from "../db/client";
 
 export const CheckoutSessionModeMap = {
@@ -24,4 +26,16 @@ export const SubscriptionStatusMap = {
   past_due: SubscriptionStatus.PAST_DUE,
   canceled: SubscriptionStatus.CANCELED,
   unpaid: SubscriptionStatus.UNPAID,
+};
+
+export const PriceTypeMap = {
+  one_time: PriceType.ONE_TIME,
+  recurring: PriceType.RECURRING,
+};
+
+export const RecurringPriceDataIntervalMap = {
+  month: RecurringPriceDataInterval.MONTH,
+  year: RecurringPriceDataInterval.YEAR,
+  day: RecurringPriceDataInterval.DAY,
+  week: RecurringPriceDataInterval.WEEK,
 };

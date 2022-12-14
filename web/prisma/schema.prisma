@@ -15,22 +15,37 @@ datasource db {
   relationMode = "prisma"
 }
 
-enum SubscriptionStatus {
-  INCOMPLETE
-  INCOMPLETE_EXPIRED
-  TRIALING
-  ACTIVE
-  PAST_DUE
-  CANCELED
-  UNPAID
+enum RecurringPriceDataInterval {
+  MONTH
+  YEAR
+  WEEK
+  DAY
+}
+
+model RecurringPriceData {
+  id       String                     @id
+  price    Price                      @relation(fields: [id], references: [id])
+  interval RecurringPriceDataInterval
+
+  @@index([id])
+}
+
+enum PriceType {
+  ONE_TIME
+  RECURRING
 }
 
 model Price {
-  id        String  @id
-  productId String
-  product   Product @relation(fields: [productId], references: [id])
+  id         String    @id
+  productId  String
+  product    Product   @relation(fields: [productId], references: [id])
+  type       PriceType
+  unitAmount Int
+  active     Boolean
 
-  createdAt DateTime
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
+  recurring RecurringPriceData?
 
   @@index([productId])
 }
@@ -40,8 +55,10 @@ model Product {
   name        String
   description String?
   prices      Price[]
+  active      Boolean
 
-  createdAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model SubscriptionItem {
@@ -50,9 +67,20 @@ model SubscriptionItem {
   priceId        String
   subscription   Subscription @relation(fields: [subscriptionId], references: [id])
 
-  createdAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([subscriptionId])
+}
+
+enum SubscriptionStatus {
+  INCOMPLETE
+  INCOMPLETE_EXPIRED
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  UNPAID
 }
 
 model Subscription {

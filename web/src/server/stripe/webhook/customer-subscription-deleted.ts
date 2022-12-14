@@ -1,5 +1,4 @@
 import type { Stripe } from "../client";
-import { SubscriptionStatusMap } from "../utils";
 import type { Ctx } from "./context";
 
 export const handleCustomerSubscriptionDeleted = async (
@@ -8,12 +7,9 @@ export const handleCustomerSubscriptionDeleted = async (
 ) => {
   const subscription = event.data.object as Stripe.Subscription;
 
-  await ctx.prisma.subscription.update({
+  await ctx.prisma.subscription.delete({
     where: {
       id: subscription.id,
-    },
-    data: {
-      status: SubscriptionStatusMap[subscription.status],
     },
   });
 };
