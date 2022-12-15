@@ -73,7 +73,7 @@ const Account: NextPage<Props> = () => {
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(" ");
 }
-const Page = () => {
+const Page: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
   const router = useRouter();
 
   const lastPath = router.pathname.split("/").pop()?.charAt(0).toUpperCase();
@@ -174,7 +174,7 @@ const Page = () => {
         </div>
       </header>
       <main>
-        <div className="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8"></div>
+        <div className="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">{children}</div>
       </main>
     </div>
   );
