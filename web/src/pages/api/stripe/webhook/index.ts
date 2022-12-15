@@ -4,7 +4,6 @@ import type { Stripe } from "../../../../server/stripe/client";
 import { stripe } from "../../../../server/stripe/client";
 import { prisma } from "../../../../server/db/client";
 import { buffer } from "micro";
-import { handleCustomerSubscriptionCreated } from "../../../../server/stripe/webhook/customer-subscription-created";
 import { handleCustomerSubscriptionUpdated } from "../../../../server/stripe/webhook/customer-subscription-updated";
 import { handleCustomerSubscriptionDeleted } from "../../../../server/stripe/webhook/customer-subscription-deleted";
 import { handleCheckoutSessionCompleted } from "../../../../server/stripe/webhook/checkout-session-completed";
@@ -38,13 +37,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   }
 
   switch (event.type) {
-    case "customer.subscription.created":
-      await handleCustomerSubscriptionCreated(event, {
-        prisma,
-        stripe,
-      });
-      break;
-
     case "customer.subscription.updated":
       await handleCustomerSubscriptionUpdated(event, {
         prisma,
