@@ -5,7 +5,7 @@ import { getServerAuthSession } from "../../server/common/get-server-auth-sessio
 import type { NextPageWithLayout } from "../_app";
 
 const Connections: NextPageWithLayout<Props> = () => {
-  return <div>test</div>;
+  return <div>connections</div>;
 };
 
 Connections.getLayout = function getLayout(page: React.ReactElement) {

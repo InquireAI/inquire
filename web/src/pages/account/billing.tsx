@@ -5,7 +5,7 @@ import { getServerAuthSession } from "../../server/common/get-server-auth-sessio
 import type { NextPageWithLayout } from "../_app";
 
 const Billing: NextPageWithLayout<Props> = () => {
-  return <div>test</div>;
+  return <div>billing</div>;
 };
 
 Billing.getLayout = function getLayout(page: React.ReactElement) {
