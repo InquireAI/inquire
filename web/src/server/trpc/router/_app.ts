@@ -2,15 +2,15 @@ import { router } from "../trpc";
 import { authRouter } from "./auth";
 import { telegramRouter } from "./telegram";
 import { userRouter } from "./user";
-import { stripeRouter } from "./stripe";
 import { customerRouter } from "./customer";
+import { checkoutSessionRouter } from "./checkout-session";
 
 export const appRouter = router({
   auth: authRouter,
   telegram: telegramRouter,
   user: userRouter,
   customer: customerRouter,
-  stripe: stripeRouter,
+  checkoutSession: checkoutSessionRouter,
 });
 
 // export type definition of API
