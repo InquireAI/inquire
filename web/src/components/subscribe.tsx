@@ -1,10 +1,8 @@
-import { useSession } from "next-auth/react";
 import { trpc } from "../utils/trpc";
+import Spinner from "./spinner";
 
 const Subscribe: React.FC = () => {
-  const { data: sessionData } = useSession();
-
-  const { mutate: createCheckoutSession } =
+  const { mutate: createCheckoutSession, isLoading } =
     trpc.checkoutSession.createPremiumCheckoutSession.useMutation({
       onSuccess(data) {
         window.location.replace(data.url);
@@ -12,18 +10,17 @@ const Subscribe: React.FC = () => {
     });
 
   return (
-    <div className="flex flex-col items-center justify-center gap-4">
+    <div className="flex w-full flex-col items-center justify-center gap-4">
       <button
-        className="rounded-full bg-white/10 px-10 py-3 font-semibold text-white no-underline transition hover:bg-white/20"
+        className="flex w-full items-center justify-center rounded-md border border-indigo-200 bg-indigo-100 px-10 py-3 font-semibold text-indigo-700 no-underline transition hover:cursor-pointer hover:border-transparent hover:bg-indigo-900 hover:bg-gradient-to-br hover:from-indigo-900 hover:to-indigo-700 hover:text-white"
         onClick={() =>
           createCheckoutSession({
             successUrl: "http://localhost:3000/checkout/success",
             cancelUrl: "http://localhost:3000/checkout/canceled",
           })
         }
-        disabled={!sessionData}
       >
-        {"Subscribe"}
+        {!isLoading ? "Subscribe" : <Spinner />}
       </button>
     </div>
   );

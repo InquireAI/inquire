@@ -2,10 +2,7 @@ import { Disclosure } from "@headlessui/react";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/router";
 
-const navigation = [
-  { name: "Billing", href: "/account/billing" },
-  { name: "Connections", href: "/account/connections" },
-];
+const navigation = [{ name: "Account", href: "/account" }];
 
 const userNavigation = [{ name: "Sign out", href: "#" }];
 
@@ -19,10 +16,6 @@ export const AccountLayout: React.FC<{ children?: React.ReactNode }> = ({
   const router = useRouter();
 
   const lastPath = router.pathname.split("/").pop();
-
-  const headerText = lastPath
-    ? lastPath.charAt(0).toUpperCase() + lastPath.slice(1)
-    : "Account";
 
   return (
     <div className="min-h-full">
@@ -58,7 +51,6 @@ export const AccountLayout: React.FC<{ children?: React.ReactNode }> = ({
                 </div>
                 <div className="hidden md:block">
                   <div className="ml-4 flex items-center md:ml-6">
-                    {/* Profile dropdown */}
                     <button className="rounded-md bg-indigo-800 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-900">
                       Sign Out
                     </button>
@@ -120,16 +112,7 @@ export const AccountLayout: React.FC<{ children?: React.ReactNode }> = ({
         )}
       </Disclosure>
 
-      <header className="bg-white shadow">
-        <div className="mx-auto max-w-7xl py-6 px-4 sm:px-6 lg:px-8">
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900">
-            {headerText}
-          </h1>
-        </div>
-      </header>
-      <main>
-        <div className="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">{children}</div>
-      </main>
+      {children}
     </div>
   );
 };
