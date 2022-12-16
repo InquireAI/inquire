@@ -5,11 +5,8 @@ import { AccountLayout } from "../../components/account-layout";
 import BillingTab from "../../components/billing-tab";
 import ConnectionsTab from "../../components/connections-tab";
 import { getServerAuthSession } from "../../server/common/get-server-auth-session";
+import { classNames } from "../../utils/classnames";
 import type { NextPageWithLayout } from "../_app";
-
-function classNames(...classes: string[]) {
-  return classes.filter(Boolean).join(" ");
-}
 
 type TabConfig = {
   name: string;
@@ -60,7 +57,7 @@ const Account: NextPageWithLayout<Props> = () => {
             </Tab.List>
             <Tab.Panels as={Fragment}>
               {tabs.map((t, idx) => (
-                <Tab.Panel as={Fragment} key={idx}>
+                <Tab.Panel key={idx} className="flex flex-grow">
                   {t.component}
                 </Tab.Panel>
               ))}

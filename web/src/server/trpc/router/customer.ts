@@ -12,7 +12,12 @@ export const customerRouter = router({
           include: {
             subscriptionItems: {
               include: {
-                price: true,
+                price: {
+                  include: {
+                    product: true,
+                    recurring: true,
+                  },
+                },
               },
             },
           },

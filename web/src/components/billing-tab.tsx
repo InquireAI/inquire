@@ -1,3 +1,4 @@
+import { classNames } from "../utils/classnames";
 import { trpc } from "../utils/trpc";
 import Spinner from "./spinner";
 import Subscribe from "./subscribe";
@@ -44,15 +45,36 @@ const BillingTab: React.FC = () => {
   const subscriptions = customer.subscriptions;
 
   return (
-    <div className="flex min-h-full flex-grow flex-col px-10">
+    <div className="flex min-h-full flex-grow flex-col gap-5 px-10">
       <p className="text-3xl font-medium">Subscriptions</p>
       <div>
         {subscriptions.map((s, idx) => {
           console.log(s);
           return (
-            <div key={idx}>
+            <div key={idx} className="border-b border-b-gray-200">
               {s.subscriptionItems.map((si, idx) => {
-                return <div key={idx}>{JSON.stringify(si.price)}</div>;
+                return (
+                  <div key={idx}>
+                    <div className="flex flex-row gap-3 py-2">
+                      <p className="font-medium">{si.price.product.name}</p>
+                      <p
+                        className={classNames(
+                          "rounded p-1 text-xs",
+                          s.status === "ACTIVE" || s.status === "TRIALING"
+                            ? "bg-green-300 text-green-700"
+                            : "bg-red-300 text-red-700"
+                        )}
+                      >
+                        {s.status}
+                      </p>
+                    </div>
+                    <p className="font-light text-gray-700">
+                      {`$${
+                        si.price.unitAmount / 100
+                      } per ${si.price.recurring?.interval.toLowerCase()}`}
+                    </p>
+                  </div>
+                );
               })}
             </div>
           );
