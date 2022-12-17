@@ -25,6 +25,7 @@ export async function getConnectionByTypeAndUser(
   if (!queryParse.success) {
     return res.status(400).json({
       code: "BAD_REQUEST",
+      message: "Invalid query parameters",
       errors: queryParse.error.format(),
     });
   }
