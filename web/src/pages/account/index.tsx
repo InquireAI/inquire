@@ -46,7 +46,7 @@ const Account: NextPageWithLayout<Props> = () => {
                       "w-full rounded-full p-2.5 text-sm font-medium leading-5",
                       "ring-white ring-opacity-60 ring-offset-2 focus:outline-none focus:ring-2",
                       selected
-                        ? "bg-indigo-700 text-white shadow"
+                        ? "bg-rose-700 text-white shadow"
                         : "hover:bg-gray-200"
                     )
                   }

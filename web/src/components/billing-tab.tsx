@@ -50,7 +50,6 @@ const BillingTab: React.FC = () => {
       <p className="text-3xl font-medium">Subscriptions</p>
       <div>
         {subscriptions.map((s, idx) => {
-          console.log(s);
           return (
             <div
               key={idx}
@@ -98,7 +97,7 @@ const BillingTab: React.FC = () => {
                   );
                 })}
               </div>
-              <button className="flex flex-row items-center justify-center gap-1 rounded-lg px-2 py-1 font-medium text-indigo-700 hover:border-transparent hover:bg-indigo-700 hover:text-white">
+              <button className="flex flex-row items-center justify-center gap-1 rounded-lg px-2 py-1 font-medium text-rose-700 hover:border-transparent hover:bg-rose-700 hover:text-white">
                 <TrashIcon className="h-4 w-4" />
                 Cancel
               </button>
