@@ -43,9 +43,10 @@ model Price {
   unitAmount Int
   active     Boolean
 
-  createdAt DateTime            @default(now())
-  updatedAt DateTime            @updatedAt
-  recurring RecurringPriceData?
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+  recurring        RecurringPriceData?
+  SubscriptionItem SubscriptionItem[]
 
   @@index([productId])
 }
@@ -66,11 +67,13 @@ model SubscriptionItem {
   subscriptionId String
   priceId        String
   subscription   Subscription @relation(fields: [subscriptionId], references: [id])
+  price          Price        @relation(fields: [priceId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([subscriptionId])
+  @@index([priceId])
 }
 
 enum SubscriptionStatus {
@@ -84,11 +87,13 @@ enum SubscriptionStatus {
 }
 
 model Subscription {
-  id                String             @id
-  customerId        String
-  customer          Customer           @relation(fields: [customerId], references: [id])
-  status            SubscriptionStatus
-  subscriptionItems SubscriptionItem[]
+  id                 String             @id
+  customerId         String
+  customer           Customer           @relation(fields: [customerId], references: [id])
+  currentPeriodStart DateTime
+  currentPeriodEnd   DateTime
+  status             SubscriptionStatus
+  subscriptionItems  SubscriptionItem[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

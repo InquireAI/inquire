@@ -2,13 +2,26 @@ import { TRPCError } from "@trpc/server";
 import { router, protectedProcedure } from "../trpc";
 
 export const customerRouter = router({
-  customerByCurrentUser: protectedProcedure.query(async ({ ctx }) => {
+  getCustomerData: protectedProcedure.query(async ({ ctx }) => {
     const customer = await ctx.prisma.customer.findUnique({
       where: {
         userId: ctx.session.user.id,
       },
       include: {
-        subscriptions: true,
+        subscriptions: {
+          include: {
+            subscriptionItems: {
+              include: {
+                price: {
+                  include: {
+                    product: true,
+                    recurring: true,
+                  },
+                },
+              },
+            },
+          },
+        },
       },
     });
 

@@ -27,6 +27,8 @@ export const handleCustomerSubscriptionUpdated = async (
       id: subscription.id,
       customerId: subscription.customer as string,
       status: SubscriptionStatusMap[subscription.status],
+      currentPeriodStart: new Date(subscription.current_period_start * 1000),
+      currentPeriodEnd: new Date(subscription.current_period_end * 1000),
       subscriptionItems: {
         createMany: {
           data: subscription.items.data.map((sItem) => {

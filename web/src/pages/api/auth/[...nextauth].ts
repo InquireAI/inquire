@@ -9,6 +9,9 @@ import { stripe } from "../../../server/stripe/client";
 
 export const authOptions: NextAuthOptions = {
   // Include user.id on session
+  pages: {
+    signIn: "/auth/signin",
+  },
   events: {
     async signIn({ user, isNewUser }) {
       if (isNewUser) {
