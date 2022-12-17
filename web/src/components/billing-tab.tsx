@@ -2,6 +2,7 @@ import { classNames } from "../utils/classnames";
 import { trpc } from "../utils/trpc";
 import Spinner from "./spinner";
 import Subscribe from "./subscribe";
+import { TrashIcon } from "@heroicons/react/24/outline";
 
 const BillingTab: React.FC = () => {
   const { data: customer, isLoading } =
@@ -51,31 +52,56 @@ const BillingTab: React.FC = () => {
         {subscriptions.map((s, idx) => {
           console.log(s);
           return (
-            <div key={idx} className="border-b border-b-gray-200">
-              {s.subscriptionItems.map((si, idx) => {
-                return (
-                  <div key={idx}>
-                    <div className="flex flex-row gap-3 py-2">
-                      <p className="font-medium">{si.price.product.name}</p>
-                      <p
-                        className={classNames(
-                          "rounded p-1 text-xs",
-                          s.status === "ACTIVE" || s.status === "TRIALING"
-                            ? "bg-green-300 text-green-700"
-                            : "bg-red-300 text-red-700"
-                        )}
-                      >
-                        {s.status}
-                      </p>
+            <div
+              key={idx}
+              className="flex flex-row items-center justify-between border-b border-b-gray-200"
+            >
+              <div className="flex flex-col gap-4 py-5">
+                {s.subscriptionItems.map((si, idx) => {
+                  return (
+                    <div
+                      key={idx}
+                      className="rounded-md px-3 py-2 hover:bg-gray-100"
+                    >
+                      <div className="flex flex-row gap-3 py-2">
+                        <p className="font-medium">{si.price.product.name}</p>
+                        <p
+                          className={classNames(
+                            "rounded p-1 text-xs",
+                            s.status === "ACTIVE" || s.status === "TRIALING"
+                              ? "bg-green-300 text-green-700"
+                              : "bg-red-300 text-red-700"
+                          )}
+                        >
+                          {s.status}
+                        </p>
+                      </div>
+                      <span className="flex flex-row gap-2 font-light text-gray-700">
+                        <p>
+                          {`$${
+                            si.price.unitAmount / 100
+                          } per ${si.price.recurring?.interval.toLowerCase()}`}
+                        </p>
+                        <p>&middot;</p>
+                        <p>
+                          {`Next invoice on ${s.currentPeriodEnd.toLocaleDateString(
+                            undefined,
+                            {
+                              year: "numeric",
+                              month: "long",
+                              day: "numeric",
+                            }
+                          )}`}
+                        </p>
+                      </span>
                     </div>
-                    <p className="font-light text-gray-700">
-                      {`$${
-                        si.price.unitAmount / 100
-                      } per ${si.price.recurring?.interval.toLowerCase()}`}
-                    </p>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
+              <button className="flex flex-row items-center justify-center gap-1 rounded-lg px-2 py-1 font-medium text-indigo-700 hover:border-transparent hover:bg-indigo-700 hover:text-white">
+                <TrashIcon className="h-4 w-4" />
+                Cancel
+              </button>
             </div>
           );
         })}

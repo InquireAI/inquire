@@ -87,11 +87,13 @@ enum SubscriptionStatus {
 }
 
 model Subscription {
-  id                String             @id
-  customerId        String
-  customer          Customer           @relation(fields: [customerId], references: [id])
-  status            SubscriptionStatus
-  subscriptionItems SubscriptionItem[]
+  id                 String             @id
+  customerId         String
+  customer           Customer           @relation(fields: [customerId], references: [id])
+  currentPeriodStart DateTime
+  currentPeriodEnd   DateTime
+  status             SubscriptionStatus
+  subscriptionItems  SubscriptionItem[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
