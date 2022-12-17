@@ -7,10 +7,19 @@ const QuerySchema = z.object({
   connectionUserId: z.string(),
 });
 
+const supportedMethods = ["GET"];
+
 export async function getConnectionByTypeAndUser(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
+  if (!req.method || !supportedMethods.includes(req.method)) {
+    return res.status(400).json({
+      code: "BAD_REQUEST",
+      message: `Unsupported request method: ${req.method}`,
+    });
+  }
+
   const queryParse = await QuerySchema.spa(req.query);
 
   if (!queryParse.success) {
