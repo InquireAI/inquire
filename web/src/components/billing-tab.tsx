@@ -25,7 +25,7 @@ const BillingTab: React.FC = () => {
         <div className="flex w-full flex-col justify-evenly gap-5 rounded-xl border border-gray-200 bg-gray-100 p-10 md:w-1/2 lg:w-1/3">
           <div className="w-full">
             <div className="border-b border-gray-300">
-              <p className="text-4xl">Premium</p>
+              <p className="mb-2 text-4xl">Premium</p>
               <p className="text-sm">Super-charge your ai assistant</p>
             </div>
           </div>

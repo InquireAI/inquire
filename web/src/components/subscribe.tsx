@@ -15,8 +15,8 @@ const Subscribe: React.FC = () => {
         className="flex w-full items-center justify-center rounded-md border border-rose-200 bg-rose-100 px-10 py-3 font-semibold text-rose-700 no-underline transition hover:cursor-pointer hover:border-transparent hover:bg-gradient-to-br hover:from-rose-900 hover:to-rose-700 hover:text-white"
         onClick={() =>
           createCheckoutSession({
-            successUrl: "http://localhost:3000/checkout/success",
-            cancelUrl: "http://localhost:3000/checkout/canceled",
+            successUrl: "http://localhost:3000/account",
+            cancelUrl: "http://localhost:3000/account",
           })
         }
       >

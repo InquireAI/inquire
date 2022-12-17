@@ -13,7 +13,7 @@ const AuthButton: React.FC = () => {
             : () => signIn(undefined, { callbackUrl: "/account" })
         }
       >
-        {sessionData ? "Sign out" : "Sign in"}
+        {sessionData ? "Sign Out" : "Sign In"}
       </button>
     </div>
   );
