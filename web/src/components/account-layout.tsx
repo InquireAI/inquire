@@ -1,5 +1,6 @@
 import { Disclosure } from "@headlessui/react";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
+import { signOut } from "next-auth/react";
 import { useRouter } from "next/router";
 
 const navigation = [{ name: "Account", href: "/account" }];
@@ -51,7 +52,10 @@ export const AccountLayout: React.FC<{ children?: React.ReactNode }> = ({
                 </div>
                 <div className="hidden md:block">
                   <div className="ml-4 flex items-center md:ml-6">
-                    <button className="rounded-md bg-rose-800 px-3 py-2 text-sm font-medium text-white hover:bg-rose-900">
+                    <button
+                      className="rounded-md bg-rose-800 px-3 py-2 text-sm font-medium text-white hover:bg-rose-900"
+                      onClick={() => signOut()}
+                    >
                       Sign Out
                     </button>
                   </div>
