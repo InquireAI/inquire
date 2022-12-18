@@ -1,8 +1,16 @@
 import type { NextApiRequest, NextApiResponse } from "next";
+import { createInquiry } from "../../../../server/api/v1/controllers/inquiries/create-inquiry";
+import { withApiKeyAuth } from "../../../../server/api/with-api-key-auth";
 
-export default async function createInquiry(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  return res.status(200).json({});
+async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method === "POST") {
+    return createInquiry(req, res);
+  }
+
+  return res.status(400).json({
+    code: "BAD_REQUEST",
+    message: `Unsupported request method: ${req.method}`,
+  });
 }
+
+export default withApiKeyAuth(handler);
