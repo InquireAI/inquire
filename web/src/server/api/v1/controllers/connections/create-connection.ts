@@ -1,6 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { z } from "zod";
+import type { Connection } from "../../../../db/client";
 import { prisma } from "../../../../db/client";
+import type { BadRequestRes, SuccessRes } from "../../../api-responses";
+import { zodIssuesToBadRequestIssues } from "../../../utils";
 
 const BodySchema = z.object({
   userId: z.string().optional(),
@@ -8,11 +11,13 @@ const BodySchema = z.object({
   connectionUserId: z.string(),
 });
 
+type Res = SuccessRes<Connection> | BadRequestRes;
+
 const supportedMethods = ["POST"];
 
 export async function createConnection(
   req: NextApiRequest,
-  res: NextApiResponse
+  res: NextApiResponse<Res>
 ) {
   if (!req.method || !supportedMethods.includes(req.method)) {
     return res.status(400).json({
@@ -26,8 +31,8 @@ export async function createConnection(
   if (!bodyParse.success) {
     return res.status(400).json({
       code: "BAD_REQUEST",
-      message: "invalid request body",
-      errors: bodyParse.error.format(),
+      message: "Invalid request body",
+      issues: zodIssuesToBadRequestIssues(bodyParse.error.issues),
     });
   }
 
@@ -41,5 +46,7 @@ export async function createConnection(
     },
   });
 
-  return res.status(200).json(connection);
+  return res.status(200).json({
+    data: connection,
+  });
 }
