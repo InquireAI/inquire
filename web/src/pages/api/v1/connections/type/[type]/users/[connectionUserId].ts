@@ -3,7 +3,7 @@ import { getConnectionByTypeAndUser } from "../../../../../../../server/api/v1/c
 import { withApiKeyAuth } from "../../../../../../../server/api/with-api-key-auth";
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method === "POST") {
+  if (req.method === "GET") {
     return getConnectionByTypeAndUser(req, res);
   }
 
