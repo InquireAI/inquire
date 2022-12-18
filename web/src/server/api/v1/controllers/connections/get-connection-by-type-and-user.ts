@@ -16,19 +16,10 @@ const QuerySchema = z.object({
 
 type Res = SuccessRes<Connection> | BadRequestRes | NotFoundRes;
 
-const supportedMethods = ["GET"];
-
 export async function getConnectionByTypeAndUser(
   req: NextApiRequest,
   res: NextApiResponse<Res>
 ) {
-  if (!req.method || !supportedMethods.includes(req.method)) {
-    return res.status(400).json({
-      code: "BAD_REQUEST",
-      message: `Unsupported request method: ${req.method}`,
-    });
-  }
-
   const queryParse = await QuerySchema.spa(req.query);
 
   if (!queryParse.success) {

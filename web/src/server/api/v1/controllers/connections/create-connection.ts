@@ -13,19 +13,10 @@ const BodySchema = z.object({
 
 type Res = SuccessRes<Connection> | BadRequestRes;
 
-const supportedMethods = ["POST"];
-
 export async function createConnection(
   req: NextApiRequest,
   res: NextApiResponse<Res>
 ) {
-  if (!req.method || !supportedMethods.includes(req.method)) {
-    return res.status(400).json({
-      code: "BAD_REQUEST",
-      message: `Unsupported request method: ${req.method}`,
-    });
-  }
-
   const bodyParse = await BodySchema.spa(req.body);
 
   if (!bodyParse.success) {
