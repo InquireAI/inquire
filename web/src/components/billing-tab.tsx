@@ -2,7 +2,7 @@ import { classNames } from "../utils/classnames";
 import { trpc } from "../utils/trpc";
 import Spinner from "./spinner";
 import Subscribe from "./subscribe";
-import { TrashIcon } from "@heroicons/react/24/outline";
+import { PencilIcon, TrashIcon } from "@heroicons/react/24/outline";
 
 const BillingTab: React.FC = () => {
   const { data: customer, isLoading } =
@@ -105,6 +105,11 @@ const BillingTab: React.FC = () => {
           );
         })}
       </div>
+
+      <button className="flex flex-grow flex-row items-center justify-center gap-1 rounded-lg border border-gray-200 px-2 py-1 font-medium text-gray-700 hover:border-transparent hover:bg-gray-700 hover:text-white">
+        <PencilIcon className="h-4 w-4" />
+        Update Payment Method
+      </button>
     </div>
   );
 };
