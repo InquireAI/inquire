@@ -155,7 +155,6 @@ class Telegram:
         if chat.type == Chat.PRIVATE:
             if not was_member and is_member:
                 context.bot_data.setdefault("user_ids", set()).add(chat.id)
-
                 # Log new users to axiom
                 self.client.ingest_events('user_data', [
                     {
@@ -173,7 +172,6 @@ class Telegram:
                 self.logger.info(f"New user: {update.effective_user.id}")
             elif was_member and not is_member:
                 context.bot_data.setdefault("user_ids", set()).discard(chat.id)
-
                 # Remove users to axiom
                 self.client.ingest_events('user_data', [
                     {
@@ -193,7 +191,7 @@ class Telegram:
         elif chat.type in [Chat.GROUP, Chat.SUPERGROUP]:
             if not was_member and is_member:
                 context.bot_data.setdefault("group_ids", set()).add(chat.id)
-                
+
                 # Log new groups to axiom
                 self.client.ingest_events('user_data', [
                     {
@@ -328,11 +326,10 @@ f"inquire.run\n",
     def build(self) -> None:
         """Start the bot."""
 
-        # TODO: broadcast command to message all users
+        # TODO: integrate auth with planetscale
         # TODO: fix typing on all commands, it periodically stops working for /draw and /search
-        # TODO: github actions to publish container (https://docs.github.com/en/actions/publishing-packages/publishing-docker-images)
         # TODO: integrate with dust.tt
-        # TODO: raiise type errors all the way back to return a message to the user
+        # TODO: raise type errors all the way back to return a message to the user
         
         # Register command handlers
         # block-False allows for concurrent execution
