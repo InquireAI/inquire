@@ -86,19 +86,37 @@ enum SubscriptionStatus {
   UNPAID
 }
 
+enum PaymentMethodType {
+  CARD
+}
+
+model PaymentMethod {
+  id           String            @id
+  customerId   String
+  customer     Customer          @relation(fields: [customerId], references: [id])
+  type         PaymentMethodType
+  card         Json?
+  subscription Subscription[]
+
+  @@index([customerId])
+}
+
 model Subscription {
-  id                 String             @id
-  customerId         String
-  customer           Customer           @relation(fields: [customerId], references: [id])
-  currentPeriodStart DateTime
-  currentPeriodEnd   DateTime
-  status             SubscriptionStatus
-  subscriptionItems  SubscriptionItem[]
+  id                     String             @id
+  customerId             String
+  customer               Customer           @relation(fields: [customerId], references: [id])
+  currentPeriodStart     DateTime
+  currentPeriodEnd       DateTime
+  status                 SubscriptionStatus
+  subscriptionItems      SubscriptionItem[]
+  defaultPaymentMethodId String
+  defaultPaymentMethod   PaymentMethod      @relation(fields: [defaultPaymentMethodId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([customerId])
+  @@index([defaultPaymentMethodId])
 }
 
 model Customer {
@@ -108,8 +126,9 @@ model Customer {
   subscriptions    Subscription[]
   checkoutSessions CheckoutSession[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  paymentMethods PaymentMethod[]
 
   @@index([userId])
 }
