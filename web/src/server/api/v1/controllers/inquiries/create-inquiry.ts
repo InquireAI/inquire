@@ -21,6 +21,18 @@ const BodySchema = z.object({
   query: z.string(),
 });
 
+interface App {
+  sId: string;
+  name: string;
+  description: string;
+  visibility: string;
+}
+
+interface AppList {
+  apps: App[];
+}
+
+// @TODO: need to edit the response type to a more generic type that provides responses for all types of inquiries
 type Res = SuccessRes<Inquiry> | BadRequestRes;
 
 /// POST /api/v1/inquiries
@@ -62,11 +74,27 @@ export async function createInquiry(
   // check if the user has any connections first
 
   // if not update the `User` and associated `Connection` table
+  // @TODO: check if this already exists 
+  try {
+    const connection = await prisma.connection.create({
+      data: {
+        connectionType: bodyData.connectionType,
+        connectionUserId: bodyData.connectionUserId,
+        userId: bodyData.userId,
+      }
+    })
+  } catch (error) {
+    console.log("Connection already created, skipping")
+  }
+
+
   // if not create a row in the db for the user connection
   const inquiry = await prisma.inquiry.create({
     data: {
       connectionType: bodyData.connectionType,
       connectionUserId: bodyData.connectionUserId,
+      queryType: bodyData.queryType,
+      query: bodyData.query,
     },
   });
 
@@ -103,7 +131,7 @@ export async function createInquiry(
     }
 
     // list dust apps and find the id for the queryType 
-    let appList = await fetch("https://dust.tt/api/v1/apps/Lucas-Kohorst", {headers})
+    let appList: AppList = await fetch("https://dust.tt/api/v1/apps/Lucas-Kohorst", {headers})
       .then((response) => response.json())
       .catch((error) => {
         return res.status(400).json({
@@ -111,27 +139,34 @@ export async function createInquiry(
         })
       });
 
-    let id = appList.find(a => a.name === bodyData.queryType)
-    
-    /// Example Body 
-    /// @TODO: need to check what stays the same across these queries and what changes
-    // {
-    //   "specification_hash": "2d4f4560e7fc1f2c19870bc2989a2530f293946373ac105f35e70f278281f4ef",
-    //   "config": {"GOOGLE_SEARCH":{"provider_id":"serpapi","use_cache":true},"MODEL_ANSWER_WITH_REFS":{"provider_id":"openai","model_id":"text-davinci-002","use_cache":true},"WEBCONTENT":{"provider_id":"browserlessapi","use_cache":true},"MODEL_SUMMARIZE":{"provider_id":"openai","model_id":"text-davinci-002","use_cache":true}},
-    //   "blocking": true,
-    //   "inputs": [{ "question": "what are some supplements for weight loss that are under $100?" }]
-    // }
+    // @TODO: all apps specs and apis need to be stored in the database, no way of dynamically retriving
+
+    // let app = appList.apps.find(a => a.name === bodyData.queryType)
+
+    const app = await prisma.persona.findUnique({
+      where: {
+        name: bodyData.queryType,
+      }
+    });
+
+    const name = app.name
+    const id = app.id
+    const specificationHash = app.specificationHash
+    const config = JSON.parse(app.config)
 
     // query the dust app
     const options = {
       method: 'POST',
       body: JSON.stringify({
-        "specification_hash": id.specification_hash,
+          "specification_hash": specificationHash,
+          "config": config,
+          "blocking": true,
+          "inputs": [{ "question": bodyData.query }]
       }),
       headers: headers
     }
 
-    let data = await fetch("https://dust.tt/api/v1/apps/Lucas-Kohorst", options)
+    let data = await fetch(`https://dust.tt/api/v1/apps/Lucas-Kohorst/${id}/runs`, options)
       .then((response) => response.json())
       .catch((error) => {
         return res.status(400).json({
@@ -145,9 +180,11 @@ export async function createInquiry(
         data: data.error,
       })
     }
-  }
 
-  return res.status(200).json({
-    data: inquiry,
-  });
+    let completion = data.run.results[0][0].value.completion.text
+
+    return res.status(200).json({
+      data: completion,
+    });
+  }
 }

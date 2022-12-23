@@ -39,10 +39,21 @@ model Inquiry {
   id               String         @id @default(cuid())
   connectionType   ConnectionType
   connectionUserId String
+  queryType        String
+  query            String
 
   connection Connection @relation(fields: [connectionType, connectionUserId], references: [connectionType, connectionUserId])
 
   @@index([connectionType, connectionUserId])
+}
+
+model Persona {
+  name String @id
+  id String
+  specificationHash String
+  config String
+
+  @@index([name])
 }
 
 enum RecurringPriceDataInterval {
