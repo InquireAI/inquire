@@ -83,6 +83,7 @@ export const checkoutSessionRouter = router({
   createSetupCheckoutSession: protectedProcedure
     .input(
       z.object({
+        subscriptionId: z.string(),
         successUrl: z.string(),
         cancelUrl: z.string(),
       })
@@ -117,6 +118,9 @@ export const checkoutSessionRouter = router({
         await stripe.checkout.sessions.create({
           customer: user.customer.id,
           mode: "setup",
+          setup_intent_data: {
+            metadata: { subscriptionId: input.subscriptionId },
+          },
           success_url: input.successUrl,
           cancel_url: input.cancelUrl,
         });
