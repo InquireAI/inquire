@@ -14,13 +14,8 @@ export async function listInquiry(
     'Content-Type': 'application/json'
   }
   
-  let data = await fetch("https://dust.tt/api/v1/apps/Lucas-Kohorst", {headers})
-    .then((response) => response.json())
-    .catch((error) => {
-      return res.status(400).json({
-        data: error,
-      })
-    });
+  // query db for all personas available
+  let data = await prisma.persona.findMany({ })
 
   // handle dust api error 
   if (data.error) {

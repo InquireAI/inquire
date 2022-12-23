@@ -27,6 +27,7 @@ export const serverSchema = z.object({
   STRIPE_WH_SECRET: z.string(),
   OPENAI_API_KEY: z.string(),
   DUST_API_KEY: z.string(),
+  USER_INQUIRY_LIMIT: z.number().int(),
 });
 
 /**

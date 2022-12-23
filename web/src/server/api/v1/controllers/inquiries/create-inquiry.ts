@@ -5,7 +5,18 @@ import type { Inquiry } from "../../../../db/client";
 import { prisma } from "../../../../db/client";
 import { zodIssuesToBadRequestIssues } from "../../../utils";
 import { env } from "../../../../../env/server.mjs";
+import inquiries from "../../../../../pages/api/v1/inquiries";
 const { Configuration, OpenAIApi } = require("openai");
+
+enum SubscriptionStatus {
+  INCOMPLETE,
+  INCOMPLETE_EXPIRED,
+  TRIALING,
+  ACTIVE, 
+  PAST_DUE, 
+  CANCELED, 
+  UNPAID
+}
 
 // configure the openai api
 const configuration = new Configuration({
@@ -20,17 +31,6 @@ const BodySchema = z.object({
   queryType: z.string(),
   query: z.string(),
 });
-
-interface App {
-  sId: string;
-  name: string;
-  description: string;
-  visibility: string;
-}
-
-interface AppList {
-  apps: App[];
-}
 
 // @TODO: need to edit the response type to a more generic type that provides responses for all types of inquiries
 type Res = SuccessRes<Inquiry> | BadRequestRes;
@@ -50,7 +50,6 @@ type Res = SuccessRes<Inquiry> | BadRequestRes;
 ///   "queryType": "fitness-trainer" // this is the name of the dust app / persona they want 
 ///   "query": "I want to get fit" // this is the query they want to ask the dust app / persona
 /// }
-/// @TODO: do we want to add in fields that would be useful for the `User` table in cases a user uses a connection before signing up for the app? Or do we want to keep all information from the connection in the `Inquiry` table?
 
 export async function createInquiry(
   req: NextApiRequest,
@@ -71,24 +70,107 @@ export async function createInquiry(
   // parse the body
   const { data: bodyData } = bodyParse;
 
-  // check if the user has any connections first
+  // we check the connections table beacuse a user 
+  // might not have signed up via the website but we want 
+  // to still log the # of inquiries
+  // in this case the `userId` is unique to the user _and_ 
+  // the `connection`. It is not unique to the user alone.
+  let connection = await prisma.connection.findFirst({
+    where: {
+      connectionType: bodyData.connectionType,
+      userId: bodyData.userId
+    }
+  })
 
-  // if not update the `User` and associated `Connection` table
-  // @TODO: check if this already exists 
-  try {
-    const connection = await prisma.connection.create({
-      data: {
-        connectionType: bodyData.connectionType,
-        connectionUserId: bodyData.connectionUserId,
-        userId: bodyData.userId,
-      }
-    })
-  } catch (error) {
-    console.log("Connection already created, skipping")
+  // check if user already has a connection
+  // if not create a connection
+  // else continue
+  if (!connection) {
+    try {
+      const createConnection = await prisma.connection.create({
+        data: {
+          connectionType: bodyData.connectionType,
+          connectionUserId: bodyData.connectionUserId,
+          userId: bodyData.userId,
+        }
+      })
+      // get the connection data
+      connection = await prisma.connection.findFirst({
+        where: {
+          connectionType: bodyData.connectionType,
+          userId: bodyData.userId
+        }
+      })
+    } catch (error) {
+      console.log("Error in creating new connection: " + error)
+    }
+  } else {
+    console.log("User already has a connection")
   }
 
+  // check if connection is null
+  if (!connection) {
+    return res.status(400).json({
+      data: "Error in creating connection",
+    })
+  }
 
-  // if not create a row in the db for the user connection
+  // In order to validate a inquiry we
+  // - check the users limits
+  // - if user is over limit check if they are paying
+  // - if they are paying allow the inquiry
+  // - if they are not paying return a message saying they have exceeded the limit
+
+  // get the user
+  // @TODO we will need to rework the db schema a little bit to allow for generic connections
+  const user = await prisma.user.findUnique({
+    where: {
+      telegramId: bodyData.userId
+    }
+  })
+  // check if user is null 
+  if (!user) {
+    return res.status(400).json({
+      data: "Error in finding user",
+    })
+  }
+
+  // check the users limits
+  const inquiries = await prisma.inquiry.findMany({
+    where: {
+      connectionType: bodyData.connectionType,
+      connectionUserId: connection.connectionUserId
+    }
+  })
+
+  // check if the user is paying via stripe 
+  // note, in order for this to a connection _must_ be created and connected into a user account
+  // so that we can check if the user is paying
+  const stripeCustomer = await prisma.subscription.findUnique({
+    where: {
+      id: user.id
+    }
+  })
+  // check if stripeCustomer is null
+  if (!stripeCustomer) {
+    return res.status(400).json({
+      data: "Error in finding stripe customer",
+    })
+  }
+
+  const subscriptionStatus: SubscriptionStatus = stripeCustomer.status
+
+  // check if the user has exceeded the limit and are paying
+  // if not serve a message saying they have exceeded the limit
+  if (inquiries.length > env.USER_INQUIRY_LIMIT && (subscriptionStatus !== SubscriptionStatus.ACTIVE && subscriptionStatus !== SubscriptionStatus.TRIALING)) {  
+    return res.status(400).json({
+      data: "User has exceeded the inquiry limit",
+    })
+  }
+
+  // Handle the inquiry
+  
+  // create new inquriy entry in table
   const inquiry = await prisma.inquiry.create({
     data: {
       connectionType: bodyData.connectionType,
@@ -97,12 +179,6 @@ export async function createInquiry(
       query: bodyData.query,
     },
   });
-
-  // update `Connection` table with userId etc
-
-  // check the users limits
-
-  // if > limit check stripe payments
 
   // check if queryType is chat or use the dust app to query the persona
   if (bodyData.queryType === "chat") {
@@ -120,6 +196,7 @@ export async function createInquiry(
     // @TODO: need to format text
     let formattedResponse = response.data.choices[0].text
 
+    // return the response
     res.status(200).json({
       data: formattedResponse,
     });
@@ -130,25 +207,30 @@ export async function createInquiry(
       'Content-Type': 'application/json'
     }
 
-    // list dust apps and find the id for the queryType 
-    let appList: AppList = await fetch("https://dust.tt/api/v1/apps/Lucas-Kohorst", {headers})
-      .then((response) => response.json())
-      .catch((error) => {
-        return res.status(400).json({
-          data: error,
-        })
+    // find the app id for the queryType
+    // else return error
+    let app;
+    try {
+      app = await prisma.persona.findUnique({
+        where: {
+          name: bodyData.queryType,
+        }
       });
+    } catch (error) {
+      console.log("Error in finding persona: " + error)
+      return res.status(400).json({
+        data: error,
+      })
+    }
 
-    // @TODO: all apps specs and apis need to be stored in the database, no way of dynamically retriving
+    // check if app is null 
+    if (!app) {
+      return res.status(400).json({
+        data: "Persona not found",
+      })
+    }
 
-    // let app = appList.apps.find(a => a.name === bodyData.queryType)
-
-    const app = await prisma.persona.findUnique({
-      where: {
-        name: bodyData.queryType,
-      }
-    });
-
+    // break out the app data
     const name = app.name
     const id = app.id
     const specificationHash = app.specificationHash
@@ -166,6 +248,7 @@ export async function createInquiry(
       headers: headers
     }
 
+    // query the dust app
     let data = await fetch(`https://dust.tt/api/v1/apps/Lucas-Kohorst/${id}/runs`, options)
       .then((response) => response.json())
       .catch((error) => {
@@ -181,8 +264,10 @@ export async function createInquiry(
       })
     }
 
+    // parse the response
     let completion = data.run.results[0][0].value.completion.text
 
+    // return the response
     return res.status(200).json({
       data: completion,
     });
