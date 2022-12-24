@@ -16,10 +16,10 @@ datasource db {
 }
 
 enum RecurringPriceDataInterval {
-  MONTH
-  YEAR
-  WEEK
-  DAY
+  month
+  year
+  week
+  day
 }
 
 model RecurringPriceData {
@@ -31,8 +31,8 @@ model RecurringPriceData {
 }
 
 enum PriceType {
-  ONE_TIME
-  RECURRING
+  one_time
+  recurring
 }
 
 model Price {
@@ -77,23 +77,52 @@ model SubscriptionItem {
 }
 
 enum SubscriptionStatus {
-  INCOMPLETE
-  INCOMPLETE_EXPIRED
-  TRIALING
-  ACTIVE
-  PAST_DUE
-  CANCELED
-  UNPAID
+  incomplete
+  incomplete_expired
+  trialing
+  active
+  past_due
+  canceled
+  unpaid
 }
 
 enum PaymentMethodType {
-  CARD
+  acss_debit
+  affirm
+  afterpay_clearpay
+  alipay
+  au_becs_debit
+  bacs_debit
+  bancontact
+  blik
+  boleto
+  card
+  card_present
+  customer_balance
+  eps
+  fpx
+  giropay
+  grabpay
+  ideal
+  interac_present
+  klarna
+  konbini
+  link
+  oxxo
+  p24
+  paynow
+  pix
+  promptpay
+  sepa_debit
+  sofort
+  us_bank_account
+  wechat_pay
 }
 
 model PaymentMethod {
   id           String            @id
-  customerId   String
-  customer     Customer          @relation(fields: [customerId], references: [id])
+  customerId   String?
+  customer     Customer?         @relation(fields: [customerId], references: [id])
   type         PaymentMethodType
   card         Json?
   subscription Subscription[]
@@ -134,22 +163,22 @@ model Customer {
 }
 
 enum CheckoutSessionMode {
-  PAYMENT
-  SETUP
-  SUBSCRIPTION
+  payment
+  setup
+  subscription
 }
 
 enum CheckoutSessionStatus {
-  OPEN
-  COMPLETE
-  EXPIRED
+  open
+  complete
+  expired
 }
 
 model CheckoutSession {
   id         String                 @id
   mode       CheckoutSessionMode
   successUrl String
-  cancelUrl  String
+  cancelUrl  String?
   url        String                 @db.VarChar(500) // stripe checkout links are quite long
   customerId String
   customer   Customer               @relation(fields: [customerId], references: [id])

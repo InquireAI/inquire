@@ -1,8 +1,9 @@
 import { classNames } from "../utils/classnames";
 import { trpc } from "../utils/trpc";
 import Spinner from "./spinner";
-import Subscribe from "./subscribe";
-import { PencilIcon, TrashIcon } from "@heroicons/react/24/outline";
+import SubscribeButton from "./subscribe-button";
+import { TrashIcon } from "@heroicons/react/24/outline";
+import UpdatePaymentMethodButton from "./update-payment-method-button";
 
 const BillingTab: React.FC = () => {
   const { data: customer, isLoading } =
@@ -33,7 +34,7 @@ const BillingTab: React.FC = () => {
             <p className="text-4xl">$5</p>
             <p className="text-sm text-gray-600">per month</p>
           </div>
-          <Subscribe />
+          <SubscribeButton />
           <ul className="list-disc items-center px-5 text-base font-light text-gray-600">
             <li>Unlimited Inquiries</li>
             <li>Access to all inquire prompts</li>
@@ -53,63 +54,61 @@ const BillingTab: React.FC = () => {
           return (
             <div
               key={idx}
-              className="flex flex-row items-center justify-between border-b border-b-gray-200"
+              className="flex flex-col border-b border-b-gray-200 py-2"
             >
-              <div className="flex flex-col gap-4 py-5">
-                {s.subscriptionItems.map((si, idx) => {
-                  return (
-                    <div
-                      key={idx}
-                      className="rounded-md px-3 py-2 hover:bg-gray-100"
-                    >
-                      <div className="flex flex-row gap-3 py-2">
-                        <p className="font-medium">{si.price.product.name}</p>
-                        <p
-                          className={classNames(
-                            "rounded p-1 text-xs",
-                            s.status === "ACTIVE" || s.status === "TRIALING"
-                              ? "bg-green-300 text-green-700"
-                              : "bg-red-300 text-red-700"
-                          )}
-                        >
-                          {s.status}
-                        </p>
+              <div className="flex flex-row items-center justify-between">
+                <div className="flex flex-col gap-4 py-5">
+                  {s.subscriptionItems.map((si, idx) => {
+                    return (
+                      <div
+                        key={idx}
+                        className="rounded-md px-3 py-2 hover:bg-gray-100"
+                      >
+                        <div className="flex flex-row gap-3 py-2">
+                          <p className="font-medium">{si.price.product.name}</p>
+                          <p
+                            className={classNames(
+                              "rounded p-1 text-xs",
+                              s.status === "active" || s.status === "trialing"
+                                ? "bg-green-300 text-green-700"
+                                : "bg-red-300 text-red-700"
+                            )}
+                          >
+                            {s.status}
+                          </p>
+                        </div>
+                        <span className="flex flex-row gap-2 font-light text-gray-700">
+                          <p>
+                            {`$${
+                              si.price.unitAmount / 100
+                            } per ${si.price.recurring?.interval.toLowerCase()}`}
+                          </p>
+                          <p>&middot;</p>
+                          <p>
+                            {`Next invoice on ${s.currentPeriodEnd.toLocaleDateString(
+                              undefined,
+                              {
+                                year: "numeric",
+                                month: "long",
+                                day: "numeric",
+                              }
+                            )}`}
+                          </p>
+                        </span>
                       </div>
-                      <span className="flex flex-row gap-2 font-light text-gray-700">
-                        <p>
-                          {`$${
-                            si.price.unitAmount / 100
-                          } per ${si.price.recurring?.interval.toLowerCase()}`}
-                        </p>
-                        <p>&middot;</p>
-                        <p>
-                          {`Next invoice on ${s.currentPeriodEnd.toLocaleDateString(
-                            undefined,
-                            {
-                              year: "numeric",
-                              month: "long",
-                              day: "numeric",
-                            }
-                          )}`}
-                        </p>
-                      </span>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
+                <button className="flex flex-row items-center justify-center gap-1 rounded-lg px-2 py-1 font-medium text-rose-700 hover:border-transparent hover:bg-rose-700 hover:text-white">
+                  <TrashIcon className="h-4 w-4" />
+                  Cancel
+                </button>
               </div>
-              <button className="flex flex-row items-center justify-center gap-1 rounded-lg px-2 py-1 font-medium text-rose-700 hover:border-transparent hover:bg-rose-700 hover:text-white">
-                <TrashIcon className="h-4 w-4" />
-                Cancel
-              </button>
+              <UpdatePaymentMethodButton subscriptionId={s.id} />
             </div>
           );
         })}
       </div>
-
-      <button className="flex flex-grow flex-row items-center justify-center gap-1 rounded-lg border border-gray-200 px-2 py-1 font-medium text-gray-700 hover:border-transparent hover:bg-gray-700 hover:text-white">
-        <PencilIcon className="h-4 w-4" />
-        Update Payment Method
-      </button>
     </div>
   );
 };

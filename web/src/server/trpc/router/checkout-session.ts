@@ -3,10 +3,6 @@ import type Stripe from "stripe";
 import { z } from "zod";
 import { env } from "../../../env/server.mjs";
 import { stripe } from "../../stripe/client";
-import {
-  CheckoutSessionModeMap,
-  CheckoutSessionStatusMap,
-} from "../../stripe/utils";
 import { router, protectedProcedure } from "../trpc";
 
 export const checkoutSessionRouter = router({
@@ -68,13 +64,11 @@ export const checkoutSessionRouter = router({
         data: {
           id: stripeCheckoutSession.id,
           successUrl: stripeCheckoutSession.success_url,
-          cancelUrl: stripeCheckoutSession.cancel_url,
-          mode: CheckoutSessionModeMap[stripeCheckoutSession.mode],
+          cancelUrl: stripeCheckoutSession.cancel_url as string,
+          mode: stripeCheckoutSession.mode,
           url: stripeCheckoutSession.url,
           customerId: user.customer.id,
-          status:
-            stripeCheckoutSession.status &&
-            CheckoutSessionStatusMap[stripeCheckoutSession.status],
+          status: stripeCheckoutSession.status,
         },
       });
 
@@ -121,6 +115,7 @@ export const checkoutSessionRouter = router({
           setup_intent_data: {
             metadata: { subscriptionId: input.subscriptionId },
           },
+          payment_method_types: ["card"],
           success_url: input.successUrl,
           cancel_url: input.cancelUrl,
         });
@@ -135,13 +130,11 @@ export const checkoutSessionRouter = router({
         data: {
           id: stripeCheckoutSession.id,
           successUrl: stripeCheckoutSession.success_url,
-          cancelUrl: stripeCheckoutSession.cancel_url,
-          mode: CheckoutSessionModeMap[stripeCheckoutSession.mode],
+          cancelUrl: stripeCheckoutSession.cancel_url as string,
+          mode: stripeCheckoutSession.mode,
           url: stripeCheckoutSession.url,
           customerId: user.customer.id,
-          status:
-            stripeCheckoutSession.status &&
-            CheckoutSessionStatusMap[stripeCheckoutSession.status],
+          status: stripeCheckoutSession.status,
         },
       });
 
