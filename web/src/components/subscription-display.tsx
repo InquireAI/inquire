@@ -152,6 +152,7 @@ const SubscriptionDisplay: React.FC<Props> = (props) => {
         })}
       </div>
       {subscription.cancelAtPeriodEnd ? (
+        // TODO: add route and new modal for reactivating subscription
         <button
           onClick={() => setShow(true)}
           className="flex flex-row items-center justify-center gap-1 rounded-lg px-2 py-1 font-medium text-rose-700 hover:bg-rose-700 hover:text-white"
