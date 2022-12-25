@@ -1,27 +1,19 @@
-import { classNames } from "../utils/classnames";
 import { trpc } from "../utils/trpc";
-import Spinner from "./spinner";
 import SubscribeButton from "./subscribe-button";
-import { TrashIcon } from "@heroicons/react/24/outline";
-import ChangePaymentMethodButton from "./change-payment-method-button";
 import PaymentMethodDisplay from "./payment-method-display";
+import Skeleton from "react-loading-skeleton";
+import Switch from "./switch";
+import SubscriptionDisplay from "./subscription-display";
 
 const BillingTab: React.FC = () => {
   const { data: customer, isLoading } =
     trpc.customer.getCustomerData.useQuery();
 
-  if (isLoading)
-    return (
-      <div className="flex min-h-full flex-grow items-center justify-center">
-        <Spinner />
-      </div>
-    );
-
-  if (!customer) {
+  if (!isLoading && !customer) {
     return <p>Couldn&apos;t find you billing information</p>;
   }
 
-  if (!customer.subscriptions.length) {
+  if (!isLoading && !customer.subscriptions.length) {
     return (
       <div className="flex min-h-full flex-grow flex-col items-center justify-center gap-2 font-medium">
         <div className="flex w-full flex-col justify-evenly gap-5 rounded-xl border border-gray-200 bg-gray-100 p-10 md:w-1/2 lg:w-1/3">
@@ -45,80 +37,52 @@ const BillingTab: React.FC = () => {
     );
   }
 
-  const subscriptions = customer.subscriptions;
-
   return (
     <div className="flex min-h-full flex-grow flex-col gap-5 px-10">
-      <p className="text-3xl font-medium">Subscriptions</p>
-      <div>
-        {subscriptions.map((s, idx) => {
-          return (
-            <div
-              key={idx}
-              className="flex flex-col border-b border-b-gray-200 py-2"
-            >
-              <div className="flex flex-row items-center justify-between">
-                <div className="flex flex-col gap-4 py-5">
-                  {s.subscriptionItems.map((si, idx) => {
-                    return (
-                      <div key={idx}>
-                        <div className="flex flex-row gap-3 py-2">
-                          <p className="font-medium">{si.price.product.name}</p>
-                          <p
-                            className={classNames(
-                              "rounded p-1 text-xs",
-                              s.status === "active" || s.status === "trialing"
-                                ? "bg-green-300 text-green-700"
-                                : "bg-red-300 text-red-700"
-                            )}
-                          >
-                            {s.status}
-                          </p>
-                        </div>
-                        <span className="flex flex-row gap-2 font-light text-gray-700">
-                          <p>
-                            {`$${
-                              si.price.unitAmount / 100
-                            } per ${si.price.recurring?.interval.toLowerCase()}`}
-                          </p>
-                          <p>&middot;</p>
-                          <p>
-                            {`Next invoice on ${s.currentPeriodEnd.toLocaleDateString(
-                              undefined,
-                              {
-                                year: "numeric",
-                                month: "long",
-                                day: "numeric",
-                              }
-                            )}`}
-                          </p>
-                        </span>
-                      </div>
-                    );
-                  })}
+      <Switch
+        isOn={!isLoading}
+        onComponent={<p className="text-3xl font-medium">Subscription</p>}
+        offComponent={<Skeleton className="h-10" />}
+      />
+      <Switch
+        isOn={!isLoading}
+        offComponent={<Skeleton className="h-20" count={2} />}
+        onComponent={
+          <div>
+            {customer?.subscriptions.map((s, idx) => {
+              return (
+                <div
+                  key={idx}
+                  className="flex flex-col border-b border-b-gray-200 py-2"
+                >
+                  <Switch
+                    isOn={!isLoading}
+                    onComponent={<SubscriptionDisplay subscription={s} />}
+                    offComponent={<Skeleton className="h-20" />}
+                  />
+                  <Switch
+                    isOn={!isLoading}
+                    onComponent={
+                      <PaymentMethodDisplay
+                        subscriptionId={s.id}
+                        paymentMethod={{
+                          card: s.defaultPaymentMethod.card && {
+                            last4: s.defaultPaymentMethod.card.last4,
+                            brand: s.defaultPaymentMethod.card.brand,
+                            expMonth: s.defaultPaymentMethod.card.exp_month,
+                            expYear: s.defaultPaymentMethod.card.exp_year,
+                          },
+                        }}
+                      />
+                    }
+                    offComponent={<Skeleton className="h-20" />}
+                  />
                 </div>
-                <button className="flex flex-row items-center justify-center gap-1 rounded-lg px-2 py-1 font-medium text-rose-700 hover:bg-rose-700 hover:text-white">
-                  <TrashIcon className="h-4 w-4" />
-                  Cancel
-                </button>
-              </div>
-              <div className="flex flex-row items-center justify-between">
-                <PaymentMethodDisplay
-                  paymentMethod={{
-                    card: s.defaultPaymentMethod.card && {
-                      last4: s.defaultPaymentMethod.card.last4,
-                      brand: s.defaultPaymentMethod.card.brand,
-                      expMonth: s.defaultPaymentMethod.card.exp_month,
-                      expYear: s.defaultPaymentMethod.card.exp_year,
-                    },
-                  }}
-                />
-                <ChangePaymentMethodButton subscriptionId={s.id} />
-              </div>
-            </div>
-          );
-        })}
-      </div>
+              );
+            })}
+          </div>
+        }
+      />
     </div>
   );
 };

@@ -6,6 +6,8 @@ import { SessionProvider } from "next-auth/react";
 import { trpc } from "../utils/trpc";
 
 import "../styles/globals.css";
+import "react-loading-skeleton/dist/skeleton.css";
+
 import type { NextPage } from "next";
 import type { ReactElement } from "react";
 
