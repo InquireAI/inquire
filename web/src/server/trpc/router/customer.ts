@@ -1,4 +1,5 @@
 import { TRPCError } from "@trpc/server";
+import type Stripe from "stripe";
 import { router, protectedProcedure } from "../trpc";
 
 export const customerRouter = router({
@@ -10,6 +11,7 @@ export const customerRouter = router({
       include: {
         subscriptions: {
           include: {
+            defaultPaymentMethod: true,
             subscriptionItems: {
               include: {
                 price: {
@@ -31,6 +33,17 @@ export const customerRouter = router({
         message: "Billing information not found",
       });
 
-    return customer;
+    return {
+      ...customer,
+      subscriptions: customer.subscriptions.map((s) => {
+        return {
+          ...s,
+          defaultPaymentMethod: {
+            ...s.defaultPaymentMethod,
+            card: s.defaultPaymentMethod.card as Stripe.Card | null | undefined,
+          },
+        };
+      }),
+    };
   }),
 });

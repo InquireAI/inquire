@@ -3,7 +3,8 @@ import { trpc } from "../utils/trpc";
 import Spinner from "./spinner";
 import SubscribeButton from "./subscribe-button";
 import { TrashIcon } from "@heroicons/react/24/outline";
-import UpdatePaymentMethodButton from "./update-payment-method-button";
+import ChangePaymentMethodButton from "./change-payment-method-button";
+import PaymentMethodDisplay from "./payment-method-display";
 
 const BillingTab: React.FC = () => {
   const { data: customer, isLoading } =
@@ -60,10 +61,7 @@ const BillingTab: React.FC = () => {
                 <div className="flex flex-col gap-4 py-5">
                   {s.subscriptionItems.map((si, idx) => {
                     return (
-                      <div
-                        key={idx}
-                        className="rounded-md px-3 py-2 hover:bg-gray-100"
-                      >
+                      <div key={idx}>
                         <div className="flex flex-row gap-3 py-2">
                           <p className="font-medium">{si.price.product.name}</p>
                           <p
@@ -99,12 +97,24 @@ const BillingTab: React.FC = () => {
                     );
                   })}
                 </div>
-                <button className="flex flex-row items-center justify-center gap-1 rounded-lg px-2 py-1 font-medium text-rose-700 hover:border-transparent hover:bg-rose-700 hover:text-white">
+                <button className="flex flex-row items-center justify-center gap-1 rounded-lg px-2 py-1 font-medium text-rose-700 hover:bg-rose-700 hover:text-white">
                   <TrashIcon className="h-4 w-4" />
                   Cancel
                 </button>
               </div>
-              <UpdatePaymentMethodButton subscriptionId={s.id} />
+              <div className="flex flex-row items-center justify-between">
+                <PaymentMethodDisplay
+                  paymentMethod={{
+                    card: s.defaultPaymentMethod.card && {
+                      last4: s.defaultPaymentMethod.card.last4,
+                      brand: s.defaultPaymentMethod.card.brand,
+                      expMonth: s.defaultPaymentMethod.card.exp_month,
+                      expYear: s.defaultPaymentMethod.card.exp_year,
+                    },
+                  }}
+                />
+                <ChangePaymentMethodButton subscriptionId={s.id} />
+              </div>
             </div>
           );
         })}
