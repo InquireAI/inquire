@@ -1,7 +1,7 @@
 import { trpc } from "../utils/trpc";
 import Spinner from "./spinner";
 
-const Subscribe: React.FC = () => {
+const SubscribeButton: React.FC = () => {
   const { mutate: createCheckoutSession, isLoading } =
     trpc.checkoutSession.createPremiumCheckoutSession.useMutation({
       onSuccess(data) {
@@ -26,4 +26,4 @@ const Subscribe: React.FC = () => {
   );
 };
 
-export default Subscribe;
+export default SubscribeButton;
