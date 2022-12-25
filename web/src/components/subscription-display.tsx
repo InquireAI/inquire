@@ -1,30 +1,10 @@
 import { Dialog } from "@headlessui/react";
-import { TrashIcon } from "@heroicons/react/24/outline";
+import { SparklesIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
 import { classNames } from "../utils/classnames";
 import { trpc } from "../utils/trpc";
 import Modal, { type Props as ModalProps } from "./modal";
 import Spinner from "./spinner";
-
-type Props = {
-  subscription: {
-    id: string;
-    status: string;
-    currentPeriodEnd: Date;
-    currentPeriodStart: Date;
-    subscriptionItems: {
-      price: {
-        recurring?: {
-          interval: string;
-        } | null;
-        product: {
-          name: string;
-        };
-        unitAmount: number;
-      };
-    }[];
-  };
-};
 
 const CancelSubscriptionModalContent: React.FC<{
   subscriptionId: string;
@@ -88,6 +68,27 @@ const CancelSubscriptionModalContent: React.FC<{
   );
 };
 
+type Props = {
+  subscription: {
+    id: string;
+    status: string;
+    currentPeriodEnd: Date;
+    currentPeriodStart: Date;
+    cancelAtPeriodEnd: boolean;
+    subscriptionItems: {
+      price: {
+        recurring?: {
+          interval: string;
+        } | null;
+        product: {
+          name: string;
+        };
+        unitAmount: number;
+      };
+    }[];
+  };
+};
+
 const SubscriptionDisplay: React.FC<Props> = (props) => {
   const { subscription } = props;
   const [show, setShow] = useState(true);
@@ -132,7 +133,11 @@ const SubscriptionDisplay: React.FC<Props> = (props) => {
                 </p>
                 <p>&middot;</p>
                 <p>
-                  {`Next invoice on ${subscription.currentPeriodEnd.toLocaleDateString(
+                  {`${
+                    subscription.cancelAtPeriodEnd
+                      ? "Will be cancelled on"
+                      : "Next invoice on"
+                  } ${subscription.currentPeriodEnd.toLocaleDateString(
                     undefined,
                     {
                       year: "numeric",
@@ -146,13 +151,23 @@ const SubscriptionDisplay: React.FC<Props> = (props) => {
           );
         })}
       </div>
-      <button
-        onClick={() => setShow(true)}
-        className="flex flex-row items-center justify-center gap-1 rounded-lg px-2 py-1 font-medium text-rose-700 hover:bg-rose-700 hover:text-white"
-      >
-        <TrashIcon className="h-4 w-4" />
-        Cancel
-      </button>
+      {subscription.cancelAtPeriodEnd ? (
+        <button
+          onClick={() => setShow(true)}
+          className="flex flex-row items-center justify-center gap-1 rounded-lg px-2 py-1 font-medium text-rose-700 hover:bg-rose-700 hover:text-white"
+        >
+          <SparklesIcon className="h-4 w-4" />
+          Reactivate
+        </button>
+      ) : (
+        <button
+          onClick={() => setShow(true)}
+          className="flex flex-row items-center justify-center gap-1 rounded-lg px-2 py-1 font-medium text-rose-700 hover:bg-rose-700 hover:text-white"
+        >
+          <TrashIcon className="h-4 w-4" />
+          Cancel
+        </button>
+      )}
     </div>
   );
 };
