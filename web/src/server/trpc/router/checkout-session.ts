@@ -20,8 +20,8 @@ export const checkoutSessionRouter = router({
         },
         include: {
           customer: {
-            select: {
-              id: true,
+            include: {
+              subscriptions: true,
             },
           },
         },
@@ -37,6 +37,12 @@ export const checkoutSessionRouter = router({
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: "User is missing a stripe customer",
+        });
+
+      if (user.customer.subscriptions.length)
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `User is already subscribed can not subscribe again`,
         });
 
       const stripeCheckoutSession: Stripe.Checkout.Session =
