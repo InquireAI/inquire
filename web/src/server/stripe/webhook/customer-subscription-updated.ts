@@ -31,6 +31,7 @@ export const handleCustomerSubscriptionUpdated = async (
     create: {
       id: subscription.id,
       status: subscription.status,
+      cancelAtPeriodEnd: subscription.cancel_at_period_end,
       customer: {
         connect: {
           id: subscription.customer as string,
@@ -68,6 +69,7 @@ export const handleCustomerSubscriptionUpdated = async (
     },
     update: {
       status: subscription.status,
+      cancelAtPeriodEnd: subscription.cancel_at_period_end,
       defaultPaymentMethod: {
         connectOrCreate: {
           where: {
