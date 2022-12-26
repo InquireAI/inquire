@@ -23,7 +23,7 @@ const CancelSubscriptionModalContent: React.FC<{
 
   if (isCanceled) {
     return (
-      <h3 className="text-xl font-medium text-gray-600">
+      <h3 className="text-xl font-medium text-neutral-600">
         Your subscription has been scheduled to be cancelled
       </h3>
     );
@@ -33,12 +33,12 @@ const CancelSubscriptionModalContent: React.FC<{
     <>
       <Dialog.Title
         as="h3"
-        className="text-lg font-medium leading-6 text-gray-900"
+        className="text-lg font-medium leading-6 text-neutral-900"
       >
         Are you sure you want to cancel?
       </Dialog.Title>
       <div className="mt-2">
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-neutral-500">
           If so, your subscription will still be active until the end of the
           current billing period, at which point it which be cancelled.
         </p>
@@ -47,7 +47,7 @@ const CancelSubscriptionModalContent: React.FC<{
       <div className="mt-4">
         <button
           type="button"
-          className="inline-flex justify-center rounded-md border border-transparent bg-rose-700 px-4 py-2 text-sm font-medium text-white hover:bg-rose-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2"
+          className="inline-flex justify-center rounded-md border border-transparent bg-neutral-700 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-500 focus-visible:ring-offset-2"
           onClick={() =>
             cancelSubscription({
               subscriptionId: subscriptionId,
@@ -58,7 +58,7 @@ const CancelSubscriptionModalContent: React.FC<{
         </button>
         <button
           type="button"
-          className="ml-3 inline-flex justify-center rounded-md border border-transparent px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2"
+          className="ml-3 inline-flex justify-center rounded-md border border-transparent px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-500 focus-visible:ring-offset-2"
           onClick={onClose}
         >
           No
@@ -87,7 +87,7 @@ const ReactivateSubscriptionModalContent: React.FC<{
 
   if (isReactivated) {
     return (
-      <h3 className="text-xl font-medium text-gray-600">
+      <h3 className="text-xl font-medium text-neutral-600">
         Your subscription has been reactivated!
       </h3>
     );
@@ -97,12 +97,12 @@ const ReactivateSubscriptionModalContent: React.FC<{
     <>
       <Dialog.Title
         as="h3"
-        className="text-lg font-medium leading-6 text-gray-900"
+        className="text-lg font-medium leading-6 text-neutral-900"
       >
         Are you sure you want to reactivate your subscription?
       </Dialog.Title>
       <div className="mt-2">
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-neutral-500">
           If so, your subscription will continue to be invoiced on the date it
           was scheduled to be cancelled
         </p>
@@ -111,7 +111,7 @@ const ReactivateSubscriptionModalContent: React.FC<{
       <div className="mt-4">
         <button
           type="button"
-          className="inline-flex justify-center rounded-md border border-transparent bg-rose-700 px-4 py-2 text-sm font-medium text-white hover:bg-rose-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2"
+          className="inline-flex justify-center rounded-md border border-transparent bg-neutral-700 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-500 focus-visible:ring-offset-2"
           onClick={() =>
             reactivateSubscription({
               subscriptionId: subscriptionId,
@@ -122,7 +122,7 @@ const ReactivateSubscriptionModalContent: React.FC<{
         </button>
         <button
           type="button"
-          className="ml-3 inline-flex justify-center rounded-md border border-transparent px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2"
+          className="ml-3 inline-flex justify-center rounded-md border border-transparent px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-500 focus-visible:ring-offset-2"
           onClick={onClose}
         >
           No
@@ -205,7 +205,7 @@ const SubscriptionDisplay: React.FC<Props> = (props) => {
                   {subscription.status}
                 </p>
               </div>
-              <span className="flex flex-row gap-2 font-light text-gray-700">
+              <span className="flex flex-row gap-2 font-light text-neutral-700">
                 <p>
                   {`$${
                     si.price.unitAmount / 100
@@ -234,7 +234,7 @@ const SubscriptionDisplay: React.FC<Props> = (props) => {
       {subscription.cancelAtPeriodEnd ? (
         <button
           onClick={() => setShow(true)}
-          className="flex flex-row items-center justify-center gap-1 rounded-lg px-2 py-1 font-medium text-rose-700 hover:bg-rose-700 hover:text-white"
+          className="flex flex-row items-center justify-center gap-1 rounded-lg px-2 py-1 font-medium text-neutral-700 hover:bg-neutral-700 hover:text-white"
         >
           <SparklesIcon className="h-4 w-4" />
           Reactivate
@@ -242,7 +242,7 @@ const SubscriptionDisplay: React.FC<Props> = (props) => {
       ) : (
         <button
           onClick={() => setShow(true)}
-          className="flex flex-row items-center justify-center gap-1 rounded-lg px-2 py-1 font-medium text-rose-700 hover:bg-rose-700 hover:text-white"
+          className="flex flex-row items-center justify-center gap-1 rounded-lg px-2 py-1 font-medium text-neutral-700 hover:bg-neutral-700 hover:text-white"
         >
           <TrashIcon className="h-4 w-4" />
           Cancel

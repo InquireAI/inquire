@@ -13,7 +13,7 @@ const navMenuLinks = [
 
 const Sidebar: React.FunctionComponent = () => {
   return (
-    <div className="disable-scrollbar w-44 bg-gray-800">
+    <div className="disable-scrollbar w-44 bg-neutral-800">
       <div className="flex h-full w-full flex-col items-center overflow-x-visible">
         <nav className="w-full flex-1 list-none space-y-1 px-2">
           {navMenuLinks.map((item, index) => (
