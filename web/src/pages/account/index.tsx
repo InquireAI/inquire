@@ -40,7 +40,7 @@ const Account: NextPageWithLayout<Props> = () => {
                       "focus:outline-none ",
                       selected
                         ? "border-r-2 border-neutral-900 text-neutral-900"
-                        : "text-neutral-900/30 hover:text-neutral-900"
+                        : "text-neutral-900/50 hover:text-neutral-900"
                     )
                   }
                 >
