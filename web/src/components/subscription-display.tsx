@@ -187,15 +187,15 @@ const SubscriptionDisplay: React.FC<Props> = (props) => {
           );
         }}
       />
-      <div className="flex flex-col gap-4 py-5">
+      <div className="flex flex-col gap-4">
         {subscription.subscriptionItems.map((si, idx) => {
           return (
-            <div key={idx}>
+            <div key={idx} className="text-lg">
               <div className="flex flex-row gap-3 py-2">
-                <p className="font-medium">{si.price.product.name}</p>
+                <p className="text-2xl font-medium">{si.price.product.name}</p>
                 <p
                   className={classNames(
-                    "rounded p-1 text-xs",
+                    "rounded p-1 text-base",
                     subscription.status === "active" ||
                       subscription.status === "trialing"
                       ? "bg-green-300 text-green-700"
