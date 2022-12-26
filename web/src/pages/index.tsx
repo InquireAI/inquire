@@ -1,9 +1,13 @@
 import { type NextPage } from "next";
-import { signIn } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 import Head from "next/head";
+import { useRouter } from "next/router";
 import AuthButton from "../components/auth-button";
 
 const Home: NextPage = () => {
+  const { data: sessionData } = useSession();
+  const router = useRouter();
+
   return (
     <>
       <Head>
@@ -47,11 +51,15 @@ const Home: NextPage = () => {
                 <div>
                   <button
                     className="rounded-xl bg-white/10 px-10 py-3 font-semibold text-white no-underline transition hover:bg-white/20"
-                    onClick={() =>
-                      signIn(undefined, { callbackUrl: "/account" })
-                    }
+                    onClick={() => {
+                      if (sessionData) {
+                        router.push("/account");
+                        return;
+                      }
+                      signIn(undefined, { callbackUrl: "/account" });
+                    }}
                   >
-                    Sign Up
+                    {sessionData ? "Account" : "Sign Up"}
                   </button>
                 </div>
               </div>
