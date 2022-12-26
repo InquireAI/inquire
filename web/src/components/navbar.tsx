@@ -1,10 +1,13 @@
+import Link from "next/link";
 import AuthButton from "./auth-button";
 
 const Navbar: React.FC = () => {
   return (
     <div className="flex items-center justify-between py-6 md:justify-start md:space-x-10">
       <div className="flex justify-start text-xl text-neutral-900 lg:w-0 lg:flex-1">
-        inquire
+        <Link className="font-medium" href="/">
+          inquire
+        </Link>
         {/* <Image
               className="rounded-lg"
               height={75}
