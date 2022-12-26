@@ -6,7 +6,7 @@ const AuthButton: React.FC = () => {
   return (
     <div className="flex flex-col items-center justify-center gap-4">
       <button
-        className="rounded-xl bg-white/10 px-10 py-3 font-semibold text-white no-underline transition hover:bg-white/20"
+        className="rounded-xl bg-neutral-900/10 px-10 py-3 font-semibold text-neutral-900 no-underline transition hover:bg-neutral-900/20"
         onClick={
           sessionData
             ? () => signOut()
