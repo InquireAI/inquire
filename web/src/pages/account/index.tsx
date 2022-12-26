@@ -27,27 +27,20 @@ const Account: NextPageWithLayout<Props> = () => {
 
   return (
     <>
-      <header className="bg-white shadow">
-        <div className="mx-auto max-w-7xl py-6 px-4 sm:px-6 lg:px-8">
-          <h1 className="text-3xl font-bold tracking-tight text-neutral-900">
-            Account
-          </h1>
-        </div>
-      </header>
-      <main>
-        <div className="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
+      <main className="pt-20">
+        <div className="mx-auto max-w-7xl">
           <Tab.Group as={"div"} vertical className="flex flex-row">
-            <Tab.List className="flex flex-col space-y-1 rounded-xl p-1">
+            <Tab.List className="flex flex-col gap-4 space-y-1 rounded-xl p-1">
               {tabs.map((t, idx) => (
                 <Tab
                   key={idx}
                   className={({ selected }) =>
                     classNames(
-                      "w-full rounded-full p-2.5 text-sm font-medium leading-5",
-                      "ring-white ring-opacity-60 ring-offset-2 focus:outline-none focus:ring-2",
+                      "w-full px-2.5 text-left text-lg font-medium",
+                      "focus:outline-none ",
                       selected
-                        ? "bg-neutral-700 text-white shadow"
-                        : "hover:bg-neutral-200"
+                        ? "border-r-2 border-neutral-900 text-neutral-900"
+                        : "text-neutral-900/30 hover:text-neutral-900"
                     )
                   }
                 >
