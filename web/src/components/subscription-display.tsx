@@ -68,6 +68,70 @@ const CancelSubscriptionModalContent: React.FC<{
   );
 };
 
+const ReactivateSubscriptionModalContent: React.FC<{
+  subscriptionId: string;
+  onClose: ModalProps["onClose"];
+}> = (props) => {
+  const { onClose, subscriptionId } = props;
+
+  const [isReactivated, setIsReactivated] = useState(false);
+
+  const {
+    mutate: reactivateSubscription,
+    isLoading: reactivateSubscriptionLoading,
+  } = trpc.customer.reactivateSubscription.useMutation({
+    onSuccess() {
+      setIsReactivated(true);
+    },
+  });
+
+  if (isReactivated) {
+    return (
+      <h3 className="text-xl font-medium text-gray-600">
+        Your subscription has been reactivated!
+      </h3>
+    );
+  }
+
+  return (
+    <>
+      <Dialog.Title
+        as="h3"
+        className="text-lg font-medium leading-6 text-gray-900"
+      >
+        Are you sure you want to reactivate your subscription?
+      </Dialog.Title>
+      <div className="mt-2">
+        <p className="text-sm text-gray-500">
+          If so, your subscription will continue to be invoiced on the date it
+          was scheduled to be cancelled
+        </p>
+      </div>
+
+      <div className="mt-4">
+        <button
+          type="button"
+          className="inline-flex justify-center rounded-md border border-transparent bg-rose-700 px-4 py-2 text-sm font-medium text-white hover:bg-rose-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2"
+          onClick={() =>
+            reactivateSubscription({
+              subscriptionId: subscriptionId,
+            })
+          }
+        >
+          {!reactivateSubscriptionLoading ? "Yes" : <Spinner />}
+        </button>
+        <button
+          type="button"
+          className="ml-3 inline-flex justify-center rounded-md border border-transparent px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2"
+          onClick={onClose}
+        >
+          No
+        </button>
+      </div>
+    </>
+  );
+};
+
 type Props = {
   subscription: {
     id: string;
@@ -91,15 +155,31 @@ type Props = {
 
 const SubscriptionDisplay: React.FC<Props> = (props) => {
   const { subscription } = props;
-  const [show, setShow] = useState(true);
+  const [show, setShow] = useState(false);
+
+  const trpcUtils = trpc.useContext();
 
   return (
     <div className="flex flex-row items-center justify-between">
       <Modal
         show={show}
-        onClose={() => setShow(false)}
+        onClose={() => {
+          // invalidate getCustomerData to retrieve new subscription info
+          /*
+          TODO: move this to each individual content and provide info in
+          onClose to check if the subscription was actually cancelled or reactivated
+          and only invalidate if they were
+           */
+          trpcUtils.customer.getCustomerData.invalidate();
+          setShow(false);
+        }}
         renderContent={({ onClose }) => {
-          return (
+          return subscription.cancelAtPeriodEnd ? (
+            <ReactivateSubscriptionModalContent
+              onClose={onClose}
+              subscriptionId={subscription.id}
+            />
+          ) : (
             <CancelSubscriptionModalContent
               onClose={onClose}
               subscriptionId={subscription.id}
@@ -152,7 +232,6 @@ const SubscriptionDisplay: React.FC<Props> = (props) => {
         })}
       </div>
       {subscription.cancelAtPeriodEnd ? (
-        // TODO: add route and new modal for reactivating subscription
         <button
           onClick={() => setShow(true)}
           className="flex flex-row items-center justify-center gap-1 rounded-lg px-2 py-1 font-medium text-rose-700 hover:bg-rose-700 hover:text-white"

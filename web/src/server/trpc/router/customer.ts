@@ -74,4 +74,29 @@ export const customerRouter = router({
 
       return null;
     }),
+  reactivateSubscription: protectedProcedure
+    .input(
+      z.object({
+        subscriptionId: z.string(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      const subscription = await ctx.prisma.subscription.findUnique({
+        where: {
+          id: input.subscriptionId,
+        },
+      });
+
+      if (!subscription)
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: `Subscription with id ${input.subscriptionId} not found`,
+        });
+
+      await stripe.subscriptions.update(subscription.id, {
+        cancel_at_period_end: false,
+      });
+
+      return null;
+    }),
 });
