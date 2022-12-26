@@ -55,6 +55,9 @@ const Home: NextPage = () => {
                   </button>
                 </div>
               </div>
+              {
+                // TODO: add different text colors for commands and prompts
+              }
               <div className="flex w-2/5">
                 <div className="flex flex-col gap-12 rounded-xl bg-black/75 p-12 font-mono text-2xl text-white/75">
                   <div>
