@@ -29,7 +29,7 @@ const Account: NextPageWithLayout<Props> = () => {
     <>
       <header className="bg-white shadow">
         <div className="mx-auto max-w-7xl py-6 px-4 sm:px-6 lg:px-8">
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+          <h1 className="text-3xl font-bold tracking-tight text-neutral-900">
             Account
           </h1>
         </div>
@@ -46,8 +46,8 @@ const Account: NextPageWithLayout<Props> = () => {
                       "w-full rounded-full p-2.5 text-sm font-medium leading-5",
                       "ring-white ring-opacity-60 ring-offset-2 focus:outline-none focus:ring-2",
                       selected
-                        ? "bg-rose-700 text-white shadow"
-                        : "hover:bg-gray-200"
+                        ? "bg-neutral-700 text-white shadow"
+                        : "hover:bg-neutral-200"
                     )
                   }
                 >

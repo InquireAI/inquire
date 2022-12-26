@@ -15,7 +15,7 @@ const ChangePaymentMethodButton: React.FC<{
 
   return (
     <button
-      className="flex flex-row items-center justify-center gap-1 rounded-lg px-2 py-1 font-medium text-gray-700 hover:border-transparent hover:bg-gray-700 hover:text-white"
+      className="flex flex-row items-center justify-center gap-1 rounded-lg px-2 py-1 font-medium text-neutral-700 hover:border-transparent hover:bg-neutral-700 hover:text-white"
       onClick={() =>
         createCheckoutSession({
           successUrl: "http://localhost:3000/account",
@@ -63,11 +63,11 @@ const PaymentMethodDisplay: React.FC<Props> = (props) => {
       <div className="flex flex-row items-center justify-between">
         <div className="flex flex-row items-center gap-4 font-medium">
           <CreditCardIcon
-            className="rounded bg-rose-700 p-2 text-white"
+            className="rounded bg-neutral-700 p-2 text-white"
             height={50}
             width={50}
           />
-          <div className="flex flex-col text-gray-600">
+          <div className="flex flex-col text-neutral-600">
             <p className="font-medium">
               {brand.toUpperCase()} ending in {last4}
             </p>

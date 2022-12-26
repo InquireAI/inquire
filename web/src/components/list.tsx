@@ -6,7 +6,7 @@ interface IProps<T> {
 const List = <T,>({ data, renderChild }: IProps<T>) => {
   return (
     <div className="overflow-hidden">
-      <ul className="divide-y divide-gray-200">
+      <ul className="divide-y divide-neutral-200">
         {data.map((item, idx) => (
           <li key={idx}>{renderChild(item)}</li>
         ))}
