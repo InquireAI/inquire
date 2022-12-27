@@ -23,3 +23,8 @@ export type NotFoundRes = {
   code: "NOT_FOUND";
   message: string;
 };
+
+export type DatabaseError = {
+  code: "DATABASE_ERROR";
+  message: string;
+}

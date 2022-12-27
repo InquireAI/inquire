@@ -5,6 +5,9 @@ import { prisma } from "../../../../db/client";
 import type { BadRequestRes, SuccessRes } from "../../../api-responses";
 import { zodIssuesToBadRequestIssues } from "../../../utils";
 
+// configure logger
+const logger = require('consola')
+
 const BodySchema = z.object({
   userId: z.string().optional(),
   connectionType: z.enum(["WEB", "TELEGRAM"]),
@@ -20,6 +23,7 @@ export async function createConnection(
   const bodyParse = await BodySchema.spa(req.body);
 
   if (!bodyParse.success) {
+    logger.error(`Invalid request body: ${bodyParse.error.issues}`)
     return res.status(400).json({
       code: "BAD_REQUEST",
       message: "Invalid request body",

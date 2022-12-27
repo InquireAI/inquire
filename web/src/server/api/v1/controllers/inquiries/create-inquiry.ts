@@ -1,10 +1,14 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { z } from "zod";
-import type { BadRequestRes, SuccessRes } from "../../../api-responses";
-import { prisma, SubscriptionStatus } from "../../../../db/client";
+import type { BadRequestRes, SuccessRes, DatabaseError, UnauthorizedRes } from "../../../api-responses";
+import { prisma, SubscriptionStatus, User, Subscription } from "../../../../db/client";
 import { zodIssuesToBadRequestIssues } from "../../../utils";
 import { env } from "../../../../../env/server.mjs";
+import { formatErrors } from "../../../../../env/client.mjs";
 const { Configuration, OpenAIApi } = require("openai");
+
+// configure logger
+const logger = require('consola')
 
 // configure the openai api
 const configuration = new Configuration({
@@ -21,7 +25,7 @@ const BodySchema = z.object({
   query: z.string(),
 });
 
-type Res = SuccessRes<String> | BadRequestRes;
+type Res = SuccessRes<String> | BadRequestRes | DatabaseError | UnauthorizedRes;
 
 /// POST /api/v1/inquiries
 /// An endpoint to create an inquiry
@@ -48,6 +52,7 @@ export async function createInquiry(
 
   // return if the body is invalid
   if (!bodyParse.success) {
+    logger.error(`Invalid request body: ${JSON.stringify(bodyParse.error.issues)}`)
     return res.status(400).json({
       code: "BAD_REQUEST",
       message: "Invalid request body",
@@ -57,6 +62,8 @@ export async function createInquiry(
 
   // parse the body
   const { data: bodyData } = bodyParse;
+
+  logger.info(`Received POST /api/v1/inquiries request with body: ${JSON.stringify(bodyData)}`)
 
   // we check the connections table beacuse a user 
   // might not have signed up via the website but we want 
@@ -82,6 +89,7 @@ export async function createInquiry(
           userId: bodyData.userId,
         }
       })
+
       // get the connection data
       connection = await prisma.connection.findFirst({
         where: {
@@ -89,17 +97,20 @@ export async function createInquiry(
           userId: bodyData.userId
         }
       })
+
+      logger.info(`Created new connection for user ${bodyData.userId}`)
     } catch (error) {
-      console.log("Error in creating new connection: " + error)
+      logger.error("Error in creating new connection: " + error)
     }
   } else {
-    console.log("User already has a connection")
+    logger.info(`User ${bodyData.userId} already has a connection`)
   }
 
   // check if connection is null
   if (!connection) {
     return res.status(400).json({
-      data: "Error in creating connection",
+      code: "DATABASE_ERROR",
+      message: `Database Error`,
     })
   }
 
@@ -109,20 +120,23 @@ export async function createInquiry(
   // - if they are paying allow the inquiry
   // - if they are not paying return a message saying they have exceeded the limit
 
-  // get the user
-  // @TODO we will need to rework the db schema a little bit to allow for generic connections
-  // How to link a connection to a user?
-  const user = await prisma.user.findUnique({
-    where: {
-      telegramId: bodyData.userId
+  // @TODO: not sure why connections is not a type on User when its defined in the schema
+  // Query users, loop over connections for one with the right connectionType and userId
+  const users: User[] = await prisma.user.findMany({ 
+    include: {
+      connections: true
     }
   })
-  // check if user is null 
-  if (!user) {
-    return res.status(400).json({
-      data: "Error in finding user",
+
+  let connectedUser: User | null = null
+  users.forEach((user) => {
+    user.connections.forEach((connection) => {
+      // checking if connectionType and userId match
+      if (connection.connectionType === bodyData.connectionType && connection.userId === bodyData.userId) {
+        connectedUser = user        
+      }
     })
-  }
+  })
 
   // check the users limits
   const inquiries = await prisma.inquiry.findMany({
@@ -135,26 +149,34 @@ export async function createInquiry(
   // check if the user is paying via stripe 
   // note, in order for this to a connection _must_ be created and connected into a user account
   // so that we can check if the user is paying
-  const stripeCustomer = await prisma.subscription.findUnique({
-    where: {
-      id: user.id
-    }
-  })
-  // check if stripeCustomer is null
-  if (!stripeCustomer) {
-    return res.status(400).json({
-      data: "Error in finding stripe customer",
+  let stripeCustomer: Subscription | null = null
+  if (connectedUser) {
+    stripeCustomer = await prisma.subscription.findUnique({
+      where: {
+        id: connectedUser.id
+      }
     })
   }
 
-  const subscriptionStatus: SubscriptionStatus = stripeCustomer.status
-
-  // check if the user has exceeded the limit and are paying
-  // if not serve a message saying they have exceeded the limit
-  if (inquiries.length > env.USER_INQUIRY_LIMIT && (subscriptionStatus !== SubscriptionStatus.ACTIVE && subscriptionStatus !== SubscriptionStatus.TRIALING)) {  
-    return res.status(400).json({
-      data: "User has exceeded the inquiry limit",
-    })
+  // if there is a user check if they hit limit and are paying
+  if (stripeCustomer) {
+    const subscriptionStatus: SubscriptionStatus = stripeCustomer.status
+    if (inquiries.length > env.USER_INQUIRY_LIMIT && (subscriptionStatus !== SubscriptionStatus.ACTIVE && subscriptionStatus !== SubscriptionStatus.TRIALING)) {  
+      logger.error(`User ${bodyData.userId} has exceeded the inquiry limit ${inquiries.length}}`)
+      return res.status(400).json({
+        code: "UNAUTHORIZED",
+        message: `User Limit Error`,
+      })
+    }
+  } else {
+    // if there is no user check if they hit limit
+    if (inquiries.length > env.USER_INQUIRY_LIMIT) {
+      logger.error(`User ${bodyData.userId} has exceeded the inquiry limit ${inquiries.length}`)
+      return res.status(400).json({
+        code: "UNAUTHORIZED",
+        message: `User Limit Error`,
+      })
+    }
   }
 
   // Handle the inquiry
@@ -171,6 +193,8 @@ export async function createInquiry(
 
   // check if queryType is chat or use the dust app to query the persona
   if (bodyData.queryType === "chat") {
+    logger.info(`Query type is chat, sending to OpenAI`)
+
     // hit raw dv3 no need for dust 
     const response = await openai.createCompletion({
       model: "text-davinci-003",
@@ -184,11 +208,14 @@ export async function createInquiry(
 
     let formattedResponse = response.data.choices[0].text
 
+    logger.success(`Prompt ${bodyData.query}\n Received response from OpenAI: ${formattedResponse}`)
     // return the response
     res.status(200).json({
       data: formattedResponse,
     });
   } else {
+    logger.info(`Query type is ${bodyData.queryType}, sending to Dust`)
+
     // hit dust app
     // define headers with auth
     const headers = {
@@ -206,15 +233,19 @@ export async function createInquiry(
         }
       });
     } catch (error) {
+      logger.error("Error in finding persona: " + error)
       return res.status(400).json({
-        data: "Error in finding persona",
+        code: "DATABASE_ERROR",
+        message: `Database Error`,
       })
     }
 
     // check if app is null 
     if (!app) {
+      logger.error(`Persona ${bodyData.queryType} not found`)
       return res.status(400).json({
-        data: "Persona not found",
+        code: "DATABASE_ERROR",
+        message: `Database Error`,
       })
     }
 
@@ -240,24 +271,50 @@ export async function createInquiry(
     let data = await fetch(`https://dust.tt/api/v1/apps/Lucas-Kohorst/${id}/runs`, options)
       .then((response) => response.json())
       .catch((error) => {
+        logger.error("Error in querying Dust app: " + error)
         return res.status(400).json({
-          data: error,
+          code: "DATABASE_ERROR",
+          message: `Database Error`,
         })
       });
-  
+    
+    const runId = data.run.run_id
+
+    // check if run is complete
+    let run = await fetch(`https://dust.tt/api/v1/apps/Lucas-Kohorst/${id}/runs/${runId}`, {
+      headers: headers
+    })
+      .then((response) => response.json())
+
+    // checking if run is complete usually take ~10-15s
+    while(run.run.run.status !== "succeeded") {
+      // wait a few seconds while run is processing
+      await new Promise(r => setTimeout(r, 3000));
+      // query the run again
+      run = await fetch(`https://dust.tt/api/v1/apps/Lucas-Kohorst/${id}/runs/${runId}`, {
+        headers: headers
+      })
+        .then((response) => response.json())
+
+      logger.error(`Run: ${JSON.stringify(run.run.status)}`)
+    }
+
     // handle dust api error 
     if (data.error) {
+      logger.error("Dust API error: " + data.error)
       return res.status(400).json({
-        data: data.error,
+        code: "DATABASE_ERROR",
+        message: `Database Error`,
       })
     }
 
     // parse the response
-    let completion = data.run.results[0][0].value.completion.text
+    let formattedResponse = run.run.results[0][0].value.completion.text
 
+    logger.success(`Prompt ${bodyData.query}\n Received response from OpenAI: ${formattedResponse}`)
     // return the response
     return res.status(200).json({
-      data: completion,
+      data: formattedResponse,
     });
   }
 }
