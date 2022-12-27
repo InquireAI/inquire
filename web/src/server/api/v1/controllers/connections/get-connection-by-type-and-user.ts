@@ -8,9 +8,7 @@ import type {
   SuccessRes,
 } from "../../../api-responses";
 import { zodIssuesToBadRequestIssues } from "../../../utils";
-
-// configure logger
-const logger = require('consola')
+import logger from 'consola'
 
 const QuerySchema = z.object({
   type: z.enum(["WEB", "TELEGRAM"]),
