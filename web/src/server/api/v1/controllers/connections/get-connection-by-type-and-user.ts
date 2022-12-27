@@ -9,6 +9,9 @@ import type {
 } from "../../../api-responses";
 import { zodIssuesToBadRequestIssues } from "../../../utils";
 
+// configure logger
+const logger = require('consola')
+
 const QuerySchema = z.object({
   type: z.enum(["WEB", "TELEGRAM"]),
   connectionUserId: z.string(),
@@ -23,6 +26,7 @@ export async function getConnectionByTypeAndUser(
   const queryParse = await QuerySchema.spa(req.query);
 
   if (!queryParse.success) {
+    logger.error(`Invalid query parameters: ${queryParse.error.issues}`)
     return res.status(400).json({
       code: "BAD_REQUEST",
       message: "Invalid query parameters",
@@ -41,11 +45,13 @@ export async function getConnectionByTypeAndUser(
     },
   });
 
-  if (!connection)
+  if (!connection) {
+    logger.error(`Connection with type ${queryData.type} and connectionUserId ${queryData.connectionUserId} not found`)
     return res.status(404).json({
       code: "NOT_FOUND",
       message: `Connection with type ${queryData.type} and connectionUserId ${queryData.connectionUserId}`,
     });
+  }
 
   return res.status(200).json({
     data: connection,

@@ -287,7 +287,7 @@ export async function createInquiry(
       .then((response) => response.json())
 
     // checking if run is complete usually take ~10-15s
-    while(run.run.run.status !== "succeeded") {
+    while(run.run.status.run !== "succeeded") {
       // wait a few seconds while run is processing
       await new Promise(r => setTimeout(r, 3000));
       // query the run again
@@ -295,8 +295,6 @@ export async function createInquiry(
         headers: headers
       })
         .then((response) => response.json())
-
-      logger.error(`Run: ${JSON.stringify(run.run.status)}`)
     }
 
     // handle dust api error 
