@@ -1,22 +1,10 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { z } from "zod";
 import type { BadRequestRes, SuccessRes } from "../../../api-responses";
-import type { Inquiry } from "../../../../db/client";
-import { prisma } from "../../../../db/client";
+import { prisma, SubscriptionStatus } from "../../../../db/client";
 import { zodIssuesToBadRequestIssues } from "../../../utils";
 import { env } from "../../../../../env/server.mjs";
-import inquiries from "../../../../../pages/api/v1/inquiries";
 const { Configuration, OpenAIApi } = require("openai");
-
-enum SubscriptionStatus {
-  INCOMPLETE,
-  INCOMPLETE_EXPIRED,
-  TRIALING,
-  ACTIVE, 
-  PAST_DUE, 
-  CANCELED, 
-  UNPAID
-}
 
 // configure the openai api
 const configuration = new Configuration({
@@ -24,6 +12,7 @@ const configuration = new Configuration({
 });
 const openai = new OpenAIApi(configuration);
 
+// define the body schema
 const BodySchema = z.object({
   connectionType: z.enum(["WEB", "TELEGRAM"]),
   connectionUserId: z.string(),
@@ -32,8 +21,7 @@ const BodySchema = z.object({
   query: z.string(),
 });
 
-// @TODO: need to edit the response type to a more generic type that provides responses for all types of inquiries
-type Res = SuccessRes<Inquiry> | BadRequestRes;
+type Res = SuccessRes<String> | BadRequestRes;
 
 /// POST /api/v1/inquiries
 /// An endpoint to create an inquiry
@@ -123,6 +111,7 @@ export async function createInquiry(
 
   // get the user
   // @TODO we will need to rework the db schema a little bit to allow for generic connections
+  // How to link a connection to a user?
   const user = await prisma.user.findUnique({
     where: {
       telegramId: bodyData.userId
@@ -169,7 +158,7 @@ export async function createInquiry(
   }
 
   // Handle the inquiry
-  
+
   // create new inquriy entry in table
   const inquiry = await prisma.inquiry.create({
     data: {
@@ -193,7 +182,6 @@ export async function createInquiry(
       presence_penalty: 0.6
     })
 
-    // @TODO: need to format text
     let formattedResponse = response.data.choices[0].text
 
     // return the response
@@ -202,6 +190,7 @@ export async function createInquiry(
     });
   } else {
     // hit dust app
+    // define headers with auth
     const headers = {
       'Authorization': 'Bearer ' + env.DUST_API_KEY,
       'Content-Type': 'application/json'
@@ -217,9 +206,8 @@ export async function createInquiry(
         }
       });
     } catch (error) {
-      console.log("Error in finding persona: " + error)
       return res.status(400).json({
-        data: error,
+        data: "Error in finding persona",
       })
     }
 
@@ -242,7 +230,7 @@ export async function createInquiry(
       body: JSON.stringify({
           "specification_hash": specificationHash,
           "config": config,
-          "blocking": true,
+          "blocking": false, // true to wait for the run to complete, usually want as false
           "inputs": [{ "question": bodyData.query }]
       }),
       headers: headers
