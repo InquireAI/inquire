@@ -1,5 +1,4 @@
 import type { Stripe } from "../client";
-import { PriceTypeMap, RecurringPriceDataIntervalMap } from "../utils";
 import type { Ctx } from "./context";
 
 export const handlePriceUpdated = async (event: Stripe.Event, ctx: Ctx) => {
@@ -10,13 +9,13 @@ export const handlePriceUpdated = async (event: Stripe.Event, ctx: Ctx) => {
       id: price.id,
     },
     data: {
-      type: PriceTypeMap[price.type],
+      type: price.type,
       active: price.active,
       unitAmount: price.unit_amount as number,
       recurring: price.recurring
         ? {
             create: {
-              interval: RecurringPriceDataIntervalMap[price.recurring.interval],
+              interval: price.recurring.interval,
             },
           }
         : undefined,
