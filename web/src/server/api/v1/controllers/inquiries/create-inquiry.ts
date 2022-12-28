@@ -149,6 +149,14 @@ export async function createInquiry(
 
   // Query users, loop over connections for one with the right connectionType and userId
 
+  // users total number of inquires
+  const inquiries = await prisma.inquiry.findMany({
+    where: {
+      connectionType: bodyData.connectionType,
+      connectionUserId: connection.connectionUserId,
+    },
+  });
+
   if (connection.userId) {
     const user = await prisma.user.findUnique({
       where: {
@@ -163,43 +171,39 @@ export async function createInquiry(
       },
     });
 
-    // NOTE: may be multiple products/prices/subscription in future, but currently we only have one, so just look for the first element
-    const subscription = user?.customer?.subscriptions[0];
-
-    if (!subscription) {
-      return res.status(400).json({
-        code: "INVALID_SUBSCRIPTION",
-        message: "Subscription not found",
-      });
-    }
-
-    // if subscription is not one of these statuses it's invalid
-    if (
-      subscription.status !== "ACTIVE" &&
-      subscription.status !== "TRIALING"
-    ) {
-      return res.status(400).json({
-        code: "INVALID_SUBSCRIPTION",
-        message: "Subscription is not active or trialing",
-      });
-    }
-  } else {
-    const inquiries = await prisma.inquiry.findMany({
-      where: {
-        connectionType: bodyData.connectionType,
-        connectionUserId: connection.connectionUserId,
-      },
-    });
-
+    // if a user is over their free limit check their subscription
     if (inquiries.length > env.USER_INQUIRY_LIMIT) {
-      logger.info(
-        `Connection with type: ${bodyData.connectionType} and connectionUserId: ${bodyData.connectionUserId} has reached inquiry limit`
-      );
+      // NOTE: may be multiple products/prices/subscription in future, but currently we only have one, so just look for the first element
+      const subscription = user?.customer?.subscriptions[0];
+      if (!subscription) {
+        logger.info(`Connection with type: ${bodyData.connectionType} and connectionUserId: ${bodyData.connectionUserId} has reached inquiry limit and no subscription found`)
+        return res.status(400).json({
+          code: "INVALID_SUBSCRIPTION",
+          message: "Limit has been reached and subscription not found",
+        });
+      }
 
-      return res.status(400).json({
-        code: "QUOTA_REACHED",
-        message: `User Limit Error`,
-      });
+      // if subscription is not one of these statuses it's invalid
+      if (
+        subscription.status !== "ACTIVE" &&
+        subscription.status !== "TRIALING"
+      ) {
+        return res.status(400).json({
+          code: "INVALID_SUBSCRIPTION",
+          message: "Subscription is not active or trialing",
+        });
+      }
+    } else {
+      if (inquiries.length > env.USER_INQUIRY_LIMIT) {
+        logger.info(
+          `Connection with type: ${bodyData.connectionType} and connectionUserId: ${bodyData.connectionUserId} has reached inquiry limit`
+        );
+
+        return res.status(400).json({
+          code: "QUOTA_REACHED",
+          message: `User Limit Error`,
+        });
+      }
     }
   }
 
@@ -306,20 +310,18 @@ export async function createInquiry(
     }
 
     const runId = data.run.run_id;
-
-    let run;
-    while (run.run.status.run !== "succeeded") {
+    while (data.run.status.run === "running") {
       // wait a few seconds while run is processing
       // query the run again
-      run = await axios
-        .get(`${id}/run/${runId}`, requestConfig)
+      data = await axios
+        .get(`${id}/runs/${runId}`, requestConfig)
         .then((response) => response.data);
 
       await new Promise((r) => setTimeout(r, 3000));
     }
 
     // parse the response
-    const formattedResponse = run.run.results[0][0].value.completion.text;
+    const formattedResponse = data.run.results[0][0].value.completion.text;
 
     logger.success(
       `Prompt ${bodyData.query}\n Received response from OpenAI: ${formattedResponse}`
