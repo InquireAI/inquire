@@ -1,14 +1,12 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { z } from "zod";
-import type { BadRequestRes, SuccessRes, DatabaseError, UnauthorizedRes } from "../../../api-responses";
+import type { BadRequestRes, SuccessRes, DatabaseError, UnauthorizedRes, NotFoundRes } from "../../../api-responses";
 import { prisma, SubscriptionStatus, User, Subscription } from "../../../../db/client";
 import { zodIssuesToBadRequestIssues } from "../../../utils";
 import { env } from "../../../../../env/server.mjs";
-import { formatErrors } from "../../../../../env/client.mjs";
-const { Configuration, OpenAIApi } = require("openai");
-
-// configure logger
-const logger = require('consola')
+import { Configuration, OpenAIApi } from 'openai'
+import axios, { AxiosRequestConfig } from 'axios';
+import logger from 'consola'
 
 // configure the openai api
 const configuration = new Configuration({
@@ -25,23 +23,7 @@ const BodySchema = z.object({
   query: z.string(),
 });
 
-type Res = SuccessRes<String> | BadRequestRes | DatabaseError | UnauthorizedRes;
-
-/// POST /api/v1/inquiries
-/// An endpoint to create an inquiry
-/// This endpoint body will 
-/// - send all of the information needed to update the db
-/// - validate the user limits and stripe limits
-/// - use dust to query the inquiry and return the result
-///
-/// An example body from a TELEGRAM user would look like this 
-/// {
-///   "connectionType": "TELEGRAM",
-///   "connectionUserId": "DXfTdkXncpw4yF0zDFZ6b"
-///   "userID": 1111111111,
-///   "queryType": "fitness-trainer" // this is the name of the dust app / persona they want 
-///   "query": "I want to get fit" // this is the query they want to ask the dust app / persona
-/// }
+type Res = SuccessRes<String> | BadRequestRes | DatabaseError | UnauthorizedRes | NotFoundRes;
 
 export async function createInquiry(
   req: NextApiRequest,
@@ -109,8 +91,8 @@ export async function createInquiry(
   // check if connection is null
   if (!connection) {
     return res.status(400).json({
-      code: "DATABASE_ERROR",
-      message: `Database Error`,
+      code: "BAD_REQUEST",
+      message: `Connection does not exist`,
     })
   }
 
@@ -206,6 +188,15 @@ export async function createInquiry(
       presence_penalty: 0.6
     })
 
+    // check if response is undefined 
+    if (!response.data.choices[0]) {
+      logger.error(`OpenAI response is undefined`)
+      return res.status(400).json({
+        code: "BAD_REQUEST",
+        message: `Bad Request`,
+      })
+    }
+
     let formattedResponse = response.data.choices[0].text
 
     logger.success(`Prompt ${bodyData.query}\n Received response from OpenAI: ${formattedResponse}`)
@@ -234,9 +225,9 @@ export async function createInquiry(
       });
     } catch (error) {
       logger.error("Error in finding persona: " + error)
-      return res.status(400).json({
-        code: "DATABASE_ERROR",
-        message: `Database Error`,
+      return res.status(500).json({
+        code: "NOT_FOUND",
+        message: `Persona not found`,
       })
     }
 
@@ -255,24 +246,25 @@ export async function createInquiry(
     const specificationHash = app.specificationHash
     const config = JSON.parse(app.config)
 
-    // query the dust app
-    const options = {
-      method: 'POST',
-      body: JSON.stringify({
-          "specification_hash": specificationHash,
-          "config": config,
-          "blocking": false, // true to wait for the run to complete, usually want as false
-          "inputs": [{ "question": bodyData.query }]
-      }),
+    const requestConfig: AxiosRequestConfig = {
+      baseURL: 'https://dust.tt/api/v1/apps/Lucas-Kohorst/',
       headers: headers
     }
 
     // query the dust app
-    let data = await fetch(`https://dust.tt/api/v1/apps/Lucas-Kohorst/${id}/runs`, options)
-      .then((response) => response.json())
+    const options = {
+        "specification_hash": specificationHash,
+        "config": config,
+        "blocking": false, // true to wait for the run to complete, usually want as false
+        "inputs": [{ "question": bodyData.query }]
+    }
+
+    // query the dust app
+    let data = await axios.post(`${id}/runs`, options, requestConfig)
+      .then((response) => response.data)
       .catch((error) => {
         logger.error("Error in querying Dust app: " + error)
-        return res.status(400).json({
+        return res.status(500).json({
           code: "DATABASE_ERROR",
           message: `Database Error`,
         })
@@ -281,20 +273,18 @@ export async function createInquiry(
     const runId = data.run.run_id
 
     // check if run is complete
-    let run = await fetch(`https://dust.tt/api/v1/apps/Lucas-Kohorst/${id}/runs/${runId}`, {
-      headers: headers
-    })
-      .then((response) => response.json())
+    let run = await axios.get(`${id}/runs/${runId}`, requestConfig)
+      .then((response) => response.data)
+
+    logger.success(run)
 
     // checking if run is complete usually take ~10-15s
     while(run.run.status.run !== "succeeded") {
       // wait a few seconds while run is processing
       await new Promise(r => setTimeout(r, 3000));
       // query the run again
-      run = await fetch(`https://dust.tt/api/v1/apps/Lucas-Kohorst/${id}/runs/${runId}`, {
-        headers: headers
-      })
-        .then((response) => response.json())
+      run = await axios.get(`${id}/runs/${runId}`, requestConfig)
+      .then((response) => response.data)
     }
 
     // handle dust api error 
