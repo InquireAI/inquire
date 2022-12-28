@@ -24,11 +24,16 @@ export type NotFoundRes = {
   message: string;
 };
 
-export type DatabaseError = {
-  code: "DATABASE_ERROR";
-  message: string;
-};
-
 export type InternalError = {
   code: "INTERNAL_ERROR";
 };
+
+export type InvalidSubscription = {
+  code: "INVALID_SUBSCRIPTION";
+  message: string;
+};
+
+export type QuotaReached = {
+  code: "QUOTA_REACHED";
+  message: string;
+}

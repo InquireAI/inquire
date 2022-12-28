@@ -6,6 +6,8 @@ import type {
   InternalError,
   UnauthorizedRes,
   NotFoundRes,
+  InvalidSubscription,
+  QuotaReached,
 } from "../../../api-responses";
 import { prisma } from "../../../../db/client";
 import { zodIssuesToBadRequestIssues } from "../../../utils";
@@ -13,6 +15,7 @@ import { env } from "../../../../../env/server.mjs";
 import { Configuration, OpenAIApi } from "openai";
 import axios, { type AxiosRequestConfig } from "axios";
 import logger from "consola";
+import { enumUtil } from "zod/lib/helpers/enumUtil";
 
 // configure the openai api
 const configuration = new Configuration({
@@ -28,12 +31,54 @@ const BodySchema = z.object({
   query: z.string(),
 });
 
+type DustStatus = "succeeded" | "running" | "errored";
+
+type DustResponse = {
+  run: {
+    run_id: string;
+    created: number;
+    run_type: string;
+    config: {
+      blocks: {};
+    };
+    status: {
+      run: DustStatus;
+      blocks: [];
+    };
+    traces: [];
+    specification_hash: string;
+    results: [
+      [
+        {
+          value: {
+            prompt: {
+              text: string;
+              tokens: [];
+              logprobs: number[];
+              top_logprobs: number;
+            };
+            completion: {
+              text: string;
+              tokens: [];
+              logprobs: number[];
+              top_logprobs: number;
+            };
+          };
+          error: string;
+        }
+      ]
+    ];
+  };
+};
+
 type Res =
   | SuccessRes<string>
   | BadRequestRes
   | UnauthorizedRes
   | NotFoundRes
-  | InternalError;
+  | InternalError
+  | InvalidSubscription
+  | QuotaReached;
 
 export async function createInquiry(
   req: NextApiRequest,
@@ -121,10 +166,9 @@ export async function createInquiry(
     // NOTE: may be multiple products/prices/subscription in future, but currently we only have one, so just look for the first element
     const subscription = user?.customer?.subscriptions[0];
 
-    // TODO: add more helpful error codes to report back to user what is wrong with subscription
     if (!subscription) {
       return res.status(400).json({
-        code: "BAD_REQUEST",
+        code: "INVALID_SUBSCRIPTION",
         message: "Subscription not found",
       });
     }
@@ -135,8 +179,8 @@ export async function createInquiry(
       subscription.status !== "TRIALING"
     ) {
       return res.status(400).json({
-        code: "BAD_REQUEST",
-        message: "Invalid subscription",
+        code: "INVALID_SUBSCRIPTION",
+        message: "Subscription is not active or trialing",
       });
     }
   } else {
@@ -152,9 +196,8 @@ export async function createInquiry(
         `Connection with type: ${bodyData.connectionType} and connectionUserId: ${bodyData.connectionUserId} has reached inquiry limit`
       );
 
-      // TODO: implement an error code for QUOTA_REACHED
       return res.status(400).json({
-        code: "UNAUTHORIZED",
+        code: "QUOTA_REACHED",
         message: `User Limit Error`,
       });
     }
@@ -244,9 +287,7 @@ export async function createInquiry(
 
     // query the dust app
 
-    // TODO: make some types to represent the data
-
-    let data;
+    let data: DustResponse;
     try {
       const res = await axios.post(`${id}/runs`, options, requestConfig);
       data = res.data;
@@ -257,8 +298,8 @@ export async function createInquiry(
       });
     }
 
-    if (data.error) {
-      logger.error("Dust API error: " + data.error);
+    if (data.run.status.run === "errored") {
+      logger.error("Dust API error");
       return res.status(500).json({
         code: "INTERNAL_ERROR",
       });
@@ -267,7 +308,6 @@ export async function createInquiry(
     const runId = data.run.run_id;
 
     let run;
-
     while (run.run.status.run !== "succeeded") {
       // wait a few seconds while run is processing
       // query the run again
@@ -277,8 +317,6 @@ export async function createInquiry(
 
       await new Promise((r) => setTimeout(r, 3000));
     }
-
-    // handle dust api error
 
     // parse the response
     const formattedResponse = run.run.results[0][0].value.completion.text;
