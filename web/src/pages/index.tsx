@@ -22,7 +22,7 @@ const Home: NextPage = () => {
         <div className="flex flex-grow bg-[url('/background_pattern.svg')]">
           <div className="px-40">
             <Navbar />
-            <div className="flex flex-grow flex-row items-center gap-12 pt-12 text-neutral-900">
+            <div className="mt-32 flex flex-grow flex-row items-center text-neutral-900">
               <div className="flex w-3/5 flex-col gap-12">
                 <h1 className="text-5xl font-extrabold tracking-tight text-neutral-900 sm:text-[5rem]">
                   inquire

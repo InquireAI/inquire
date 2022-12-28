@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "build": "next build",
-    "dev": "next dev",
+    "dev": "next dev -p 80",
     "postinstall": "prisma generate",
     "lint": "next lint",
     "start": "next start"
@@ -28,6 +28,7 @@
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-loading-skeleton": "^3.1.0",
+    "react-telegram-login": "^1.1.2",
     "stripe": "^11.3.0",
     "superjson": "1.9.1",
     "zod": "^3.18.0"
