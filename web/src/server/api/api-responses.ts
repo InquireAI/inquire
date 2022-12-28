@@ -27,4 +27,8 @@ export type NotFoundRes = {
 export type DatabaseError = {
   code: "DATABASE_ERROR";
   message: string;
-}
+};
+
+export type InternalError = {
+  code: "INTERNAL_ERROR";
+};

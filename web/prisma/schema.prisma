@@ -48,11 +48,12 @@ model Inquiry {
 }
 
 model Persona {
-  name String @id
-  id String
+  id                String @id
+  name              String @unique
   specificationHash String
-  config String
+  config            String
 
+  @@index([id])
   @@index([name])
 }
 
