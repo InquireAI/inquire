@@ -48,19 +48,20 @@ model Inquiry {
 }
 
 model Persona {
-  name String @id
-  id String
+  id                String @id
+  name              String @unique
   specificationHash String
-  config String
+  config            String
 
+  @@index([id])
   @@index([name])
 }
 
 enum RecurringPriceDataInterval {
-  MONTH
-  YEAR
-  WEEK
-  DAY
+  month
+  year
+  week
+  day
 }
 
 model RecurringPriceData {
@@ -72,8 +73,8 @@ model RecurringPriceData {
 }
 
 enum PriceType {
-  ONE_TIME
-  RECURRING
+  one_time
+  recurring
 }
 
 model Price {
@@ -118,28 +119,75 @@ model SubscriptionItem {
 }
 
 enum SubscriptionStatus {
-  INCOMPLETE
-  INCOMPLETE_EXPIRED
-  TRIALING
-  ACTIVE
-  PAST_DUE
-  CANCELED
-  UNPAID
+  incomplete
+  incomplete_expired
+  trialing
+  active
+  past_due
+  canceled
+  unpaid
+}
+
+enum PaymentMethodType {
+  acss_debit
+  affirm
+  afterpay_clearpay
+  alipay
+  au_becs_debit
+  bacs_debit
+  bancontact
+  blik
+  boleto
+  card
+  card_present
+  customer_balance
+  eps
+  fpx
+  giropay
+  grabpay
+  ideal
+  interac_present
+  klarna
+  konbini
+  link
+  oxxo
+  p24
+  paynow
+  pix
+  promptpay
+  sepa_debit
+  sofort
+  us_bank_account
+  wechat_pay
+}
+
+model PaymentMethod {
+  id           String            @id
+  customerId   String?
+  customer     Customer?         @relation(fields: [customerId], references: [id])
+  type         PaymentMethodType
+  card         Json?
+  subscription Subscription[]
+
+  @@index([customerId])
 }
 
 model Subscription {
-  id                 String             @id
-  customerId         String
-  customer           Customer           @relation(fields: [customerId], references: [id])
-  currentPeriodStart DateTime
-  currentPeriodEnd   DateTime
-  status             SubscriptionStatus
-  subscriptionItems  SubscriptionItem[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                     String             @id
+  customerId             String
+  customer               Customer           @relation(fields: [customerId], references: [id])
+  currentPeriodStart     DateTime
+  currentPeriodEnd       DateTime
+  status                 SubscriptionStatus
+  subscriptionItems      SubscriptionItem[]
+  defaultPaymentMethodId String
+  defaultPaymentMethod   PaymentMethod      @relation(fields: [defaultPaymentMethodId], references: [id])
+  cancelAtPeriodEnd      Boolean
+  createdAt              DateTime           @default(now())
+  updatedAt              DateTime           @updatedAt
 
   @@index([customerId])
+  @@index([defaultPaymentMethodId])
 }
 
 model Customer {
@@ -149,29 +197,30 @@ model Customer {
   subscriptions    Subscription[]
   checkoutSessions CheckoutSession[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  paymentMethods PaymentMethod[]
 
   @@index([userId])
 }
 
 enum CheckoutSessionMode {
-  PAYMENT
-  SETUP
-  SUBSCRIPTION
+  payment
+  setup
+  subscription
 }
 
 enum CheckoutSessionStatus {
-  OPEN
-  COMPLETE
-  EXPIRED
+  open
+  complete
+  expired
 }
 
 model CheckoutSession {
   id         String                 @id
   mode       CheckoutSessionMode
   successUrl String
-  cancelUrl  String
+  cancelUrl  String?
   url        String                 @db.VarChar(500) // stripe checkout links are quite long
   customerId String
   customer   Customer               @relation(fields: [customerId], references: [id])

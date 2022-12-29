@@ -2,9 +2,7 @@ import type { NextApiHandler, NextApiRequest, NextApiResponse } from "next";
 import { createHash } from "crypto";
 import { z } from "zod";
 import { prisma } from "../db/client";
-
-// configure logger
-const logger = require('consola')
+import logger from 'consola'
 
 const ApiKeySchema = z.string();
 

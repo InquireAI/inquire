@@ -1,5 +1,4 @@
 import type { Stripe } from "../client";
-import { CheckoutSessionStatusMap } from "../utils";
 import type { Ctx } from "./context";
 
 export const handleCheckoutSessionExpired = async (
@@ -13,9 +12,7 @@ export const handleCheckoutSessionExpired = async (
       id: checkoutSession.id,
     },
     data: {
-      status:
-        checkoutSession.status &&
-        CheckoutSessionStatusMap[checkoutSession.status],
+      status: checkoutSession.status,
     },
   });
 };

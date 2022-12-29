@@ -1,11 +1,3 @@
-#!/usr/bin/env python
-# pylint: disable=unused-argument, wrong-import-position
-# This program is dedicated to the public domain under the CC0 license.
-
-"""
-Basic example for a bot that uses inline keyboards. For an in-depth explanation, check out
- https://github.com/python-telegram-bot/python-telegram-bot/wiki/InlineKeyboard-Example.
-"""
 import logging
 import os
 

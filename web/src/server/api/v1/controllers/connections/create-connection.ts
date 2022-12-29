@@ -4,9 +4,7 @@ import type { Connection } from "../../../../db/client";
 import { prisma } from "../../../../db/client";
 import type { BadRequestRes, SuccessRes } from "../../../api-responses";
 import { zodIssuesToBadRequestIssues } from "../../../utils";
-
-// configure logger
-const logger = require('consola')
+import logger from 'consola'
 
 const BodySchema = z.object({
   userId: z.string().optional(),
