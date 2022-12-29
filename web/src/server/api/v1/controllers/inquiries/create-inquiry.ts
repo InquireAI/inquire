@@ -157,6 +157,8 @@ export async function createInquiry(
     },
   });
 
+  logger.success("Inquiries: ", inquiries.length)
+
   if (connection.userId) {
     const user = await prisma.user.findUnique({
       where: {
@@ -185,7 +187,7 @@ export async function createInquiry(
 
       // if subscription is not one of these statuses it's invalid
       if (
-        subscription.status !== "ACTIVE" &&
+        subscription.status !== "ACTIVE" ||
         subscription.status !== "TRIALING"
       ) {
         return res.status(400).json({
@@ -193,17 +195,17 @@ export async function createInquiry(
           message: "Subscription is not active or trialing",
         });
       }
-    } else {
-      if (inquiries.length > env.USER_INQUIRY_LIMIT) {
-        logger.info(
-          `Connection with type: ${bodyData.connectionType} and connectionUserId: ${bodyData.connectionUserId} has reached inquiry limit`
-        );
+    }
+  } else {
+    if (inquiries.length > env.USER_INQUIRY_LIMIT) {
+      logger.info(
+        `Connection with type: ${bodyData.connectionType} and connectionUserId: ${bodyData.connectionUserId} has reached inquiry limit`
+      );
 
-        return res.status(400).json({
-          code: "QUOTA_REACHED",
-          message: `User Limit Error`,
-        });
-      }
+      return res.status(400).json({
+        code: "QUOTA_REACHED",
+        message: `User Limit Error`,
+      });
     }
   }
 

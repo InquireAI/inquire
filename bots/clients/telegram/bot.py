@@ -8,6 +8,8 @@ from uuid import uuid4
 from html import escape
 import json
 
+import random
+
 from telegram import __version__ as TG_VER
 
 try:
@@ -66,7 +68,7 @@ Learn more about Inquire at https://inquire.run
         self.application.add_handler(CommandHandler("help", self.help_command))
 
         # inline handlers
-        self.application.add_handler(CommandHandler("list", self.list_personas))
+        self.application.add_handler(CommandHandler("random", self.random_personas))
         self.application.add_handler(CommandHandler("set", self.set_persona))
         self.application.add_handler(CallbackQueryHandler(self.set_persona_callback))
 
@@ -74,7 +76,7 @@ Learn more about Inquire at https://inquire.run
         self.application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self.query_persona))
 
         # inline query handler, this is run when you type: @botusername <query>
-        # @TODO: add inline query handler for when interaction is via a group chat
+        # TODO: add inline query handler for when interaction is via a group chat
         # self.application.add_handler(InlineQueryHandler(self.inline_query))
 
         # Register error handlers
@@ -83,7 +85,7 @@ Learn more about Inquire at https://inquire.run
         # Run the bot until the user presses Ctrl-C
         self.application.run_polling()
 
-    # @TODO: track users and groups
+    # TODO: track users and groups
 
     # Error handler to capture errors
     async def error_handler(self, update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -113,28 +115,45 @@ Learn more about Inquire at https://inquire.run
         # self.logger.error(msg="Exception while handling an update:", exc_info=context.error)
         # self.logger.error(msg=message)
 
-        # @TODO: handle subscription and limit errors better with response to sign up
-
         # Handle API Errors
         (error_code, message) = context.error.args
-        if error_code == 400:
-            self.logger.error(f"""Bad Request: {error_code}""")
-            await update.message.reply_text('Bad Request')
-        elif error_code == 401:
-            self.logger.error(f"""Unauthorized: {error_code}""")
-            await update.message.reply_text('Unauthorized')
-        elif error_code == 403:
-            self.logger.error(f"""Forbidden: {error_code}""")
-            await update.message.reply_text('Forbidden')
-        elif error_code == 404:
-            self.logger.error(f"""Not Found: {error_code}""")
-            await update.message.reply_text('Not Found')
-        elif error_code == 500:
-            self.logger.error(f"""Internal Server Error: {error_code}""")
-            await update.message.reply_text('Internal Server Error')
+        
+        # if message if defined, handle it more specifically
+        if message:
+            message = json.loads(message)
+            message_code = message['code']
+            message_message = message['message']
+            if message_code == "NOT_FOUND":
+                self.logger.error(f"""Persona Not Found: {context.chat_data}""")
+                await update.message.reply_text('Persona Not Found, please use /list to see available personas')
+            if message_code == 'INVALID_SUBSCRIPTION' and message_message == 'Limit has been reached and subscription not found':
+                self.logger.error(f"""Subscription Limit Reached: {context.chat_data}""")
+                await update.message.reply_text('Subscription Limit Reached, please sign up at https://inquire.run')
+            if message_code == 'INVALID_SUBSCRIPTION' and message_message == 'Subscription not found':
+                self.logger.error(f"""Subscription Not Found: {context.chat_data}""")
+                await update.message.reply_text('Subscription Not Found, please sign up at https://inquire.run')
+            if message_code == 'QUOTA_REACHED':
+                self.logger.error(f"""Quota Reached: {context.chat_data}""")
+                await update.message.reply_text('Free tier number of inquries have been reached, please sign up at https://inquire.run for only $5/mo to continue using Inquire')
         else:
-            self.logger.error(f"""Unknown Error: {error_code}""")
-            await update.message.reply_text('Unknown Error')
+            if error_code == 400:
+                self.logger.error(f"""Bad Request: {error_code}""")
+                await update.message.reply_text('Bad Request')
+            elif error_code == 401:
+                self.logger.error(f"""Unauthorized: {error_code}""")
+                await update.message.reply_text('Unauthorized')
+            elif error_code == 403:
+                self.logger.error(f"""Forbidden: {error_code}""")
+                await update.message.reply_text('Forbidden')
+            elif error_code == 404:
+                self.logger.error(f"""Not Found: {error_code}""")
+                await update.message.reply_text('Not Found')
+            elif error_code == 500:
+                self.logger.error(f"""Internal Server Error: {error_code}""")
+                await update.message.reply_text('Internal Server Error')
+            else:
+                self.logger.error(f"""Unknown Error: {error_code}""")
+                await update.message.reply_text('Unknown Error')
 
         # self.client.ingest_events('query_data', [{"error": message}])
 
@@ -159,7 +178,7 @@ Learn more about Inquire at https://inquire.run
         """Parses the CallbackQuery and updates the message text to greeting with a persona"""
         await self.application.bot.send_chat_action(update.effective_chat.id, "typing")
 
-        # @TODO: handle any errors
+        # TODO: handle any errors
 
         chat_data = update.message.text.split(" ")
         persona = chat_data[1]
@@ -203,7 +222,7 @@ Learn more about Inquire at https://inquire.run
 
         await update.message.reply_text(response.json()['data'])
     
-    async def list_personas(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    async def random_personas(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Displays info on how to use the bot."""
         await self.application.bot.send_chat_action(update.effective_chat.id, "typing")
 
@@ -219,12 +238,22 @@ Learn more about Inquire at https://inquire.run
             raise Exception(response.status_code, response.text)
 
         keyboard = [ ]
-        for key in response.json()['data']:
-            keyboard.append(
-                [
-                    InlineKeyboardButton(key['name'], callback_data=key["name"]),
-                ],
-            )
+        # TODO: need to transition this to a inline webapp, for searching and longer responses
+        # for now limiting # of personas to 10
+        personas = 0
+        # make the list random!
+        data = response.json()['data']
+        data = random.sample(data, len(data))
+        for key in data:
+            if personas < 10:
+                keyboard.append(
+                    [
+                        InlineKeyboardButton(key['name'], callback_data=key["name"]),
+                    ],
+                )
+                personas += 1
+            else:
+                break
 
         reply_markup = InlineKeyboardMarkup(keyboard)
-        await update.message.reply_text("List of Personas", reply_markup=reply_markup)
+        await update.message.reply_text("List of 10 Random Personas", reply_markup=reply_markup)
