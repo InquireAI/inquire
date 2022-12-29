@@ -19,10 +19,10 @@ import axiom
 nest_asyncio.apply()
 dotenv.load_dotenv()
 
-import telegram
-from telegram import __version__ as TG_VER
+import bots.clients.telegram.telegram as telegram
+from bots.clients.telegram.telegram import __version__ as TG_VER
 try:
-    from telegram import __version_info__
+    from bots.clients.telegram.telegram import __version_info__
 except ImportError:
     __version_info__ = (0, 0, 0, 0, 0)  # type: ignore[assignment]
 
@@ -32,7 +32,7 @@ if __version_info__ < (20, 0, 0, "alpha", 1):
         f"{TG_VER} version of this example, "
         f"visit https://docs.python-telegram-bot.org/en/v{TG_VER}/examples.html"
     )
-from telegram import ForceReply, Update, Chat, ChatMember, ChatMemberUpdated
+from bots.clients.telegram.telegram import ForceReply, Update, Chat, ChatMember, ChatMemberUpdated
 
 from telegram.ext import (
     Application, 
