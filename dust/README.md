@@ -2,6 +2,8 @@
 
 (this is so extremely janky and will likely break, good thing it is pretty much a one time use)
 
+Waiting on dust to have [import/export](https://github.com/dust-tt/dust/issues/113) functionality from a `.dust` file
+
 In order to quickly push a lot of new personas into dust apps and into the database `createApp.py` and `pushDB.py` were created to handle the automation
 
 `createApp.py` reads from `app.json` which looks like
