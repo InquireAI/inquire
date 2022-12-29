@@ -75,7 +75,7 @@ Learn more about Inquire at https://inquire.run
 
         # inline query handler, this is run when you type: @botusername <query>
         # @TODO: add inline query handler for when interaction is via a group chat
-        self.application.add_handler(InlineQueryHandler(self.inline_query))
+        # self.application.add_handler(InlineQueryHandler(self.inline_query))
 
         # Register error handlers
         self.application.add_error_handler(self.error_handler)
