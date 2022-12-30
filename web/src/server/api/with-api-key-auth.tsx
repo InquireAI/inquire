@@ -14,6 +14,7 @@ export function withApiKeyAuth(handler: NextApiHandler) {
       logger.error(`Invalid API key: ${apiKeyParse.error}`)
       return res.status(401).json({
         code: "UNAUTHORIZED",
+        message: "Invalid API key",
       });
     }
 
@@ -31,6 +32,7 @@ export function withApiKeyAuth(handler: NextApiHandler) {
       logger.error(`Invalid DB API key: ${dbApikey}`)
       return res.status(401).json({
         code: "UNAUTHORIZED",
+        message: "Invalid API key",
       });
     }
 

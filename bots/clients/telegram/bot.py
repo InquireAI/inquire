@@ -202,6 +202,7 @@ chat - Directly chat with the bot
             message = json.loads(message)
             message_code = message['code']
             message_message = message['message']
+
             if message_code == "NOT_FOUND":
                 self.logger.error(f"""Persona Not Found: {context.chat_data}""")
                 await update.message.reply_text('Persona Not Found, please use /list to see available personas')
@@ -214,26 +215,10 @@ chat - Directly chat with the bot
             if message_code == 'QUOTA_REACHED':
                 self.logger.error(f"""Quota Reached: {context.chat_data}""")
                 await update.message.reply_text('Free tier number of inquries have been reached, please sign up at https://inquire.run for only $5/mo to continue using Inquire')
-        else:
-            if error_code == 400:
-                self.logger.error(f"""Bad Request: {error_code}""")
-                await update.message.reply_text('Bad Request')
-            elif error_code == 401:
-                self.logger.error(f"""Unauthorized: {error_code}""")
+            if message_code == 'UNAUTHORIZED':
+                self.logger.error(f"""Unauthorized: {context.chat_data}""")
                 await update.message.reply_text('Unauthorized')
-            elif error_code == 403:
-                self.logger.error(f"""Forbidden: {error_code}""")
-                await update.message.reply_text('Forbidden')
-            elif error_code == 404:
-                self.logger.error(f"""Not Found: {error_code}""")
-                await update.message.reply_text('Not Found')
-            elif error_code == 500:
-                self.logger.error(f"""Internal Server Error: {error_code}""")
-                await update.message.reply_text('Internal Server Error')
-            else:
-                self.logger.error(f"""Unknown Error: {error_code}""")
-                await update.message.reply_text('Unknown Error')
-        
+
         # traceback.format_exception returns the usual python message about an exception, but as a
         # list of strings rather than a single string, so we have to join them together.
         tb_list = traceback.format_exception(None, context.error, context.error.__traceback__)
