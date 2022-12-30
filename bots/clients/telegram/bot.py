@@ -60,9 +60,10 @@ class Telegram:
             # set base commands
             f.write(f"""
 help - Show a help message
-random - Show random personas
-set - Set the persona to talk to
 chat - Directly chat with the bot
+random - Show random personas
+persona - Show the current persona
+set - Set the persona to talk to
 """)
             for persona in self.personas:
                 f.write(f"""{persona['name']} - {persona['description']}\n""")
@@ -74,7 +75,8 @@ chat - Directly chat with the bot
             )).concurrent_updates(True).arbitrary_callback_data(True).build()
 
         # Base set of commands for the bot (will be changed with a /start command)
-        self.commands = Commands(self.application, self.personas, (self.inquireApiKey, self.inquireApi))
+        base_persona = "chat"
+        self.commands = Commands(self.application, base_persona, self.personas, (self.inquireApiKey, self.inquireApi))
 
         # direct handlers 
         self.application.add_handler(CommandHandler("start", self.start_command))
@@ -83,6 +85,7 @@ chat - Directly chat with the bot
         self.application.add_handler(CommandHandler("set", self.commands.set_persona_command))
         self.application.add_handler(CommandHandler("chat", self.commands.chat_command))
         self.application.add_handler(CommandHandler("all", self.commands.list_all_command))
+        self.application.add_handler(CommandHandler("persona", self.commands.current_persona_command))
 
         # inline handlers
         self.application.add_handler(CallbackQueryHandler(self.commands.set_persona_callback))
@@ -113,16 +116,24 @@ chat - Directly chat with the bot
         :param update: Update object
         :param context: CallbackContext object
         """
-        # Create a new set of commands for each chat
-        self.commands = Commands(self.application, self.personas, (self.inquireApiKey, self.inquireApi))
-
         # set the menu button, which is changed via /setcommands in @botfather
         await self.application.bot.set_chat_menu_button(update.effective_chat.id)
 
         await self.application.bot.send_chat_action(update.effective_chat.id, "typing")
-        
-        self.logger.info(f"""Bot Started from: {update.effective_chat.id}""")
-        await update.message.reply_text(f"""Inquire is a conversational chatbot that can take the form of just about any persona. For example, you can talk to a doctor, a lawyer, a therapist, or even a fictional character. Inquire is a work in progress, so please be patient as we add more personas. Check out the /help command for more information or sign up for an unrestricted account at https://inquire.chat.""")
+
+        # check if an persona was set via a deep link
+        command = update.message.text.split(" ")
+        if len(command) > 1:
+            deep_link = command[1]
+            # Create a new set of commands for each chat
+            self.commands = Commands(self.application, deep_link, self.personas, (self.inquireApiKey, self.inquireApi))
+            await self.commands.set_deeplink_persona(deep_link, update, context)
+        else:
+            self.logger.info(f"""Bot Started from: {update.effective_chat.id}""")
+            # Create a new set of commands for each chat
+            base_persona = "chat"
+            self.commands = Commands(self.application, base_persona, self.personas, (self.inquireApiKey, self.inquireApi))
+            await update.message.reply_text(f"""Inquire is a conversational chatbot that can take the form of just about any persona. For example, you can talk to a doctor, a lawyer, a therapist, or even a fictional character. Inquire is a work in progress, so please be patient as we add more personas. Check out the /help command for more information or sign up for an unrestricted account at https://inquire.chat.""")
 
     # Extract the status change from a ChatMemberUpdated object
     def extract_status_change(self, chat_member_update: ChatMemberUpdated) -> Optional[Tuple[bool, bool]]:
@@ -208,13 +219,13 @@ chat - Directly chat with the bot
                 await update.message.reply_text('Persona Not Found, please use /list to see available personas')
             if message_code == 'INVALID_SUBSCRIPTION' and message_message == 'Limit has been reached and subscription not found':
                 self.logger.error(f"""Subscription Limit Reached: {context.chat_data}""")
-                await update.message.reply_text('Subscription Limit Reached, please sign up at https://inquire.run')
+                await update.message.reply_text(f"""@{update.message.from_user.username}  your subscription limit has been reached, please sign up at https://inquire.run for only $5/mo to continue using Inquire""")
             if message_code == 'INVALID_SUBSCRIPTION' and message_message == 'Subscription not found':
                 self.logger.error(f"""Subscription Not Found: {context.chat_data}""")
-                await update.message.reply_text('Subscription Not Found, please sign up at https://inquire.run')
+                await update.message.reply_text(f"""@{update.message.from_user.username} your subscription is not found, please check your account at https://inquire.run""")
             if message_code == 'QUOTA_REACHED':
                 self.logger.error(f"""Quota Reached: {context.chat_data}""")
-                await update.message.reply_text('Free tier number of inquries have been reached, please sign up at https://inquire.run for only $5/mo to continue using Inquire')
+                await update.message.reply_text(f"""@{update.message.from_user.username} your free tier number of inquries have been reached, please sign up at https://inquire.run for only $5/mo to continue using Inquire""")
             if message_code == 'UNAUTHORIZED':
                 self.logger.error(f"""Unauthorized: {context.chat_data}""")
                 await update.message.reply_text('Unauthorized')

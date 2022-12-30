@@ -22,7 +22,7 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, InlineQ
 from telegram.ext import ContextTypes
 
 class Commands:
-    def __init__(self, application, personas, api_keys):
+    def __init__(self, application, persona, personas, api_keys):
          # Enable logging
         logging.basicConfig(
             format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
@@ -32,19 +32,19 @@ class Commands:
         self.application = application
         self.personas = personas
         # setting initial persona to `chat`
-        self.persona = "chat"
+        self.persona = persona
 
-        self.logger.info(f"""Starting Inquire Telegram Bot with persona {self.persona}""")
+        self.logger.info(f"""Creating a new instance with the persona: {self.persona}""")
 
         (self.inquireApiKey, self.inquireApi) = api_keys
 
         # Help text
         self.help_text = f"""
 Inquire is a converstational chatbot that can take the form of just about any persona.
-            
-To list all personas available, use the `/list` command select who you would like to talk to. To query the persona, simply send a message to the bot. 
-            
-You can change the persona at any time by using the `/list` command again or directly by using /set followed by the persona name (e.g. `/set trainer`).
+
+To get started start typing `@inquireai_bot` followed by the persona you want to chat with (e.g. `@inquireai_bot math-teacher`). Any message after will be answered!
+
+If you are in a group chat you will need to preface your inquiry with `/chat`
 
 Learn more about Inquire at https://inquire.run
         """
@@ -95,8 +95,23 @@ Learn more about Inquire at https://inquire.run
         """
         await self.application.bot.send_chat_action(update.effective_chat.id, "typing")
 
-        await update.message.reply_text(self.help_text)
+        await update.message.reply_text(self.help_text, parse_mode="Markdown")
     
+    # Set deeplink persona
+    async def set_deeplink_persona(self, new_persona, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        """
+        Set the deeplink persona
+        :param update: Update object
+        :param context: CallbackContext object
+        """
+        await self.application.bot.send_chat_action(update.effective_chat.id, "typing")
+
+        self.logger.error(f"""Current Persona: {self.persona}""")
+        self.persona = new_persona
+        self.logger.error(f"""New Persona: {self.persona}""")
+
+        await update.message.reply_text(f"You are now chatting with a {self.persona} bot, any chat will be returned with an answer")
+
     # Sets the persona for a chat
     async def set_persona_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """
@@ -114,7 +129,7 @@ Learn more about Inquire at https://inquire.run
         # if chat_data is > 3 then the user also sent a query with the command
         # also query the persona
         if len(chat_data) > 3:
-            await update.message.reply_text(f"You are now chatting with a {self.persona} bot, answering your question...")
+            await update.message.reply_text(f"You are now chatting with a {self.persona} bot, answering your question...", parse_mode="Markdown")
             await self.query_persona(update, context)
         else:
             await update.message.reply_text(f"You are now chatting with a {self.persona} bot, any chat will be returned with an answer")
@@ -156,6 +171,15 @@ Learn more about Inquire at https://inquire.run
         with open("personas.txt", "r") as f:
             await self.send_message(update, f.read())
             # await update.message.reply_text(f.read())
+
+    # Sends the current persona to the user
+    async def current_persona_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        """
+        Sends the current persona to the user
+        :param update: Update object
+        :param context: CallbackContext object
+        """
+        await update.message.reply_text(f"You are currently chatting with a {self.persona} bot")
 
     # When a user selects a persona from the list set it
     async def set_persona_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -220,7 +244,7 @@ Learn more about Inquire at https://inquire.run
         await self.application.bot.send_chat_action(update.effective_chat.id, "typing")
 
         if self.persona == "":
-            await update.message.reply_text("You need to set a persona first, use /set <persona> or with @inquireai_bot <persona>")
+            await update.message.reply_text("You need to set a persona first, use `/set <persona>` or with `@inquireai_bot <persona>`", parse_mode="Markdown")
         else:
             await self.query_persona(update, context)
 
