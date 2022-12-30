@@ -106,9 +106,7 @@ Learn more about Inquire at https://inquire.run
         """
         await self.application.bot.send_chat_action(update.effective_chat.id, "typing")
 
-        self.logger.error(f"""Current Persona: {self.persona}""")
         self.persona = new_persona
-        self.logger.error(f"""New Persona: {self.persona}""")
 
         await update.message.reply_text(f"You are now chatting with a {self.persona} bot, any chat will be returned with an answer")
 

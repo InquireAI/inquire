@@ -74,12 +74,47 @@ set - Set the persona to talk to
                 overall_max_rate=1, overall_time_period=1, group_max_rate=1, group_time_period=1, max_retries=0
             )).concurrent_updates(True).arbitrary_callback_data(True).build()
 
-        # Base set of commands for the bot (will be changed with a /start command)
-        base_persona = "chat"
-        self.commands = Commands(self.application, base_persona, self.personas, (self.inquireApiKey, self.inquireApi))
-
         # direct handlers 
         self.application.add_handler(CommandHandler("start", self.start_command))
+
+        # Register error handlers
+        self.application.add_error_handler(self.error_handler)
+
+        # Run the bot until the user presses Ctrl-C
+        self.application.run_polling()
+
+    # Start command handler
+    async def start_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        """
+        Starts the bot with a new set of commands
+        :param update: Update object
+        :param context: CallbackContext object
+        """
+        # set the menu button, which is changed via /setcommands in @botfather
+        await self.application.bot.set_chat_menu_button(update.effective_chat.id)
+
+        await self.application.bot.send_chat_action(update.effective_chat.id, "typing")
+
+        # TODO: keep track of chat id and their commands, to properly assign personas
+
+        # check if an persona was set via a deep link
+        command = update.message.text.split(" ")
+        deeplinked = False
+        if len(command) > 1:
+            deeplinked = True
+
+        base_persona = "chat"
+        if deeplinked:
+            base_persona = command[1]
+
+        self.logger.error("Deep linked: %s", deeplinked)
+        self.logger.error("Start command: %s", base_persona)
+            
+        # Create a new set of commands for each distinct chat
+        self.commands = Commands(self.application, base_persona, self.personas, (self.inquireApiKey, self.inquireApi))
+        
+        # add handlers
+        # direct handlers
         self.application.add_handler(CommandHandler("help", self.commands.help_command))
         self.application.add_handler(CommandHandler("random", self.commands.random_personas_command))
         self.application.add_handler(CommandHandler("set", self.commands.set_persona_command))
@@ -100,40 +135,17 @@ set - Set the persona to talk to
         self.application.add_handler(ChatMemberHandler(self.start_command, ChatMemberHandler.CHAT_MEMBER))
         self.application.add_handler(ChatMemberHandler(self.track_chats, ChatMemberHandler.MY_CHAT_MEMBER))
 
-        # inline query handler, this is run when you type: @botusername <query>
-        self.application.add_handler(InlineQueryHandler(self.commands.inline_query))
-
-        # Register error handlers
-        self.application.add_error_handler(self.error_handler)
-
-        # Run the bot until the user presses Ctrl-C
-        self.application.run_polling()
-
-    # Start command handler
-    async def start_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-        """
-        Starts the bot with a new set of commands
-        :param update: Update object
-        :param context: CallbackContext object
-        """
-        # set the menu button, which is changed via /setcommands in @botfather
-        await self.application.bot.set_chat_menu_button(update.effective_chat.id)
-
-        await self.application.bot.send_chat_action(update.effective_chat.id, "typing")
-
-        # check if an persona was set via a deep link
-        command = update.message.text.split(" ")
-        if len(command) > 1:
+        if deeplinked:
             deep_link = command[1]
-            # Create a new set of commands for each chat
-            self.commands = Commands(self.application, deep_link, self.personas, (self.inquireApiKey, self.inquireApi))
+           
+            # inline query handler, this is run when you type: @botusername <query>
+            self.application.add_handler(InlineQueryHandler(self.commands.inline_query))
+
             await self.commands.set_deeplink_persona(deep_link, update, context)
         else:
             self.logger.info(f"""Bot Started from: {update.effective_chat.id}""")
-            # Create a new set of commands for each chat
-            base_persona = "chat"
-            self.commands = Commands(self.application, base_persona, self.personas, (self.inquireApiKey, self.inquireApi))
             await update.message.reply_text(f"""Inquire is a conversational chatbot that can take the form of just about any persona. For example, you can talk to a doctor, a lawyer, a therapist, or even a fictional character. Inquire is a work in progress, so please be patient as we add more personas. Check out the /help command for more information or sign up for an unrestricted account at https://inquire.chat.""")
+
 
     # Extract the status change from a ChatMemberUpdated object
     def extract_status_change(self, chat_member_update: ChatMemberUpdated) -> Optional[Tuple[bool, bool]]:
