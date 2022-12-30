@@ -1,14 +1,12 @@
+from clients.telegram.commands import Commands
+
 import os
 import logging
 import traceback
-from functools import wraps
 
 import requests
-from uuid import uuid4
-from html import escape
+from typing import Optional, Tuple
 import json
-
-import random
 
 from telegram import __version__ as TG_VER
 
@@ -23,12 +21,10 @@ if __version_info__ < (20, 0, 0, "alpha", 1):
         f"{TG_VER} version of this example, "
         f"visit https://docs.python-telegram-bot.org/en/v{TG_VER}/examples.html"
     )
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, InlineQueryResultArticle, InputTextMessageContent
-from telegram.constants import ParseMode
-from telegram.ext import Application, CallbackQueryHandler, CommandHandler, ContextTypes, AIORateLimiter, MessageHandler, filters, InlineQueryHandler
+from telegram import ChatMember, ChatMemberUpdated, Chat, Update
+from telegram.ext import Application, CallbackQueryHandler, CommandHandler, ContextTypes, AIORateLimiter, MessageHandler, filters, InlineQueryHandler, ChatMemberHandler
 
 import dotenv
-import nest_asyncio
 dotenv.load_dotenv()
 
 class Telegram:
@@ -44,40 +40,63 @@ class Telegram:
         self.inquireApiKey = os.environ.get('INQUIRE_API_KEY')
         self.inquireApi = os.environ.get('INQUIRE_API')
 
-        # setting initial persona to `chat`
-        self.persona = "chat"
+        # load all personas from the db
+        url = self.inquireApi + "/inquiries"
+        headers = {
+            "x-api-key": self.inquireApiKey,
+        }
 
-        # Help text
-        self.help_text = f"""
-Inquire is a converstational chatbot that can take the form of just about any persona.
-            
-To list all personas available, use the `/list` command select who you would like to talk to. To query the persona, simply send a message to the bot. 
-            
-You can change the persona at any time by using the `/list` command again or directly by using /set followed by the persona name (e.g. `/set trainer`).
+        response = requests.get(url, headers=headers)
 
-Learn more about Inquire at https://inquire.run
-        """
+        # handle api errors
+        if response.status_code != 200:
+            self.logger.error('Error loading personas: %s', response.text)
+            raise Exception(response.status_code, response.text)
+
+        self.personas = response.json()['data']
+
+        # write personas to file this can be send to @botfather for the /setcommands
+        with open('./personas.txt', 'w') as f:
+            # set base commands
+            f.write(f"""
+help - Show a help message
+random - Show random personas
+set - Set the persona to talk to
+""")
+            for persona in self.personas:
+                f.write(f"""{persona['name']} - {persona['description']}\n""")
+            self.logger.info("Personas loaded")
 
         # Create the Application and pass it your bot's token.
         self.application = Application.builder().token(self.telegramApiKey).rate_limiter(AIORateLimiter(
                 overall_max_rate=1, overall_time_period=1, group_max_rate=1, group_time_period=1, max_retries=0
             )).concurrent_updates(True).arbitrary_callback_data(True).build()
 
+        # Base set of commands for the bot (will be changed with a /start command)
+        self.commands = Commands(self.application, self.personas, (self.inquireApiKey, self.inquireApi))
+
         # direct handlers 
-        self.application.add_handler(CommandHandler("start", self.start))
-        self.application.add_handler(CommandHandler("help", self.help_command))
+        self.application.add_handler(CommandHandler("start", self.start_command))
+        self.application.add_handler(CommandHandler("help", self.commands.help_command))
+        self.application.add_handler(CommandHandler("random", self.commands.random_personas_command))
+        self.application.add_handler(CommandHandler("set", self.commands.set_persona_command))
+        self.application.add_handler(CommandHandler("all", self.commands.list_all_command))
 
         # inline handlers
-        self.application.add_handler(CommandHandler("random", self.random_personas))
-        self.application.add_handler(CommandHandler("set", self.set_persona))
-        self.application.add_handler(CallbackQueryHandler(self.set_persona_callback))
+        self.application.add_handler(CallbackQueryHandler(self.commands.set_persona_callback))
+
+        # generic command handler 
+        self.application.add_handler(MessageHandler(filters.COMMAND, self.commands.set_persona_command))
 
         # general chat handler 
-        self.application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self.query_persona))
+        self.application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self.commands.query_persona))
+
+        # chat stats handler
+        self.application.add_handler(ChatMemberHandler(self.start_command, ChatMemberHandler.CHAT_MEMBER))
+        self.application.add_handler(ChatMemberHandler(self.track_chats, ChatMemberHandler.MY_CHAT_MEMBER))
 
         # inline query handler, this is run when you type: @botusername <query>
-        # TODO: add inline query handler for when interaction is via a group chat
-        # self.application.add_handler(InlineQueryHandler(self.inline_query))
+        self.application.add_handler(InlineQueryHandler(self.commands.inline_query))
 
         # Register error handlers
         self.application.add_error_handler(self.error_handler)
@@ -85,41 +104,99 @@ Learn more about Inquire at https://inquire.run
         # Run the bot until the user presses Ctrl-C
         self.application.run_polling()
 
-    # TODO: track users and groups
+    # Start command handler
+    async def start_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        """
+        Starts the bot with a new set of commands
+        :param update: Update object
+        :param context: CallbackContext object
+        """
+        # Create a new set of commands for each chat
+        self.commands = Commands(self.application, self.personas, (self.inquireApiKey, self.inquireApi))
+
+        # set the menu button, which is changed via /setcommands in @botfather
+        await self.application.bot.set_chat_menu_button(update.effective_chat.id)
+
+        await self.application.bot.send_chat_action(update.effective_chat.id, "typing")
+        
+        self.logger.info(f"""Bot Started from: {update.effective_chat.id}""")
+        await update.message.reply_text(f"""Inquire is a conversational chatbot that can take the form of just about any persona. For example, you can talk to a doctor, a lawyer, a therapist, or even a fictional character. Inquire is a work in progress, so please be patient as we add more personas. Check out the /help command for more information or sign up for an unrestricted account at https://inquire.chat.""")
+
+    # Extract the status change from a ChatMemberUpdated object
+    def extract_status_change(self, chat_member_update: ChatMemberUpdated) -> Optional[Tuple[bool, bool]]:
+        """
+        Extract the status change from a ChatMemberUpdated object
+        :param chat_member_update: ChatMemberUpdated object
+        :return: Tuple of (was_member, is_member)
+        """
+        status_change = chat_member_update.difference().get("status")
+        old_is_member, new_is_member = chat_member_update.difference().get("is_member", (None, None))
+
+        if status_change is None:
+            return None
+
+        old_status, new_status = status_change
+        was_member = old_status in [
+            ChatMember.MEMBER,
+            ChatMember.OWNER,
+            ChatMember.ADMINISTRATOR,
+        ] or (old_status == ChatMember.RESTRICTED and old_is_member is True)
+        is_member = new_status in [
+            ChatMember.MEMBER,
+            ChatMember.OWNER,
+            ChatMember.ADMINISTRATOR,
+        ] or (new_status == ChatMember.RESTRICTED and new_is_member is True)
+
+        return was_member, is_member
+
+    # Track the chats the bot is in
+    async def track_chats(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        """
+        Tracks the chat ids of the chats the bot is in
+        :param update: Update object
+        :param context: CallbackContext object
+        """
+        result = self.extract_status_change(update.my_chat_member)
+        if result is None:
+            return
+        was_member, is_member = result
+
+        # Handle chat types differently:
+        chat = update.effective_chat
+        if chat.type == Chat.PRIVATE:
+            if not was_member and is_member:
+                context.bot_data.setdefault("user_ids", set()).add(chat.id)
+                self.logger.info(f"New user: {update.effective_user.id}")
+            elif was_member and not is_member:
+                context.bot_data.setdefault("user_ids", set()).discard(chat.id)
+                self.logger.info(f"Removed user: {update.effective_user.id}")
+        elif chat.type in [Chat.GROUP, Chat.SUPERGROUP]:
+            if not was_member and is_member:
+                context.bot_data.setdefault("group_ids", set()).add(chat.id)
+                self.logger.info(f"New group: {chat.id}")
+            elif was_member and not is_member:
+                context.bot_data.setdefault("group_ids", set()).discard(chat.id)
+                self.logger.info(f"Removed group: {chat.id}")
 
     # Error handler to capture errors
-    async def error_handler(self, update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
+    async def error_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """
         Error handler for the bot to log errors
         :param update: Update object
         :param context: CallbackContext object
         """
+        # handle codes and errors
+        message = None
+        try:
+            (error_code, message) = context.error.args
+        except:
+            (error_code,) = context.error.args
 
-        # traceback.format_exception returns the usual python message about an exception, but as a
-        # list of strings rather than a single string, so we have to join them together.
-        tb_list = traceback.format_exception(None, context.error, context.error.__traceback__)
-        tb_string = "".join(tb_list)
+        self.logger.error(f"""Update {update} caused error {context.error}""")
 
-        # Build the message with some markup and additional information about what happened.
-        # You might need to add some logic to deal with messages longer than the 4096 character limit.
-        update_str = update.to_dict() if isinstance(update, Update) else str(update)
-        message = (
-            f"An exception was raised while handling an update\n"
-            f"update = {json.dumps(update_str, indent=2, ensure_ascii=False)}"
-            f"context.chat_data = {str(context.chat_data)}\n\n"
-            f"context.user_data = {str(context.user_data)}\n\n"
-            f"{tb_string}"
-        )
-        
-        # Log errors
-        # self.logger.error(msg="Exception while handling an update:", exc_info=context.error)
-        # self.logger.error(msg=message)
-
-        # Handle API Errors
-        (error_code, message) = context.error.args
-        
         # if message if defined, handle it more specifically
-        if message:
+        # if there is not a specific message fallback on the error code
+        if message is not None:
             message = json.loads(message)
             message_code = message['code']
             message_message = message['message']
@@ -154,106 +231,24 @@ Learn more about Inquire at https://inquire.run
             else:
                 self.logger.error(f"""Unknown Error: {error_code}""")
                 await update.message.reply_text('Unknown Error')
-
-        # self.client.ingest_events('query_data', [{"error": message}])
-
-    # Chat Commands
-
-    async def start(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-        """Sends a message with three inline buttons attached."""
-        # set the menu button, which is changed via /setcommands in @botfather
-        await self.application.bot.set_chat_menu_button(update.effective.chat.id)
-
-        await self.application.bot.send_chat_action(update.effective_chat.id, "typing")
-
-        await update.message.reply_text(self.help_text)
-    
-    async def help_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-        """Displays info on how to use the bot."""
-        await self.application.bot.send_chat_action(update.effective_chat.id, "typing")
-
-        await update.message.reply_text(self.help_text)
         
-    async def set_persona(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-        """Parses the CallbackQuery and updates the message text to greeting with a persona"""
-        await self.application.bot.send_chat_action(update.effective_chat.id, "typing")
+        # traceback.format_exception returns the usual python message about an exception, but as a
+        # list of strings rather than a single string, so we have to join them together.
+        tb_list = traceback.format_exception(None, context.error, context.error.__traceback__)
+        tb_string = "".join(tb_list)
 
-        # TODO: handle any errors
+        # Build the message with some markup and additional information about what happened.
+        update_str = update.to_dict() if isinstance(update, Update) else str(update)
+        user_message = (
+            f"An exception was raised while handling an update\n"
+            f"Error Code = {error_code}\n"
+            f"Error Message = {message}\n"
+            f"update = {json.dumps(update_str, indent=2, ensure_ascii=False)}"
+            f"context.chat_data = {str(context.chat_data)}\n\n"
+            f"context.user_data = {str(context.user_data)}\n\n"
+            f"{tb_string}"
+        )
 
-        chat_data = update.message.text.split(" ")
-        persona = chat_data[1]
-        self.persona = persona
-        await update.message.reply_text(f"You are now chatting with a {self.persona} bot, any chat will be returned with an answer")
-
-    async def set_persona_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-        """Parses the CallbackQuery and updates the message text to greeting with a persona"""
-        await self.application.bot.send_chat_action(update.effective_chat.id, "typing")
-
-        query = update.callback_query
-
-        # CallbackQueries need to be answered, even if no notification to the user is needed
-        # Some clients may have trouble otherwise. See https://core.telegram.org/bots/api#callbackquery
-        await query.answer()
-
-        self.persona = query.data
-        await query.edit_message_text(text=f"You are now chatting with a {query.data} bot, any chat will be returned with an answer")
-
-    async def query_persona(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-        """Queries the set persona."""
-        await self.application.bot.send_chat_action(update.effective_chat.id, "typing")
-
-        url = self.inquireApi + "/inquiries"
-        headers = {
-            "x-api-key": self.inquireApiKey,
-        }
-
-        payload = {
-            "connectionType": "TELEGRAM",
-            "connectionUserId": update.message.chat.id,
-            "queryType": self.persona,
-            "query": update.message.text
-        }
-
-        response = requests.post(url, headers=headers, data=payload)
-
-        # handle api errors
-        if response.status_code != 200:
-            raise Exception(response.status_code, response.text)
-
-        await update.message.reply_text(response.json()['data'])
-    
-    async def random_personas(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-        """Displays info on how to use the bot."""
-        await self.application.bot.send_chat_action(update.effective_chat.id, "typing")
-
-        url = self.inquireApi + "/inquiries"
-        headers = {
-            "x-api-key": self.inquireApiKey,
-        }
-
-        response = requests.get(url, headers=headers)
-
-        # handle api errors
-        if response.status_code != 200:
-            raise Exception(response.status_code, response.text)
-
-        keyboard = [ ]
-        # TODO: need to transition this to a inline webapp, for searching and longer responses
-        # for now limiting # of personas to 10
-        personas = 0
-        # make the list random!
-        data = response.json()['data']
-        data = random.sample(data, len(data))
-        for key in data:
-            if personas < 10:
-                keyboard.append(
-                    [
-                        InlineKeyboardButton(key['name'], callback_data=key["name"]),
-                    ],
-                )
-                personas += 1
-            else:
-                break
-
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        await update.message.reply_text("List of 10 Random Personas", reply_markup=reply_markup)
+        # Log errors
+        self.logger.error(msg="Exception while handling an update:", exc_info=context.error)
+        self.logger.error(msg=user_message)

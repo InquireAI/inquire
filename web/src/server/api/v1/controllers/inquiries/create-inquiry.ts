@@ -238,6 +238,7 @@ export async function createInquiry(
     if (!formattedResponse)
       return res.status(500).json({
         code: "INTERNAL_ERROR",
+        message: "Internal Error",
       });
 
     logger.success(
@@ -301,6 +302,7 @@ export async function createInquiry(
       logger.error("Error in querying Dust app", error);
       return res.status(500).json({
         code: "INTERNAL_ERROR",
+        message: "Internal Error",
       });
     }
 
@@ -308,6 +310,7 @@ export async function createInquiry(
       logger.error("Dust API error");
       return res.status(500).json({
         code: "INTERNAL_ERROR",
+        message: "Internal Error",
       });
     }
 
