@@ -34,6 +34,7 @@ def main():
                     id = persona['id']
                     prompt = persona['Prompt']
                     name = persona['Name']
+                    description = persona['Description']
                     page.goto(f'https://dust.tt/Lucas-Kohorst/a/{id}')
 
                     # fill in w/ the new prompt
@@ -56,6 +57,9 @@ def main():
                     App Edited with: name {name}, id {id}, specification_hash: {specification_hash}, config: {config}
                     """)
 
+                    persona['Name'] = name
+                    persona['Description'] = description
+                    persona['Prompt'] = prompt
                     persona['id'] = id
                     persona['specification_hash'] = specification_hash
                     persona['config'] = config
