@@ -15,6 +15,48 @@ datasource db {
   relationMode = "prisma"
 }
 
+model ApiKey {
+  key String @id @db.VarChar(500)
+}
+
+enum ConnectionType {
+  WEB
+  TELEGRAM
+}
+
+model Connection {
+  connectionType   ConnectionType
+  connectionUserId String
+  userId           String?
+  user             User?          @relation(fields: [userId], references: [id])
+  inquiries        Inquiry[]
+
+  @@id([connectionType, connectionUserId])
+  @@index([userId])
+}
+
+model Inquiry {
+  id               String         @id @default(cuid())
+  connectionType   ConnectionType
+  connectionUserId String
+  queryType        String
+  query            String
+
+  connection Connection @relation(fields: [connectionType, connectionUserId], references: [connectionType, connectionUserId])
+
+  @@index([connectionType, connectionUserId])
+}
+
+model Persona {
+  id                String @id
+  name              String @unique
+  specificationHash String
+  config            String
+
+  @@index([id])
+  @@index([name])
+}
+
 enum RecurringPriceDataInterval {
   month
   year
@@ -221,15 +263,15 @@ model Session {
 }
 
 model User {
-  id            String    @id @default(cuid())
+  id            String       @id @default(cuid())
   name          String?
-  email         String?   @unique
+  email         String?      @unique
   emailVerified DateTime?
   image         String?
-  telegramId    String?
   accounts      Account[]
   sessions      Session[]
   customer      Customer?
+  connections   Connection[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
