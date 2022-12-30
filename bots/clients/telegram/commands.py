@@ -157,7 +157,7 @@ Learn more about Inquire at https://inquire.run
             await self.send_message(update, f.read())
             # await update.message.reply_text(f.read())
 
-        # When a user selects a persona from the list set it
+    # When a user selects a persona from the list set it
     async def set_persona_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """
         Sets the persona for a chat, used to query the correct persona
@@ -184,6 +184,12 @@ Learn more about Inquire at https://inquire.run
         """
         await self.application.bot.send_chat_action(update.effective_chat.id, "typing")
 
+        query = update.message.text
+        # check if the user is using `/chat` or just chatting
+        if update.message.text.startswith('/chat'):
+            chat_data = update.message.text.split('/')[1].split(' ')
+            query = chat_data[2]
+
         url = self.inquireApi + "/inquiries"
         headers = {
             "x-api-key": self.inquireApiKey,
@@ -191,9 +197,9 @@ Learn more about Inquire at https://inquire.run
 
         payload = {
             "connectionType": "TELEGRAM",
-            "connectionUserId": update.message.chat.id,
+            "connectionUserId": update.message.from_user.id,
             "queryType": self.persona,
-            "query": update.message.text
+            "query": query
         }
 
         response = requests.post(url, headers=headers, data=payload)
@@ -204,6 +210,20 @@ Learn more about Inquire at https://inquire.run
 
         await self.send_message(update, response.json()['data'])
     
+    # Chat command to handle chats in groups
+    async def chat_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        """
+        Chat command to handle chats in groups
+        :param update: Update object
+        :param context: CallbackContext object
+        """
+        await self.application.bot.send_chat_action(update.effective_chat.id, "typing")
+
+        if self.persona == "":
+            await update.message.reply_text("You need to set a persona first, use /set <persona> or with @inquireai_bot <persona>")
+        else:
+            await self.query_persona(update, context)
+
     # Handle the inline query
     async def inline_query(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """

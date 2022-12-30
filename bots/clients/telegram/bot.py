@@ -62,6 +62,7 @@ class Telegram:
 help - Show a help message
 random - Show random personas
 set - Set the persona to talk to
+chat - Directly chat with the bot
 """)
             for persona in self.personas:
                 f.write(f"""{persona['name']} - {persona['description']}\n""")
@@ -80,6 +81,7 @@ set - Set the persona to talk to
         self.application.add_handler(CommandHandler("help", self.commands.help_command))
         self.application.add_handler(CommandHandler("random", self.commands.random_personas_command))
         self.application.add_handler(CommandHandler("set", self.commands.set_persona_command))
+        self.application.add_handler(CommandHandler("chat", self.commands.chat_command))
         self.application.add_handler(CommandHandler("all", self.commands.list_all_command))
 
         # inline handlers
