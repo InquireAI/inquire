@@ -4,6 +4,7 @@ from uuid import uuid4
 
 import random
 import time
+import json
 
 from telegram import __version__ as TG_VER
 
@@ -33,8 +34,6 @@ class Commands:
         self.personas = personas
         # setting initial persona to `chat`
         self.persona = persona
-
-        self.logger.info(f"""Creating a new instance with the persona: {self.persona}""")
 
         (self.inquireApiKey, self.inquireApi) = api_keys
 
@@ -84,7 +83,43 @@ Learn more about Inquire at https://inquire.run
             time.sleep(1)
         return msg  # return only the last message
 
-    # Chat Commands
+    # Put chat related data https://github.com/python-telegram-bot/python-telegram-bot/wiki/Storing-bot,-user-and-chat-related-data
+    async def put(self, data, update, context):
+        """
+        Put chat related data
+        :param update: Update object
+        :param context: CallbackContext object
+        """
+        # response could either be a chat or a callback 
+        # query, so we need to check which one it is
+        try:
+            key = update.message.chat_id
+        except:
+            key = update.callback_query.message.chat.id
+
+        # Store value
+        context.chat_data[key] = data
+
+    # Get chat related data https://github.com/python-telegram-bot/python-telegram-bot/wiki/Storing-bot,-user-and-chat-related-data
+    async def get(self, update, context):
+        """
+        Get chat related data
+        :param update: Update object
+        :param context: CallbackContext object
+        """
+        # response could either be a chat or a callback 
+        # query, so we need to check which one it is
+        try:
+            key = update.message.chat_id
+        except:
+            key = update.callback_query.message.chat.id
+
+        # Load value and send it to the user
+        value = context.chat_data.get(key, 'Not found')
+
+        return value
+
+    ### Chat Commands
 
     # Help command handler
     async def help_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -106,9 +141,13 @@ Learn more about Inquire at https://inquire.run
         """
         await self.application.bot.send_chat_action(update.effective_chat.id, "typing")
 
-        self.persona = new_persona
+        # set the persona
+        await self.put(new_persona, update, context)
 
-        await update.message.reply_text(f"You are now chatting with a {self.persona} bot, any chat will be returned with an answer")
+        # get the persona
+        persona = await self.get(update, context)
+
+        await update.message.reply_text(f"You are now chatting with a {persona} bot, any chat will be returned with an answer")
 
     # Sets the persona for a chat
     async def set_persona_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -120,17 +159,31 @@ Learn more about Inquire at https://inquire.run
         await self.application.bot.send_chat_action(update.effective_chat.id, "typing")
 
         chat_data = update.message.text.split('/')[1].split(' ')
-        persona_data = chat_data[1]
 
-        self.persona = persona_data
+        # if a chat is simply `/<persona>` it should still be accepted
+        try:
+            persona_data = chat_data[1]
+        except:
+            persona_data = chat_data[0]
+
+        # if its in a group chat the set command will look like either 
+        # `math-teacher@inquireai_bot` or `/set math-teacher@inquireai_bot`
+        # remove @inquireai_bot
+        persona_data = persona_data.split('@')[0]
+
+        # set the persona
+        await self.put(persona_data, update, context)
+
+        # get the persona
+        persona = await self.get(update, context)
 
         # if chat_data is > 3 then the user also sent a query with the command
         # also query the persona
         if len(chat_data) > 3:
-            await update.message.reply_text(f"You are now chatting with a {self.persona} bot, answering your question...", parse_mode="Markdown")
+            await update.message.reply_text(f"You are now chatting with a {persona} bot, answering your question...", parse_mode="Markdown")
             await self.query_persona(update, context)
         else:
-            await update.message.reply_text(f"You are now chatting with a {self.persona} bot, any chat will be returned with an answer")
+            await update.message.reply_text(f"You are now chatting with a {persona} bot, any chat will be returned with an answer")
 
     # List a random 10 personas for the user
     async def random_personas_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -177,7 +230,10 @@ Learn more about Inquire at https://inquire.run
         :param update: Update object
         :param context: CallbackContext object
         """
-        await update.message.reply_text(f"You are currently chatting with a {self.persona} bot")
+        # get the persona
+        persona = await self.get(update, context)
+
+        await update.message.reply_text(f"You are currently chatting with a {persona} bot")
 
     # When a user selects a persona from the list set it
     async def set_persona_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -194,8 +250,13 @@ Learn more about Inquire at https://inquire.run
         # Some clients may have trouble otherwise. See https://core.telegram.org/bots/api#callbackquery
         await query.answer()
 
-        self.persona = query.data
-        await query.edit_message_text(text=f"You are now chatting with a {query.data} bot, any chat will be returned with an answer")
+        # set the persona
+        await self.put(query.data, update, context)
+
+        # get the persona
+        persona = await self.get(update, context) 
+
+        await query.edit_message_text(text=f"You are now chatting with a {persona} bot, any chat will be returned with an answer")
 
     # Call the Inquire API to query the persona
     async def query_persona(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -210,28 +271,33 @@ Learn more about Inquire at https://inquire.run
         # check if the user is using `/chat` or just chatting
         if update.message.text.startswith('/chat'):
             chat_data = update.message.text.split('/')[1].split(' ')
-            query = chat_data[2]
+            if len(chat_data) > 1:
+                query = chat_data[2]
+                url = self.inquireApi + "/inquiries"
+                headers = {
+                    "x-api-key": self.inquireApiKey,
+                }
 
-        url = self.inquireApi + "/inquiries"
-        headers = {
-            "x-api-key": self.inquireApiKey,
-        }
+                # get the persona
+                persona = await self.get(update, context)
 
-        payload = {
-            "connectionType": "TELEGRAM",
-            "connectionUserId": update.message.from_user.id,
-            "queryType": self.persona,
-            "query": query
-        }
+                payload = {
+                    "connectionType": "TELEGRAM",
+                    "connectionUserId": update.message.from_user.id,
+                    "queryType": persona,
+                    "query": query
+                }
 
-        response = requests.post(url, headers=headers, data=payload)
+                response = requests.post(url, headers=headers, data=payload)
 
-        # handle api errors
-        if response.status_code != 200:
-            raise Exception(response.status_code, response.text)
+                # handle api errors
+                if response.status_code != 200:
+                    raise Exception(response.status_code, response.text)
 
-        await self.send_message(update, response.json()['data'])
-    
+                await self.send_message(update, response.json()['data'])
+            else:
+                await update.message.reply_text("Specify a query after such as `/chat who are you?`", parse_mode="Markdown")
+
     # Chat command to handle chats in groups
     async def chat_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """
@@ -241,7 +307,10 @@ Learn more about Inquire at https://inquire.run
         """
         await self.application.bot.send_chat_action(update.effective_chat.id, "typing")
 
-        if self.persona == "":
+        # get the persona
+        persona = await self.get(update, context)
+
+        if persona == "":
             await update.message.reply_text("You need to set a persona first, use `/set <persona>` or with `@inquireai_bot <persona>`", parse_mode="Markdown")
         else:
             await self.query_persona(update, context)

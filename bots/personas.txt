@@ -1,6 +1,8 @@
 
 help - Show a help message
+chat - Directly chat with the bot
 random - Show random personas
+persona - Show the current persona
 set - Set the persona to talk to
 python-interpreter - Act as a Python interpreter
 english-pronunciation - Act as a English Pronunciation Helper
@@ -16,7 +18,6 @@ debator - Act as a Debater
 it-architect - Act as an IT Architect
 fullstack-software-developer - Act as a Fullstack Software Developer
 tech-writer - Act as a Tech Writer
-linux-terminal - A Linux Terminal
 philosopher - Act as a Philosopher
 position-interviewer - Act as position Interviewer
 english-translator - Act as an English Translator and Improver

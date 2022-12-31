@@ -23,6 +23,7 @@ if __version_info__ < (20, 0, 0, "alpha", 1):
     )
 from telegram import ChatMember, ChatMemberUpdated, Chat, Update
 from telegram.ext import Application, CallbackQueryHandler, CommandHandler, ContextTypes, AIORateLimiter, MessageHandler, filters, InlineQueryHandler, ChatMemberHandler
+from clients.telegram.mysqlpersistence import MySQLPersistence
 
 import dotenv
 dotenv.load_dotenv()
@@ -39,6 +40,7 @@ class Telegram:
         self.telegramApiKey = os.environ.get('TELEGRAM_API_KEY')
         self.inquireApiKey = os.environ.get('INQUIRE_API_KEY')
         self.inquireApi = os.environ.get('INQUIRE_API')
+        self.dbURI = os.environ.get('DB_URI')
 
         # load all personas from the db
         url = self.inquireApi + "/inquiries"
@@ -72,45 +74,12 @@ set - Set the persona to talk to
         # Create the Application and pass it your bot's token.
         self.application = Application.builder().token(self.telegramApiKey).rate_limiter(AIORateLimiter(
                 overall_max_rate=1, overall_time_period=1, group_max_rate=1, group_time_period=1, max_retries=0
-            )).concurrent_updates(True).arbitrary_callback_data(True).build()
+            )).concurrent_updates(True).arbitrary_callback_data(True).persistence(MySQLPersistence(url=self.dbURI)).build()
 
         # direct handlers 
         self.application.add_handler(CommandHandler("start", self.start_command))
-
-        # Register error handlers
-        self.application.add_error_handler(self.error_handler)
-
-        # Run the bot until the user presses Ctrl-C
-        self.application.run_polling()
-
-    # Start command handler
-    async def start_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-        """
-        Starts the bot with a new set of commands
-        :param update: Update object
-        :param context: CallbackContext object
-        """
-        # set the menu button, which is changed via /setcommands in @botfather
-        await self.application.bot.set_chat_menu_button(update.effective_chat.id)
-
-        await self.application.bot.send_chat_action(update.effective_chat.id, "typing")
-
-        # TODO: keep track of chat id and their commands, to properly assign personas
-
-        # check if an persona was set via a deep link
-        command = update.message.text.split(" ")
-        deeplinked = False
-        if len(command) > 1:
-            deeplinked = True
-
-        base_persona = "chat"
-        if deeplinked:
-            base_persona = command[1]
-
-        self.logger.error("Deep linked: %s", deeplinked)
-        self.logger.error("Start command: %s", base_persona)
-            
         # Create a new set of commands for each distinct chat
+        base_persona = "chat"
         self.commands = Commands(self.application, base_persona, self.personas, (self.inquireApiKey, self.inquireApi))
         
         # add handlers
@@ -135,16 +104,45 @@ set - Set the persona to talk to
         self.application.add_handler(ChatMemberHandler(self.start_command, ChatMemberHandler.CHAT_MEMBER))
         self.application.add_handler(ChatMemberHandler(self.track_chats, ChatMemberHandler.MY_CHAT_MEMBER))
 
+        # inline query handler, this is run when you type: @botusername <query>
+        self.application.add_handler(InlineQueryHandler(self.commands.inline_query))
+
+        # Register error handlers
+        self.application.add_error_handler(self.error_handler)
+
+        # Run the bot until the user presses Ctrl-C
+        self.application.run_polling()
+
+    # Start command handler
+    async def start_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        """
+        Starts the bot with a new set of commands
+        :param update: Update object
+        :param context: CallbackContext object
+        """
+        # if in a group chat, set the menu button, which is changed via /setcommands in @botfather
+        print(update.effective_chat)
+        if update.effective_chat.type == "ChatType.PRIVATE":
+            await self.application.bot.set_chat_menu_button(update.effective_chat.id)
+
+        await self.application.bot.send_chat_action(update.effective_chat.id, "typing")
+
+        # check if an persona was set via a deep link
+        command = update.message.text.split(" ")
+        deeplinked = False
+        if len(command) > 1:
+            deeplinked = True
+
         if deeplinked:
             deep_link = command[1]
-           
-            # inline query handler, this is run when you type: @botusername <query>
-            self.application.add_handler(InlineQueryHandler(self.commands.inline_query))
-
             await self.commands.set_deeplink_persona(deep_link, update, context)
         else:
             self.logger.info(f"""Bot Started from: {update.effective_chat.id}""")
-            await update.message.reply_text(f"""Inquire is a conversational chatbot that can take the form of just about any persona. For example, you can talk to a doctor, a lawyer, a therapist, or even a fictional character. Inquire is a work in progress, so please be patient as we add more personas. Check out the /help command for more information or sign up for an unrestricted account at https://inquire.chat.""")
+
+            # set the base persona to just chat
+            await self.commands.put("chat", update, context)
+
+            await update.message.reply_text(f"""Inquire is a conversational chatbot that can take the form of just about any persona. For example, you can talk to a doctor, a lawyer, a therapist, or even a fictional character (or set to `chat` to just have a normal conversation). Inquire is a work in progress, so please be patient as we add more personas. Check out the /help command for more information or sign up for an unrestricted account at https://inquire.chat.""")
 
 
     # Extract the status change from a ChatMemberUpdated object
@@ -199,6 +197,7 @@ set - Set the persona to talk to
             if not was_member and is_member:
                 context.bot_data.setdefault("group_ids", set()).add(chat.id)
                 self.logger.info(f"New group: {chat.id}")
+                self.start_command(update, context)
             elif was_member and not is_member:
                 context.bot_data.setdefault("group_ids", set()).discard(chat.id)
                 self.logger.info(f"Removed group: {chat.id}")
