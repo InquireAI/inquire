@@ -1,7 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { env } from "../../../env/server.mjs";
-import { router, protectedProcedure } from "../trpc";
+import { env } from "../../../../env/server.mjs";
+import { router, protectedProcedure } from "../../trpc";
 import { createHash, createHmac } from "crypto";
 
 //  id, first_name, last_name, username, photo_url, auth_date and hash fields
@@ -45,8 +45,6 @@ export const telegramRouter = router({
         .map((key) => `${key}=${input[key as keyof TInputSchema]}`)
         .sort()
         .join("\n");
-
-      console.log(dataCheckString);
 
       const now = new Date().getTime() / 1000;
 

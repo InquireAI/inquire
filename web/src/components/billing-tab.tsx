@@ -53,7 +53,7 @@ const BillingTab: React.FC = () => {
               return (
                 <div
                   key={idx}
-                  className="flex flex-col gap-12 rounded-lg border border-b border-neutral-900 p-8 text-lg"
+                  className="flex flex-col gap-12 rounded-lg border border-neutral-900 p-8 text-lg"
                 >
                   <Switch
                     isOn={!isLoading}
