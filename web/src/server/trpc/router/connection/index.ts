@@ -28,8 +28,6 @@ export const connectionRouter = router({
           cause: "Could not find connection",
         });
 
-      // TODO: maybe make an api call to telegram to disconnect from bot?
-
       await ctx.prisma.connection.delete({
         where: {
           connectionType_connectionUserId: {
