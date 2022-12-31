@@ -2,6 +2,7 @@ import { TRPCError } from "@trpc/server";
 import type Stripe from "stripe";
 import { z } from "zod";
 import { env } from "../../../env/server.mjs";
+import { getBaseUrl } from "../../../utils/get-base-url";
 import { stripe } from "../../stripe/client";
 import { router, protectedProcedure } from "../trpc";
 
@@ -49,8 +50,8 @@ export const checkoutSessionRouter = router({
         await stripe.checkout.sessions.create({
           customer: user.customer.id,
           mode: "subscription",
-          success_url: input.successUrl,
-          cancel_url: input.cancelUrl,
+          success_url: `${getBaseUrl()}${input.successUrl}`,
+          cancel_url: `${getBaseUrl()}${input.cancelUrl}`,
           line_items: [
             {
               price: env.STRIPE_PRICE_ID,
@@ -122,8 +123,8 @@ export const checkoutSessionRouter = router({
             metadata: { subscriptionId: input.subscriptionId },
           },
           payment_method_types: ["card"],
-          success_url: input.successUrl,
-          cancel_url: input.cancelUrl,
+          success_url: `${getBaseUrl()}${input.successUrl}`,
+          cancel_url: `${getBaseUrl()}${input.cancelUrl}`,
         });
 
       if (!stripeCheckoutSession.url)

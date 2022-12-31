@@ -22,6 +22,7 @@ const ConnectionsTab: React.FC = () => {
           onComponent={
             <TelegramLoginButton
               botName="inquireai_dev_bot"
+              cornerRadius={5}
               dataOnauth={(res) => {
                 console.log(res);
                 connectTelegramAccount(res);

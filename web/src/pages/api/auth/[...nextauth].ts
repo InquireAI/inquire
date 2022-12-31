@@ -6,6 +6,7 @@ import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { env } from "../../../env/server.mjs";
 import { prisma } from "../../../server/db/client";
 import { stripe } from "../../../server/stripe/client";
+import CredentialsProvider from "next-auth/providers/credentials";
 
 export const authOptions: NextAuthOptions = {
   // Include user.id on session
@@ -33,9 +34,9 @@ export const authOptions: NextAuthOptions = {
     },
   },
   callbacks: {
-    session({ session, user }) {
-      if (session.user) {
-        session.user.id = user.id;
+    session({ session, token }) {
+      if (session.user && token.sub) {
+        session.user.id = token.sub;
       }
       return session;
     },
@@ -47,8 +48,23 @@ export const authOptions: NextAuthOptions = {
       clientId: env.GOOGLE_CLIENT_ID,
       clientSecret: env.GOOGLE_CLIENT_SECRET,
     }),
+    // TODO: finish telegram credentials provider
+    CredentialsProvider({
+      id: "telegram",
+      name: "Telegram",
+      type: "credentials",
+      credentials: {},
+      authorize(credentials, req) {
+        console.log(credentials);
+        console.log(req);
+        return null;
+      },
+    }),
     // ...add more providers here
   ],
+  session: {
+    strategy: "jwt",
+  },
 };
 
 export default NextAuth(authOptions);
