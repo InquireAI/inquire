@@ -70,7 +70,7 @@ export const telegramRouter = router({
         });
       }
 
-      const user = await ctx.prisma.connection.create({
+      await ctx.prisma.connection.create({
         data: {
           userId: ctx.session.user.id,
           connectionType: "TELEGRAM",
@@ -78,12 +78,6 @@ export const telegramRouter = router({
         },
       });
 
-      if (!user)
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "User not found",
-        });
-
-      return user;
+      return null;
     }),
 });
