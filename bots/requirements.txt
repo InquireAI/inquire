@@ -3,14 +3,6 @@ nest-asyncio==1.5.6
 python-dotenv==0.21.0
 requests==2.28.1
 
-# web
-playwright==1.28.0
-google-search-results==2.4.1
-
-# ai
-openai==0.25.0
-stability-sdk==0.3.0
-
 # db
 axiom-py==0.1.0b5
 

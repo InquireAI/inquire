@@ -1,0 +1,107 @@
+
+help - Show a help message
+chat - Directly chat with the bot
+random - Show random personas
+persona - Show the current persona
+set - Set the persona to talk to
+python-interpreter - Act as a Python interpreter
+english-pronunciation - Act as a English Pronunciation Helper
+life-coach - Act as a Life Coach
+journalist - Act as a Journalist
+svg-designer - Act as an SVG designer
+composer - Act as a Composer
+etymologist - Act as a Etymologist
+web-designer - Act as a Web Design Consultant
+tea-taster - Act As A Tea-Taster
+javascript-console - Act as a JavaScript Console
+debator - Act as a Debater
+it-architect - Act as an IT Architect
+fullstack-software-developer - Act as a Fullstack Software Developer
+tech-writer - Act as a Tech Writer
+philosopher - Act as a Philosopher
+position-interviewer - Act as position Interviewer
+english-translator - Act as an English Translator and Improver
+recruiter - Act as a Recruiter
+writing-tutor - Act as an AI Writing Tutor
+screenwriter - Act as a Screenwriter
+accountant - Act as an Accountant
+matematician - Act as a Mathematician
+math-teacher - Act as a Math Teacher
+gaslighter - Act as a Gaslighter
+chef - Act As A Chef
+fallacy-finder - Act as a Fallacy Finder
+social-media-manager - Act as a Social Media Manager
+career-counselor - Act as a Career Counselor
+plagiarism-checker - Act as a Plagiarism Checker
+storyteller - Act as a Storyteller
+artist - Act as an Artist Advisor
+elocutionist - Act as an Elocutionist
+pet-behaviorist - Act as a Pet Behaviorist
+public-speaking-coach - Act as a Public Speaking Coach
+cyber-security-specialist - Act as a Cyber Security Specialist
+debat-coach - Act as a Debate Coach
+biblical-translator - Act as a Biblical Translator
+film-critic - Act as a Film Critic
+philosophy-teacher - Act as a Philosophy Teacher
+motivational-sepaker - Act as a Motivational Speaker
+poet - Act as a Poet
+florist - Act As A Florist
+advertiser - Act as an Advertiser
+financial-analyst - Act As A Financial Analyst
+makeup-artist - Act as a Makeup Artist
+essay-writer - Act as an Essay Writer
+adventure-game - Act as a Text Based Adventure Game
+classical-music-composer - Act as a Classical Music Composer
+babysitter - Act as a Babysitter
+escape-the-box - Act as an AI Trying to Escape the Box
+teacher - Act as an Instructor in a School
+dietitian - Act as a Dietitian
+travel-guide - Act as a Travel Guide
+investment-manager - Act As An Investment Manager
+midjourney-generator - Act as a Midjourney Prompt Generator
+domain-name-generator - Act as a Smart Domain Name Generator
+comedian - Act as a Stand-up Comedian
+journal-reviewer - Act as a Journal Reviewer
+diy-expert - Act as a DIY Expert
+commentariat - Act as a Commentariat
+yogi - Act as a Yogi
+magician - Act as a Magician
+motivational-coach - Act as a Motivational Coach
+synonym-finder - Act as a Synonym finder
+astrologer - Act as an Astrologer
+content-creator - Act as an Educational Content Creator
+hypnotherapist - Act as a Hypnotherapist
+mechanic - Act As An Automobile Mechanic
+data-visualizer - Act as a Scientific Data Visualizer
+character - Act as ‘Character’ from ‘Movie/Book/Anything’
+digital-art-gallery-guide - Act as a Digital Art Gallery Guide
+gnomist - Act as a Gnomist
+novelist - Act as a Novelist
+self-help - Act as a Self-Help Book
+personal-trainer - Act as a Personal Trainer
+football-commentator - Act as a Football Commentator
+rapper - Act as a Rapper
+aphorism - Act as an Aphorism Book
+influencer - Act as a Social Media Influencer
+lunatic - Act as a Lunatic
+developer-realations - Act as a Developer Relations consultant
+movie-critic - Act as a Movie Critic
+ascii-artist - Act as an Ascii Artist
+chess-player - Act as an Chess Player
+relationship-coach - Act as a Relationship Coach
+historian - Act as a Historian
+dentist - Act as a Dentist
+statistician - Act as a Statistician
+it-expert - Act as an IT Expert
+prompt-generator - Act as a Prompt Generator
+tech-reviewer - Act as a Tech Reviewer
+ux-designer - Act as a UX/UI Developer
+sql-terminal - Act as a SQL terminal
+interior-decorator - Act as an Interior Decorator
+title-generator - Act as a Fancy Title Generator
+excel-sheet - Act as an Excel Sheet
+socrat - Act as a Socrat
+logistician - Act as a Logistician
+real-estate-agent - Act as a Real Estate Agent
+academiician - Act as an Academician
+car-navigation - Act as a Car Navigation System

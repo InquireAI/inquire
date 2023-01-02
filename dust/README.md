@@ -23,6 +23,7 @@ Clones a base dust app (https://dust.tt/Lucas-Kohorst/a/c5eca429b8), then fills 
 
 Note: while running depending on your github account if it has 2fa this script will print out the mobile code for you to input to authenticate
 
+
 - `editApp.py` reads from `db.json` and edits the app to add the persona
 
 - `pushDB.py` reads from `db.json` which looks like this 

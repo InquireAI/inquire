@@ -50,6 +50,8 @@ model Inquiry {
 model Persona {
   id                String @id
   name              String @unique
+  prompt            String                 @db.VarChar(5000)
+  description       String                 @db.VarChar(5000)
   specificationHash String
   config            String
 

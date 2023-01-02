@@ -26,6 +26,7 @@ export type NotFoundRes = {
 
 export type InternalError = {
   code: "INTERNAL_ERROR";
+  message: string;
 };
 
 export type InvalidSubscription = {

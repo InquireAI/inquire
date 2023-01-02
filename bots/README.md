@@ -1,91 +1,44 @@
 # Inquire
 
-Inquire is a generalized chatbot ready to handle anything you throw at it. 
+Inquire is a converstational chatbot that can take the form of just about any persona. Learn more at [inquire.run](https://inquire.run)
 
-## Features
-You can view all features by sending `/help` to the bot
-- `/ask`, ask chatGPT anything receive a response
-- `/draw`, draw pictures using stablediffusion
-- `/search`, give chatGPT access to Google
+## Features 
+- Chat with any persona available on inquire
+- Chats and groupchats are tracked and saved
+- Inline commands are supported, message the bot in a groupchat with `@BotName <command>` to use it
+- Full command menu with a list of all personas available
 
-## Install
-### Locally
-```bash
-# make sure to have python>3.8
-python3.8 -m venv .venv
-source .venv/bin/activate
-
-# make sure to have pip >22, upgrade with
-python -m pip install --upgrade pip
-
-# setup environment
-pip install -r requirements.txt
-
-# install additional packages
-pip install python-telegram-bot[rate-limiter]
-pip install python-telegram-bot[callback-data]
-
-# install playwright for headless browser
-playwright install 
-playwright install-deps
+### Full Set of Commands
+Inquire's full set of commands available are listed below 
+```
+help - Show a help message
+random - Show random personas
+set - Set the persona to talk to
+all - view a list of all personas and their descriptions that are available
+<list of all personas as commands>
 ```
 
-### Docker 
-Build and run your Dockerfile
-```bash
-docker build . --tag inquire
+## Installation and Setup
+### Prerequisites
+- [Docker](https://docs.docker.com/install/)
+- [Inquire API Key](https://inquire.run)
+- [Telegram Bot Token](###Creating-and-setting-up-the-Telegram-Bot)
+
+### Building and Deploying 
+The Telegram bot can be built and deployed via a docker container
+```
+docker build -t inquire-bot .
+docker run --env-file .env -d inquire-bot
 ```
 
-## Telegram Bot Setup
-Copy `.env.example` and fill it in with the relevant API keys
-```bash
-cp .env.example .env
-```
-
-The `.env` file is layed out with the following keys
-```bash
-TELEGRAM_API_KEY=# (required) used to identify and control your bot
-#TELEGRAM_USER_ID=# (optional) used to authenticate access to your bot to just a given account
-
-OPENAI_EMAIL=# (required) email to access the openai account that is being used for chatgpt
-OPENAI_PASSWORD=# (required) password to access the openai account that is being used for chatgpt
-
-STABILITY_API_KEY=# (required) API key for stablediffusion to generate drawings
-SERP_API_KEY=# (required) API key for google searches
-
-AXIOM_TOKEN==# (required) for pushing to axiom for logging
-```
-
-You can obtain the required API Keys below
-- [Telegram](https://core.telegram.org/bots/tutorial#obtain-your-bot-token)
-- [Dream Studio StableDiffusion](https://beta.dreamstudio.ai/membership?tab=home)
-- [SERP API Google Searches](https://serpapi.com/)
-
-## Running 
-### Locally 
-```bash
-# if your environment is installed correct
-python server.py
-```
-
-### Docker
-```bash
-docker run -d --name inquire inquire --env-file .env
-```
-
-You will also need to go the bot that you created via `@Botfather`, start a chat with it, and click start. 
-
-## Documentation
-```
-# generate pydoc documentation
-chmod +x scripts/docs.sh
-./scripts/docs.sh
-```
-
-## Credits and Libraries Used
-- [OpenAI](https://openai.com/)
-- [StableDiffusion](https://github.com/Stability-AI/StableDiffusion)
-- [SerpAPI](https://serpapi.com/)
-- [PTB](https://docs.python-telegram-bot.org/en/stable/index.html)
-- Original Creator [@Altryne](https://twitter.com/altryne/status/1598902799625961472) on Twitter
-- Based on [Daniel Gross's whatsapp gpt](https://github.com/danielgross/whatsapp-gpt) package.
+### Creating and setting up the Telegram Bot
+1. Create a new bot by messaging [@BotFather](https://t.me/BotFather) on Telegram
+2. Copy the bot token and add it to the `.env` file
+3. Confiigure the bot by messaging [@BotFather](https://t.me/BotFather) on Telegram with the following commands 
+    - `/setprivacy` - set to disable
+    - `/setcommands` - set to the full set of commands, which you can find by messaging the inquire bot `/all` this is a full list of base commands and personas
+    - `/setdescription` - set to a description of the bot, this will be displayed when a user clicks on the bot's profile
+    - `/setabouttext` - set to a description of the bot, this will be displayed when a user starts the bot
+    - `/setuserpic` - set to a profile picture for the bot
+    - `/setinlinefeedback` - set to enable, to allow a user in a groupchat to use the bot inline (i.e. @BotName <command>)
+4. Start chatting!

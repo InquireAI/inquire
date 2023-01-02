@@ -29,10 +29,6 @@ def main():
         with open("app.json") as f:
             data = json.load(f)
             out_data = {"personas": []}
-
-            # TODO: check if app aleady exists, if it does simply edit it
-            # otherwise clone and create a new app
-
             for persona in data['personas']:
                 name = persona['Name']
                 description = persona['Description']
