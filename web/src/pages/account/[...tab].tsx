@@ -1,7 +1,8 @@
 import { Tab } from "@headlessui/react";
 import type { GetServerSideProps, InferGetServerSidePropsType } from "next";
+import Link from "next/link";
 import { useRouter } from "next/router";
-import React, { Fragment, useState } from "react";
+import React, { Fragment, useEffect, useState } from "react";
 import { AccountLayout } from "../../components/account-layout";
 import BillingTab from "../../components/billing-tab";
 import ConnectionsTab from "../../components/connections-tab";
@@ -12,27 +13,36 @@ import type { NextPageWithLayout } from "../_app";
 type TabConfig = {
   name: string;
   component: React.ReactElement;
+  href: string;
 };
 
 const Account: NextPageWithLayout<Props> = () => {
   const router = useRouter();
 
-  const tabName = (router.query?.tab as string[])[0];
+  const [tabIndex, setTabIndex] = useState(0);
 
-  let initialTab = 0;
+  useEffect(() => {
+    const tabName = (router.query?.tab as string[])[0];
 
-  if (tabName === "billing") initialTab = 0;
+    let initialTab = 0;
 
-  if (tabName === "connections") initialTab = 1;
+    if (tabName === "billing") initialTab = 0;
+    else if (tabName === "connections") initialTab = 1;
+    else router.push("/404");
+
+    setTabIndex(initialTab);
+  }, [router.query.tab]);
 
   const [tabs] = useState<TabConfig[]>([
     {
       name: "Billing",
       component: <BillingTab />,
+      href: "/account/billing",
     },
     {
       name: "Connections",
       component: <ConnectionsTab />,
+      href: "/account/connections",
     },
   ]);
 
@@ -41,24 +51,7 @@ const Account: NextPageWithLayout<Props> = () => {
       <main className="pt-20">
         <div className="mx-auto max-w-7xl">
           <div className="flex flex-row">
-            <Tab.Group
-              as={Fragment}
-              vertical
-              defaultIndex={initialTab}
-              onChange={(index) => {
-                if (index === 0) {
-                  router.push("/account/billing");
-                  return;
-                }
-
-                if (index === 1) {
-                  router.push("/account/connections");
-                  return;
-                }
-
-                return;
-              }}
-            >
+            <Tab.Group as={Fragment} vertical selectedIndex={tabIndex}>
               <Tab.List className="flex flex-col gap-4 space-y-1 rounded-xl p-1">
                 {tabs.map((t, idx) => (
                   <Tab
@@ -73,7 +66,7 @@ const Account: NextPageWithLayout<Props> = () => {
                       )
                     }
                   >
-                    {t.name}
+                    <Link href={t.href}>{t.name}</Link>
                   </Tab>
                 ))}
               </Tab.List>
