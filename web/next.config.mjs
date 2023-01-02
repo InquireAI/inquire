@@ -13,6 +13,15 @@ const config = {
     locales: ["en"],
     defaultLocale: "en",
   },
+  async redirects() {
+    return [
+      {
+        source: "/account",
+        destination: "/account/billing",
+        permanent: true,
+      },
+    ];
+  },
   images: {
     remotePatterns: [
       {

@@ -17,4 +17,13 @@ export const userRouter = router({
 
     return user;
   }),
+  connections: protectedProcedure.query(async ({ ctx }) => {
+    const connections = await ctx.prisma.connection.findMany({
+      where: {
+        userId: ctx.session.user.id,
+      },
+    });
+
+    return connections;
+  }),
 });
