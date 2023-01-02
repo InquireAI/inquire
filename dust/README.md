@@ -6,7 +6,7 @@ Waiting on dust to have [import/export](https://github.com/dust-tt/dust/issues/1
 
 In order to quickly push a lot of new personas into dust apps and into the database `createApp.py` and `pushDB.py` were created to handle the automation
 
-`createApp.py` reads from `app.json` which looks like
+- `createApp.py` reads from `app.json` which looks like
 ```
 { 
     "personas": [
@@ -23,7 +23,10 @@ Clones a base dust app (https://dust.tt/Lucas-Kohorst/a/c5eca429b8), then fills 
 
 Note: while running depending on your github account if it has 2fa this script will print out the mobile code for you to input to authenticate
 
-`pushDB.py` reads from `db.json` which looks like this 
+
+- `editApp.py` reads from `db.json` and edits the app to add the persona
+
+- `pushDB.py` reads from `db.json` which looks like this 
 ```
 {
     "personas": [
