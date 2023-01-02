@@ -16,19 +16,19 @@ const BillingTab: React.FC = () => {
   if (!isLoading && !customer.subscriptions.length) {
     return (
       <div className="flex min-h-full flex-grow flex-col items-center justify-center gap-2 font-medium">
-        <div className="flex w-full flex-col justify-evenly gap-5 rounded-xl border border-gray-200 bg-gray-100 p-10 md:w-1/2 lg:w-1/3">
+        <div className="flex w-full flex-col justify-evenly gap-5 rounded-xl border border-neutral-200 bg-neutral-100 p-10 md:w-1/2 lg:w-1/3">
           <div className="w-full">
-            <div className="border-b border-gray-300">
+            <div className="border-b border-neutral-300">
               <p className="mb-2 text-4xl">Premium</p>
               <p className="text-sm">Super-charge your ai assistant</p>
             </div>
           </div>
           <div>
             <p className="text-4xl">$5</p>
-            <p className="text-sm text-gray-600">per month</p>
+            <p className="text-sm text-neutral-600">per month</p>
           </div>
           <SubscribeButton />
-          <ul className="list-disc items-center px-5 text-base font-light text-gray-600">
+          <ul className="list-disc items-center px-5 text-base font-light text-neutral-600">
             <li>Unlimited Inquiries</li>
             <li>Access to all inquire prompts</li>
           </ul>
@@ -53,7 +53,7 @@ const BillingTab: React.FC = () => {
               return (
                 <div
                   key={idx}
-                  className="flex flex-col border-b border-b-gray-200 py-2"
+                  className="flex flex-col gap-12 rounded-lg border border-neutral-900 p-8 text-lg"
                 >
                   <Switch
                     isOn={!isLoading}
