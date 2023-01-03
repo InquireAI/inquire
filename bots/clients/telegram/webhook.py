@@ -3,6 +3,7 @@ from clients.telegram.commands import Commands
 import os
 import logging
 import traceback
+import html
 
 from dataclasses import dataclass
 from http import HTTPStatus
@@ -37,13 +38,14 @@ from clients.telegram.mysqlpersistence import MySQLPersistence
 import dotenv
 dotenv.load_dotenv()
 
+### Custom Types for Webhooks
+
 @dataclass
 class WebhookUpdate:
     """Simple dataclass to wrap a custom update type"""
 
     user_id: int
     payload: str
-
 
 class CustomContext(CallbackContext[ExtBot, dict, dict, dict]):
     """
@@ -75,6 +77,9 @@ class Telegram:
         self.inquireApi = os.environ.get('INQUIRE_API')
         self.dbURI = os.environ.get('DB_URI')
 
+        self.webhook_url = "https://e36e-3-82-104-41.ngrok.io"
+        self.port = 8443
+
         # load all personas from the db
         url = self.inquireApi + "/inquiries"
         headers = {
@@ -103,12 +108,6 @@ set - Set the persona to talk to
             for persona in self.personas:
                 f.write(f"""{persona['name']} - {persona['description']}\n""")
             self.logger.info("Personas loaded")
-
-        context_types = ContextTypes(context=CustomContext)
-        # Create the Application and pass it your bot's token.
-        self.application = Application.builder().token(self.telegramApiKey).context_types(context_types).updater(None).rate_limiter(AIORateLimiter(
-                overall_max_rate=1, overall_time_period=1, group_max_rate=1, group_time_period=1, max_retries=0
-            )).concurrent_updates(True).arbitrary_callback_data(True).persistence(MySQLPersistence(url=self.dbURI)).build()
 
     # Start command handler
     async def start_command(self, update: Update, context: CustomContext) -> None:
@@ -140,7 +139,6 @@ set - Set the persona to talk to
             await self.commands.put("chat", update, context)
 
             await update.message.reply_text(f"""Inquire is a conversational chatbot that can take the form of just about any persona. For example, you can talk to a doctor, a lawyer, a therapist, or even a fictional character (or set to `chat` to just have a normal conversation). Inquire is a work in progress, so please be patient as we add more personas. Check out the /help command for more information or sign up for an unrestricted account at https://inquire.chat.""")
-
 
     # Extract the status change from a ChatMemberUpdated object
     def extract_status_change(self, chat_member_update: ChatMemberUpdated) -> Optional[Tuple[bool, bool]]:
@@ -259,65 +257,60 @@ set - Set the persona to talk to
         self.logger.error(msg="Exception while handling an update:", exc_info=context.error)
         self.logger.error(msg=user_message)
 
-    ### Webhook Handlers
-
     # Main function for setting up the bot and the webserver
     async def main(self) -> None:
         """Set up the application and a custom webserver."""
+        context_types = ContextTypes(context=CustomContext)
+        # Create the Application and pass it your bot's token.
+        application = Application.builder().token(self.telegramApiKey).context_types(context_types).updater(None).rate_limiter(AIORateLimiter(
+                overall_max_rate=1, overall_time_period=1, group_max_rate=1, group_time_period=1, max_retries=0
+            )).concurrent_updates(True).arbitrary_callback_data(True).persistence(MySQLPersistence(url=self.dbURI)).build()
 
-        self.webhook_url = "https://e36e-3-82-104-41.ngrok.io"
-        admin_chat_id = 779540407
-        self.port = 8443
+        application.bot_data["url"] = self.webhook_url
 
-        self.application.bot_data["url"] = self.webhook_url
-        self.application.bot_data["admin_chat_id"] = admin_chat_id
+        # direct handler
+        application.add_handler(CommandHandler("start", self.start_command))
 
-        # direct handlers 
-        self.application.add_handler(CommandHandler("start", self.start_command))
         # Create a new set of commands for each distinct chat
         base_persona = "chat"
-        self.commands = Commands(self.application, base_persona, self.personas, (self.inquireApiKey, self.inquireApi))
-        
-        # add handlers
+        self.commands = Commands(application, base_persona, self.personas, (self.inquireApiKey, self.inquireApi))
+
         # direct handlers
-        self.application.add_handler(CommandHandler("help", self.commands.help_command))
-        self.application.add_handler(CommandHandler("random", self.commands.random_personas_command))
-        self.application.add_handler(CommandHandler("set", self.commands.set_persona_command))
-        self.application.add_handler(CommandHandler("chat", self.commands.chat_command))
-        self.application.add_handler(CommandHandler("all", self.commands.list_all_command))
-        self.application.add_handler(CommandHandler("persona", self.commands.current_persona_command))
+        application.add_handler(CommandHandler("help", self.commands.help_command))
+        application.add_handler(CommandHandler("random", self.commands.random_personas_command))
+        application.add_handler(CommandHandler("set", self.commands.set_persona_command))
+        application.add_handler(CommandHandler("chat", self.commands.chat_command))
+        application.add_handler(CommandHandler("all", self.commands.list_all_command))
+        application.add_handler(CommandHandler("persona", self.commands.current_persona_command))
 
         # inline handlers
-        self.application.add_handler(CallbackQueryHandler(self.commands.set_persona_callback))
+        application.add_handler(CallbackQueryHandler(self.commands.set_persona_callback))
 
         # generic command handler 
-        self.application.add_handler(MessageHandler(filters.COMMAND, self.commands.set_persona_command))
+        application.add_handler(MessageHandler(filters.COMMAND, self.commands.set_persona_command))
 
         # general chat handler 
-        self.application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self.commands.query_persona))
+        application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self.commands.query_persona))
 
         # chat stats handler
-        self.application.add_handler(ChatMemberHandler(self.start_command, ChatMemberHandler.CHAT_MEMBER))
-        self.application.add_handler(ChatMemberHandler(self.track_chats, ChatMemberHandler.MY_CHAT_MEMBER))
+        application.add_handler(ChatMemberHandler(self.start_command, ChatMemberHandler.CHAT_MEMBER))
+        application.add_handler(ChatMemberHandler(self.track_chats, ChatMemberHandler.MY_CHAT_MEMBER))
 
         # inline query handler, this is run when you type: @botusername <query>
-        self.application.add_handler(InlineQueryHandler(self.commands.inline_query))
+        application.add_handler(InlineQueryHandler(self.commands.inline_query))
 
         # Register error handlers
-        self.application.add_error_handler(self.error_handler)
+        application.add_error_handler(self.error_handler)
 
         # Pass webhook settings to telegram
-        await self.application.bot.set_webhook(url=f"{self.webhook_url}/telegram")
-
-        app = self.application
+        await application.bot.set_webhook(url=f"{self.webhook_url}/telegram")
 
         # Set up webserver
         async def telegram(request: Request) -> Response:
             """Handle incoming Telegram updates by putting them into the `update_queue`"""
-            await app.update_queue.put(
-                Update.de_json(data=await request.json(), bot=app.bot)
+            await application.update_queue.put(
+                Update.de_json(data=await request.json(), bot=application.bot)
             )
-            self.logger.info(msg=f"Received update from Telegram: {await request.json()}")
             return Response()
 
         async def health(_: Request) -> PlainTextResponse:
@@ -330,18 +323,16 @@ set - Set the persona to talk to
                 Route("/healthcheck", health, methods=["GET"]),
             ]
         )
-        
         webserver = uvicorn.Server(
             config=uvicorn.Config(
                 app=starlette_app,
                 port=self.port,
-                use_colors=False,
                 host="127.0.0.1",
             )
         )
 
         # Run application and webserver together
-        async with self.application:
-            await self.application.start()
+        async with application:
+            await application.start()
             await webserver.serve()
-            await self.application.stop()
+            await application.stop()

@@ -4,6 +4,7 @@ WORKDIR /app
 
 # Create the environment:
 COPY ./server.py .
+COPY ./certs /app/certs/
 COPY ./requirements.txt .
 COPY ./clients /app/clients/
 
@@ -19,6 +20,7 @@ RUN python -m pip install --upgrade pip
 RUN pip install -r requirements.txt
 RUN pip install python-telegram-bot[rate-limiter]
 RUN pip install python-telegram-bot[callback-data]
+RUN pip install python-telegram-bot[webhooks]
 RUN pip install sqlalchemy
 RUN pip3 install mysqlclient
 

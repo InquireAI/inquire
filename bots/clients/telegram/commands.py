@@ -4,7 +4,7 @@ from uuid import uuid4
 
 import random
 import time
-import json
+from dataclasses import dataclass
 
 from telegram import __version__ as TG_VER
 
@@ -20,11 +20,34 @@ if __version_info__ < (20, 0, 0, "alpha", 1):
         f"visit https://docs.python-telegram-bot.org/en/v{TG_VER}/examples.html"
     )
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, InlineQueryResultArticle, InputTextMessageContent
-from telegram.ext import ContextTypes
+from telegram.ext import ContextTypes, Application, CallbackContext, ExtBot
+
+@dataclass
+class WebhookUpdate:
+    """Simple dataclass to wrap a custom update type"""
+
+    user_id: int
+    payload: str
+
+class CustomContext(CallbackContext[ExtBot, dict, dict, dict]):
+    """
+    Custom CallbackContext class that makes `user_data` available for updates of type
+    `WebhookUpdate`.
+    """
+
+    @classmethod
+    def from_update(
+        cls,
+        update: object,
+        application: "Application",
+    ) -> "CustomContext":
+        if isinstance(update, WebhookUpdate):
+            return cls(application=application, user_id=update.user_id)
+        return super().from_update(update, application)
 
 class Commands:
     def __init__(self, application, persona, personas, api_keys):
-         # Enable logging
+        # Enable logging
         logging.basicConfig(
             format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
         )
@@ -84,7 +107,7 @@ Learn more about Inquire at https://inquire.run
         return msg  # return only the last message
 
     # Put chat related data https://github.com/python-telegram-bot/python-telegram-bot/wiki/Storing-bot,-user-and-chat-related-data
-    async def put(self, data, update, context):
+    async def put(self, data, update, context: CustomContext):
         """
         Put chat related data
         :param update: Update object
@@ -101,7 +124,7 @@ Learn more about Inquire at https://inquire.run
         context.chat_data[key] = data
 
     # Get chat related data https://github.com/python-telegram-bot/python-telegram-bot/wiki/Storing-bot,-user-and-chat-related-data
-    async def get(self, update, context):
+    async def get(self, update, context: CustomContext):
         """
         Get chat related data
         :param update: Update object
@@ -122,7 +145,7 @@ Learn more about Inquire at https://inquire.run
     ### Chat Commands
 
     # Help command handler
-    async def help_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    async def help_command(self, update: Update, context: CustomContext) -> None:
         """
         Sends the help text to the user
         :param update: Update object
@@ -133,7 +156,7 @@ Learn more about Inquire at https://inquire.run
         await update.message.reply_text(self.help_text, parse_mode="Markdown")
     
     # Set deeplink persona
-    async def set_deeplink_persona(self, new_persona, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    async def set_deeplink_persona(self, new_persona, update: Update, context: CustomContext) -> None:
         """
         Set the deeplink persona
         :param update: Update object
@@ -150,7 +173,7 @@ Learn more about Inquire at https://inquire.run
         await update.message.reply_text(f"You are now chatting with a {persona} bot, any chat will be returned with an answer")
 
     # Sets the persona for a chat
-    async def set_persona_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    async def set_persona_command(self, update: Update, context: CustomContext) -> None:
         """
         Sets the persona for a chat, used to query the correct persona
         :param update: Update object
@@ -186,7 +209,7 @@ Learn more about Inquire at https://inquire.run
             await update.message.reply_text(f"You are now chatting with a {persona} bot, any chat will be returned with an answer")
 
     # List a random 10 personas for the user
-    async def random_personas_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    async def random_personas_command(self, update: Update, context: CustomContext) -> None:
         """
         List a random 10 personas for the user
         :param update: Update object
@@ -213,7 +236,7 @@ Learn more about Inquire at https://inquire.run
         await update.message.reply_text("List of 10 Random Personas", reply_markup=reply_markup)
 
     # List all commands and personas that can be used
-    async def list_all_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    async def list_all_command(self, update: Update, context: CustomContext) -> None:
         """
         List all commands and personas that can be used
         :param update: Update object
@@ -224,7 +247,7 @@ Learn more about Inquire at https://inquire.run
             # await update.message.reply_text(f.read())
 
     # Sends the current persona to the user
-    async def current_persona_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    async def current_persona_command(self, update: Update, context: CustomContext) -> None:
         """
         Sends the current persona to the user
         :param update: Update object
@@ -236,7 +259,7 @@ Learn more about Inquire at https://inquire.run
         await update.message.reply_text(f"You are currently chatting with a {persona} bot")
 
     # When a user selects a persona from the list set it
-    async def set_persona_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    async def set_persona_callback(self, update: Update, context: CustomContext) -> None:
         """
         Sets the persona for a chat, used to query the correct persona
         :param update: Update object
@@ -259,7 +282,7 @@ Learn more about Inquire at https://inquire.run
         await query.edit_message_text(text=f"You are now chatting with a {persona} bot, any chat will be returned with an answer")
 
     # Call the Inquire API to query the persona
-    async def query_persona(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    async def query_persona(self, update: Update, context: CustomContext) -> None:
         """
         Call the Inquire API to query the persona
         :param update: Update object
@@ -268,38 +291,41 @@ Learn more about Inquire at https://inquire.run
         await self.application.bot.send_chat_action(update.effective_chat.id, "typing")
 
         query = update.message.text
-        # check if the user is using `/chat` or just chatting
-        if update.message.text.startswith('/chat'):
-            chat_data = update.message.text.split('/')[1].split(' ')
-            if len(chat_data) > 1:
-                query = chat_data[2]
-                url = self.inquireApi + "/inquiries"
-                headers = {
-                    "x-api-key": self.inquireApiKey,
-                }
 
-                # get the persona
-                persona = await self.get(update, context)
-
-                payload = {
-                    "connectionType": "TELEGRAM",
-                    "connectionUserId": update.message.from_user.id,
-                    "queryType": persona,
-                    "query": query
-                }
-
-                response = requests.post(url, headers=headers, data=payload)
-
-                # handle api errors
-                if response.status_code != 200:
-                    raise Exception(response.status_code, response.text)
-
-                await self.send_message(update, response.json()['data'])
-            else:
+        # if the user is using the `/chat` command then remove it
+        if query.startswith("/chat"):
+            query = query.split(" ")
+            if len(query) <= 1:
                 await update.message.reply_text("Specify a query after such as `/chat who are you?`", parse_mode="Markdown")
+                return
+        
+        query = update.message.text
+
+        url = self.inquireApi + "/inquiries"
+        headers = {
+            "x-api-key": self.inquireApiKey,
+        }
+
+        # get the persona
+        persona = await self.get(update, context)
+
+        payload = {
+            "connectionType": "TELEGRAM",
+            "connectionUserId": update.message.from_user.id,
+            "queryType": persona,
+            "query": query
+        }
+
+        response = requests.post(url, headers=headers, data=payload)
+
+        # handle api errors
+        if response.status_code != 200:
+            raise Exception(response.status_code, response.text)
+
+        await self.send_message(update, response.json()['data'])
 
     # Chat command to handle chats in groups
-    async def chat_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    async def chat_command(self, update: Update, context: CustomContext) -> None:
         """
         Chat command to handle chats in groups
         :param update: Update object
@@ -316,7 +342,7 @@ Learn more about Inquire at https://inquire.run
             await self.query_persona(update, context)
 
     # Handle the inline query
-    async def inline_query(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    async def inline_query(self, update: Update, context: CustomContext) -> None:
         """
         Handle the inline query. This is run when you type: @botusername <query>
         :param update: Update object

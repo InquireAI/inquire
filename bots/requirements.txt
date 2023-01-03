@@ -8,3 +8,7 @@ axiom-py==0.1.0b5
 
 # telegram
 python-telegram-bot==20.0a6
+
+# webserver 
+uvicorn==0.20.0
+starlette==0.23.1
