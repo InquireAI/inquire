@@ -31,7 +31,7 @@ const Account: NextPageWithLayout<Props> = () => {
     else router.push("/404");
 
     setTabIndex(initialTab);
-  }, [router.query.tab]);
+  }, [router, router.query?.tab]);
 
   const [tabs] = useState<TabConfig[]>([
     {
