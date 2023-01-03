@@ -52,6 +52,7 @@ async function main() {
             gt: lastPersona.id,
           },
         },
+        take: 500,
       });
       if (nextPersona) nextToken = nextPersona.id;
       else break;
