@@ -1,8 +1,76 @@
+import { XMarkIcon } from "@heroicons/react/24/outline";
 import { type NextPage } from "next";
 import { signIn, useSession } from "next-auth/react";
 import Head from "next/head";
 import { useRouter } from "next/router";
+import { Fragment } from "react";
+import {
+  InstantSearch,
+  useHits,
+  useSearchBox,
+} from "react-instantsearch-hooks-web";
 import Navbar from "../components/navbar";
+import Switch from "../components/switch";
+import { env } from "../env/client.mjs";
+import { classNames } from "../utils/classnames";
+import type { AlgoliaPersona } from "../utils/searchClient";
+import { searchClient } from "../utils/searchClient";
+
+const CustomSearchBox: React.FC = () => {
+  const { query, refine, clear } = useSearchBox();
+
+  return (
+    <div className="flex w-1/3 flex-row rounded bg-white py-2 pl-4 pr-2">
+      <input
+        className="w-full border-none focus:outline-none"
+        placeholder="find a persona"
+        value={query}
+        onChange={(e) => refine(e.currentTarget.value)}
+      />
+      <Switch
+        isOn={query.length > 0}
+        onComponent={
+          <button
+            className="flex items-center justify-end focus:outline-none"
+            onClick={() => clear()}
+          >
+            <XMarkIcon height={20} width={20} />
+          </button>
+        }
+        offComponent={<Fragment />}
+      />
+    </div>
+  );
+};
+
+const PersonaHits: React.FC = () => {
+  const { hits, results } = useHits<AlgoliaPersona>();
+
+  return (
+    <Switch
+      isOn={results !== undefined && results.query.length > 0}
+      onComponent={
+        <div className="mt-2 flex flex-row gap-2">
+          {hits.slice(0, 5).map((h, idx) => {
+            return (
+              <button
+                key={idx}
+                className={classNames(
+                  "w-1/5 rounded bg-white px-2 text-neutral-900 hover:cursor-pointer hover:bg-neutral-100",
+                  "text-start"
+                )}
+              >
+                <p>{h.name}</p>
+                <p>{h.description}</p>
+              </button>
+            );
+          })}
+        </div>
+      }
+      offComponent={<Fragment />}
+    />
+  );
+};
 
 const Home: NextPage = () => {
   const { data: sessionData } = useSession();
@@ -22,7 +90,7 @@ const Home: NextPage = () => {
         <div className="flex flex-grow bg-[url('/background_pattern.svg')]">
           <div className="px-40">
             <Navbar />
-            <div className="mt-32 flex flex-grow flex-row items-center text-neutral-900">
+            <div className="flex flex-grow flex-row items-center text-neutral-900">
               <div className="flex w-3/5 flex-col gap-12">
                 <h1 className="text-5xl font-extrabold tracking-tight text-neutral-900 sm:text-[5rem]">
                   inquire
@@ -51,7 +119,7 @@ const Home: NextPage = () => {
                 // TODO: add different text colors for commands and prompts
               }
               <div className="flex w-2/5">
-                <div className="flex flex-col gap-12 rounded-xl bg-neutral-900 p-12 font-mono text-2xl text-white/75">
+                <div className="flex flex-col gap-12 rounded-xl bg-neutral-900 p-8 font-mono text-xl text-white/75">
                   <div>
                     <p className="py-2">/trainer</p>
                     <p>How can I build muscle?</p>
@@ -70,6 +138,14 @@ const Home: NextPage = () => {
                 </div>
               </div>
             </div>
+
+            <InstantSearch
+              indexName={env.NEXT_PUBLIC_ALGOLIA_PERSONA_INDEX_NAME}
+              searchClient={searchClient}
+            >
+              <CustomSearchBox />
+              <PersonaHits />
+            </InstantSearch>
           </div>
         </div>
       </main>

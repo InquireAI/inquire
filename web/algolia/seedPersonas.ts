@@ -1,13 +1,9 @@
 import * as dotenv from "dotenv";
 import algoliasearch from "algoliasearch";
 import { PrismaClient, type Persona } from "@prisma/client";
+import type { BaseHit } from "instantsearch.js";
 
 dotenv.config();
-
-console.log(
-  process.env.ALGOLIA_APP_ID as string,
-  process.env.ALGOLIA_ADMIN_KEY as string
-);
 
 const client = algoliasearch(
   process.env.ALGOLIA_APP_ID as string,
@@ -16,13 +12,13 @@ const client = algoliasearch(
 
 const prisma = new PrismaClient();
 
-type AlgoliaPersona = {
+interface AlgoliaPersona extends BaseHit {
   objectID: string;
   id: string;
   name: string;
   prompt: string;
   description: string;
-};
+}
 
 async function main() {
   const personasIndex = client.initIndex("dev_personas");
