@@ -1,25 +1,43 @@
 import { PrismaClient, type Prisma } from "@prisma/client";
-import { Chance } from "chance";
+import { readFile } from "fs/promises";
+import { join } from "path";
 
-const chance = new Chance();
+type Persona = {
+  Name: string;
+  Prompt: string;
+  Description: string;
+  id: string;
+  specification_hash: string;
+  config: string;
+};
+
+type PersonaFile = {
+  personas: Persona[];
+};
+
 const prisma = new PrismaClient();
 
 async function main() {
-  const personas: Prisma.PersonaCreateManyInput[] = [];
+  const personasBuffer = await readFile(join(__dirname, "../../dust/db.json"));
+  const personasJson = JSON.parse(personasBuffer.toString()) as PersonaFile;
 
-  for (let i = 0; i < 100; i++) {
-    personas.push({
-      id: chance.guid(),
-      config: chance.string(),
-      name: chance.word({ length: 12 }),
-      specificationHash: chance.string(),
-      description: chance.sentence(),
-      prompt: chance.paragraph(),
+  const personasInput: Prisma.PersonaCreateManyInput[] = [];
+
+  for (const persona of personasJson.personas) {
+    personasInput.push({
+      id: persona.id,
+      config: persona.config,
+      description: persona.Description,
+      name: persona.Name,
+      prompt: persona.Prompt,
+      specificationHash: persona.specification_hash,
     });
   }
 
+  await prisma.persona.deleteMany({});
+
   await prisma.persona.createMany({
-    data: personas,
+    data: personasInput,
   });
 }
 
