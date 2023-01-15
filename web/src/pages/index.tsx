@@ -88,21 +88,26 @@ const PersonaHit: React.FC<{ personaHit: AlgoliaPersona }> = ({
               </div>
               <Dialog.Title
                 as="h3"
-                className="text-lg font-medium leading-6 text-neutral-900"
+                className="text-3xl font-medium leading-6 text-neutral-900"
               >
                 {personaHit.name}
               </Dialog.Title>
               <div className="mt-2">
-                <p className="text-sm text-neutral-500">
+                <p className="text-sm text-neutral-700">
                   {personaHit.description}
                 </p>
+              </div>
+              <div className="mt-2">
+                <p className="text-sm text-neutral-500">{personaHit.prompt}</p>
               </div>
               <div className="mt-4">
                 <button
                   type="button"
                   className="inline-flex w-full justify-center gap-2 rounded-md border border-neutral-200 px-4 py-2 text-sm font-medium text-neutral-900 hover:bg-neutral-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-500 focus-visible:ring-offset-2"
                   onClick={() => {
-                    window.open("https://t.me/inquireai_dev_bot");
+                    window.open(
+                      `https://t.me/${env.NEXT_PUBLIC_TELEGRAM_BOT_NAME}?start=${personaHit.name}`
+                    );
                   }}
                 >
                   <Image
