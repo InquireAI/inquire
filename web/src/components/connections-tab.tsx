@@ -1,7 +1,7 @@
 import { Dialog } from "@headlessui/react";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import Image from "next/image";
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import Skeleton from "react-loading-skeleton";
 import { trpc } from "../utils/trpc";
 import Modal from "./modal";
@@ -126,17 +126,26 @@ const ConnectionsTab: React.FC = () => {
       </p>
       <div className="my-10 flex flex-col items-center justify-center">
         <Switch
-          isOn={!isConnectTelegramAccountLoading}
+          isOn={
+            connections?.find((c) => c.connectionType === "TELEGRAM") ===
+            undefined
+          }
           onComponent={
-            <TelegramLoginButton
-              botName="inquireai_dev_bot"
-              cornerRadius={5}
-              dataOnauth={(res) => {
-                connectTelegramAccount(res);
-              }}
+            <Switch
+              isOn={!isConnectTelegramAccountLoading}
+              onComponent={
+                <TelegramLoginButton
+                  botName="inquireai_dev_bot"
+                  cornerRadius={5}
+                  dataOnauth={(res) => {
+                    connectTelegramAccount(res);
+                  }}
+                />
+              }
+              offComponent={<Spinner />}
             />
           }
-          offComponent={<Spinner />}
+          offComponent={<Fragment />}
         />
       </div>
       <Switch
