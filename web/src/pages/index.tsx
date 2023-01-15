@@ -44,31 +44,26 @@ const CustomSearchBox: React.FC = () => {
 };
 
 const PersonaHits: React.FC = () => {
-  const { hits, results } = useHits<AlgoliaPersona>();
+  const { hits } = useHits<AlgoliaPersona>();
 
   return (
-    <Switch
-      isOn={results !== undefined && results.query.length > 0}
-      onComponent={
-        <div className="mt-2 flex flex-row gap-2">
-          {hits.slice(0, 5).map((h, idx) => {
-            return (
-              <button
-                key={idx}
-                className={classNames(
-                  "w-1/5 rounded bg-white px-2 text-neutral-900 hover:cursor-pointer hover:bg-neutral-100",
-                  "text-start"
-                )}
-              >
-                <p>{h.name}</p>
-                <p>{h.description}</p>
-              </button>
-            );
-          })}
-        </div>
-      }
-      offComponent={<Fragment />}
-    />
+    <div className="grid grid-cols-4 gap-2 py-4">
+      {hits.map((h, idx) => {
+        return (
+          <button
+            key={idx}
+            className={classNames(
+              "group/item relative h-full w-full rounded-lg border border-neutral-300 bg-white p-4 text-neutral-900 shadow-lg hover:cursor-pointer focus:outline-none"
+            )}
+          >
+            <p className="group-hover/item:invisible">{h.name}</p>
+            <div className="invisible absolute inset-1 flex items-center justify-center rounded bg-neutral-200 group-hover/item:visible">
+              Learn More
+            </div>
+          </button>
+        );
+      })}
+    </div>
   );
 };
 
