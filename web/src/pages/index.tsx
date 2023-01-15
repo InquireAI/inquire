@@ -9,6 +9,7 @@ import {
   useHits,
   useSearchBox,
 } from "react-instantsearch-hooks-web";
+import Modal from "../components/modal";
 import Navbar from "../components/navbar";
 import Switch from "../components/switch";
 import { env } from "../env/client.mjs";
@@ -53,21 +54,43 @@ const PersonaHits: React.FC = () => {
   return (
     <div className="grid grid-cols-4 gap-2 py-4">
       {hits.map((h, idx) => {
-        return (
-          <button
-            key={idx}
-            className={classNames(
-              "group/item relative h-full w-full rounded-lg border border-neutral-300 bg-white p-4 text-neutral-900 shadow-lg hover:cursor-pointer focus:outline-none"
-            )}
-          >
-            <p className="group-hover/item:invisible">{h.name}</p>
-            <div className="invisible absolute inset-1 flex items-center justify-center rounded bg-neutral-200 group-hover/item:visible">
-              Learn More
-            </div>
-          </button>
-        );
+        return <PersonaHit key={idx} personaHit={h} />;
       })}
     </div>
+  );
+};
+
+const PersonaHit: React.FC<{ personaHit: AlgoliaPersona }> = ({
+  personaHit,
+}) => {
+  const [showModal, setShowModal] = useState(false);
+  return (
+    <button
+      onClick={() => setShowModal(true)}
+      className={classNames(
+        "group/item relative h-full w-full rounded-lg border border-neutral-300 bg-white p-4 text-neutral-900 shadow-lg hover:cursor-pointer focus:outline-none"
+      )}
+    >
+      <Modal
+        show={showModal}
+        onClose={() => {
+          setShowModal(false);
+        }}
+        renderContent={({ onClose }) => {
+          return (
+            <div>
+              <p>{personaHit.name}</p>
+              <p>{personaHit.description}</p>
+              <button onClick={() => onClose()}>Close</button>
+            </div>
+          );
+        }}
+      />
+      <p className="group-hover/item:invisible">{personaHit.name}</p>
+      <p className="invisible absolute inset-1 flex items-center justify-center rounded bg-neutral-200 group-hover/item:visible">
+        Learn More
+      </p>
+    </button>
   );
 };
 
