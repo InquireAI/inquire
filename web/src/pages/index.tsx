@@ -1,7 +1,9 @@
+import { Dialog } from "@headlessui/react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { type NextPage } from "next";
 import { signIn, useSession } from "next-auth/react";
 import Head from "next/head";
+import Image from "next/image";
 import { useRouter } from "next/router";
 import { Fragment, useState } from "react";
 import {
@@ -64,33 +66,70 @@ const PersonaHit: React.FC<{ personaHit: AlgoliaPersona }> = ({
   personaHit,
 }) => {
   const [showModal, setShowModal] = useState(false);
+  console.log(showModal);
   return (
-    <button
-      onClick={() => setShowModal(true)}
-      className={classNames(
-        "group/item relative h-full w-full rounded-lg border border-neutral-300 bg-white p-4 text-neutral-900 shadow-lg hover:cursor-pointer focus:outline-none"
-      )}
-    >
+    <>
       <Modal
         show={showModal}
         onClose={() => {
+          console.log("close");
           setShowModal(false);
         }}
         renderContent={({ onClose }) => {
           return (
-            <div>
-              <p>{personaHit.name}</p>
-              <p>{personaHit.description}</p>
-              <button onClick={() => onClose()}>Close</button>
-            </div>
+            <>
+              <div className="flex flex-row justify-end">
+                <button
+                  onClick={() => onClose()}
+                  className="inline-flex justify-center rounded-md border border-transparent bg-neutral-200 p-1 text-sm font-medium text-neutral-700 hover:bg-neutral-300 hover:text-neutral-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-500 focus-visible:ring-offset-2"
+                >
+                  <XMarkIcon height={15} width={15} />
+                </button>
+              </div>
+              <Dialog.Title
+                as="h3"
+                className="text-lg font-medium leading-6 text-neutral-900"
+              >
+                {personaHit.name}
+              </Dialog.Title>
+              <div className="mt-2">
+                <p className="text-sm text-neutral-500">
+                  {personaHit.description}
+                </p>
+              </div>
+              <div className="mt-4">
+                <button
+                  type="button"
+                  className="inline-flex w-full justify-center gap-2 rounded-md border border-neutral-200 px-4 py-2 text-sm font-medium text-neutral-900 hover:bg-neutral-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-500 focus-visible:ring-offset-2"
+                  onClick={() => {
+                    window.open("https://t.me/inquireai_dev_bot");
+                  }}
+                >
+                  <Image
+                    src="/telegram_logo.svg"
+                    width={20}
+                    height={20}
+                    alt="Telegram Logo"
+                  />
+                  Open in Telegram
+                </button>
+              </div>
+            </>
           );
         }}
       />
-      <p className="group-hover/item:invisible">{personaHit.name}</p>
-      <p className="invisible absolute inset-1 flex items-center justify-center rounded bg-neutral-200 group-hover/item:visible">
-        Learn More
-      </p>
-    </button>
+      <button
+        onClick={() => setShowModal(true)}
+        className={classNames(
+          "group/item relative h-full w-full rounded-lg border border-neutral-300 bg-white p-4 text-neutral-900 shadow-lg hover:cursor-pointer focus:outline-none"
+        )}
+      >
+        <p className="group-hover/item:invisible">{personaHit.name}</p>
+        <p className="invisible absolute inset-1 flex items-center justify-center rounded bg-neutral-200 group-hover/item:visible">
+          Learn More
+        </p>
+      </button>
+    </>
   );
 };
 
