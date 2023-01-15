@@ -3,7 +3,7 @@ import { type NextPage } from "next";
 import { signIn, useSession } from "next-auth/react";
 import Head from "next/head";
 import { useRouter } from "next/router";
-import { Fragment } from "react";
+import { Fragment, useState } from "react";
 import {
   InstantSearch,
   useHits,
@@ -17,6 +17,7 @@ import type { AlgoliaPersona } from "../utils/searchClient";
 import { searchClient } from "../utils/searchClient";
 
 const CustomSearchBox: React.FC = () => {
+  const [inputText, setInputText] = useState<string>();
   const { query, refine, clear } = useSearchBox();
 
   return (
@@ -24,8 +25,11 @@ const CustomSearchBox: React.FC = () => {
       <input
         className="w-full border-none focus:outline-none"
         placeholder="find a persona"
-        value={query}
-        onChange={(e) => refine(e.currentTarget.value)}
+        value={inputText}
+        onChange={(e) => {
+          refine(e.currentTarget.value);
+          setInputText(e.currentTarget.value);
+        }}
       />
       <Switch
         isOn={query.length > 0}
