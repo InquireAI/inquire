@@ -157,19 +157,19 @@ const Home: NextPage = () => {
       </Head>
       <main className="flex min-h-screen flex-grow flex-col bg-gradient-to-tr from-neutral-300 to-neutral-100">
         <div className="flex flex-grow bg-[url('/background_pattern.svg')]">
-          <div className="px-40">
+          <div className="px-10 xl:px-40">
             <Navbar />
-            <div className="flex flex-grow flex-row items-center text-neutral-900">
-              <div className="flex w-3/5 flex-col gap-12">
+            <div className="flex flex-grow flex-col items-center gap-4 text-neutral-900 xl:flex-row">
+              <div className="flex flex-col items-center gap-12 xl:w-3/5 xl:items-start">
                 <h1 className="text-5xl font-extrabold tracking-tight text-neutral-900 sm:text-[5rem]">
                   inquire
                 </h1>
-                <p className="text-2xl text-neutral-900/50">
+                <p className="text-center text-2xl text-neutral-900/50 xl:text-left">
                   Interact with a variety of ai personas to solve any problem
                   you have. Inquire makes sure you get the most out of your ai
                   assistant.
                 </p>
-                <div>
+                <div className="flex justify-center xl:justify-start">
                   <button
                     className="rounded-xl bg-neutral-900/10 px-10 py-3 font-semibold text-neutral-900 no-underline transition hover:bg-neutral-900/20"
                     onClick={() => {
@@ -187,8 +187,8 @@ const Home: NextPage = () => {
               {
                 // TODO: add different text colors for commands and prompts
               }
-              <div className="flex w-2/5">
-                <div className="flex flex-col gap-12 rounded-xl bg-neutral-900 p-8 font-mono text-xl text-white/75">
+              <div className="flex w-full justify-center xl:w-2/5">
+                <div className="flex w-full flex-col gap-12 rounded-xl bg-neutral-900 p-8 font-mono text-xl text-white/75">
                   <div>
                     <p className="py-2">/trainer</p>
                     <p>How can I build muscle?</p>
@@ -207,14 +207,15 @@ const Home: NextPage = () => {
                 </div>
               </div>
             </div>
-
-            <InstantSearch
-              indexName={env.NEXT_PUBLIC_ALGOLIA_PERSONA_INDEX_NAME}
-              searchClient={searchClient}
-            >
-              <CustomSearchBox />
-              <PersonaHits />
-            </InstantSearch>
+            <div className="mt-4">
+              <InstantSearch
+                indexName={env.NEXT_PUBLIC_ALGOLIA_PERSONA_INDEX_NAME}
+                searchClient={searchClient}
+              >
+                <CustomSearchBox />
+                <PersonaHits />
+              </InstantSearch>
+            </div>
           </div>
         </div>
       </main>
