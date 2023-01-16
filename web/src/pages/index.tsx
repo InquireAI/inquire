@@ -24,7 +24,7 @@ const CustomSearchBox: React.FC = () => {
   const { query, refine, clear } = useSearchBox();
 
   return (
-    <div className="flex w-1/3 flex-row rounded bg-white py-2 pl-4 pr-2">
+    <div className="flex w-full flex-row rounded bg-white py-2 pl-4 pr-2 xl:w-1/3">
       <input
         className="w-full border-none focus:outline-none"
         placeholder="find a persona"

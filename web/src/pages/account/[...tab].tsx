@@ -50,9 +50,9 @@ const Account: NextPageWithLayout<Props> = () => {
     <>
       <main className="pt-20">
         <div className="mx-auto max-w-7xl">
-          <div className="flex flex-row">
+          <div className="flex flex-col xl:flex-row">
             <Tab.Group as={Fragment} vertical selectedIndex={tabIndex}>
-              <Tab.List className="flex flex-col gap-4 space-y-1 rounded-xl p-1">
+              <Tab.List className="flex flex-row gap-4 space-y-1 rounded-xl p-1 xl:flex-col">
                 {tabs.map((t, idx) => (
                   <Tab
                     key={idx}
@@ -61,7 +61,7 @@ const Account: NextPageWithLayout<Props> = () => {
                         "w-full px-2.5 text-left text-lg font-medium",
                         "focus:outline-none ",
                         selected
-                          ? "border-r-2 border-neutral-900 text-neutral-900"
+                          ? "border-b-2 border-neutral-900 text-neutral-900 xl:border-r-2 xl:border-b-0"
                           : "text-neutral-900/50 hover:text-neutral-900"
                       )
                     }
