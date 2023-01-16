@@ -20,7 +20,7 @@ import type { AlgoliaPersona } from "../utils/searchClient";
 import { searchClient } from "../utils/searchClient";
 
 const CustomSearchBox: React.FC = () => {
-  const [inputText, setInputText] = useState<string>();
+  const [inputText, setInputText] = useState<string>("");
   const { query, refine, clear } = useSearchBox();
 
   return (
@@ -39,7 +39,10 @@ const CustomSearchBox: React.FC = () => {
         onComponent={
           <button
             className="flex items-center justify-end focus:outline-none"
-            onClick={() => clear()}
+            onClick={() => {
+              clear();
+              setInputText("");
+            }}
           >
             <XMarkIcon height={20} width={20} />
           </button>
