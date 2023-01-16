@@ -28,6 +28,10 @@ export const serverSchema = z.object({
   OPENAI_API_KEY: z.string(),
   DUST_API_KEY: z.string(),
   USER_INQUIRY_LIMIT: z.string().transform((str) => parseInt(str, 10)),
+  ALGOLIA_ADMIN_KEY: z.string(),
+  ALGOLIA_PERSONA_INDEX_NAME: z.string(),
+  ALGOLIA_APP_ID: z.string(),
+  ALGOLIA_SEARCH_KEY: z.string(),
 });
 
 /**
@@ -37,6 +41,10 @@ export const serverSchema = z.object({
  */
 export const clientSchema = z.object({
   NEXT_PUBLIC_STRIPE_PUB_KEY: z.string(),
+  NEXT_PUBLIC_ALGOLIA_PERSONA_INDEX_NAME: z.string(),
+  NEXT_PUBLIC_ALGOLIA_APP_ID: z.string(),
+  NEXT_PUBLIC_ALGOLIA_SEARCH_KEY: z.string(),
+  NEXT_PUBLIC_TELEGRAM_BOT_NAME: z.string(),
 });
 
 /**
@@ -47,4 +55,9 @@ export const clientSchema = z.object({
  */
 export const clientEnv = {
   NEXT_PUBLIC_STRIPE_PUB_KEY: process.env.NEXT_PUBLIC_STRIPE_PUB_KEY,
+  NEXT_PUBLIC_ALGOLIA_PERSONA_INDEX_NAME:
+    process.env.NEXT_PUBLIC_ALGOLIA_PERSONA_INDEX_NAME,
+  NEXT_PUBLIC_ALGOLIA_APP_ID: process.env.NEXT_PUBLIC_ALGOLIA_APP_ID,
+  NEXT_PUBLIC_ALGOLIA_SEARCH_KEY: process.env.NEXT_PUBLIC_ALGOLIA_SEARCH_KEY,
+  NEXT_PUBLIC_TELEGRAM_BOT_NAME: process.env.NEXT_PUBLIC_TELEGRAM_BOT_NAME,
 };
