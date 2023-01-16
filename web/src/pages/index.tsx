@@ -57,7 +57,7 @@ const PersonaHits: React.FC = () => {
   const { hits } = useHits<AlgoliaPersona>();
 
   return (
-    <div className="grid grid-cols-4 gap-2 py-4">
+    <div className="grid gap-2 py-4 lg:grid-cols-3 xl:grid-cols-4">
       {hits.map((h, idx) => {
         return <PersonaHit key={idx} personaHit={h} />;
       })}
