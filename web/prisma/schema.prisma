@@ -286,3 +286,13 @@ model VerificationToken {
 
   @@unique([identifier, token])
 }
+
+model Persistence {
+  bot_data Json?
+  chat_data Json?
+  user_data Json?
+  callback_data Json?
+  conversations Json?
+
+  updatedAt DateTime @updatedAt @id @default(now())
+}

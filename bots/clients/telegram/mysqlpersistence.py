@@ -16,7 +16,7 @@
 #
 # You should have received a copy of the GNU Lesser Public License
 # along with this program.  If not, see [http://www.gnu.org/licenses/].
-"""This module contains MysqlPersistence class"""
+"""This module contains MysqlPersistence class, based on schema defined in /web/prisma/schema.prisma."""
 
 
 import json
@@ -43,7 +43,7 @@ class MySQLPersistence(DictPersistence):
 
     Attributes:
         store_data (:class:`PersistenceInput`): Specifies which kinds of data will be saved by this
-            persistence instance.
+            Persistence instance.
     """
 
     def __init__(
@@ -74,25 +74,55 @@ class MySQLPersistence(DictPersistence):
         self.__init_database()
         try:
             self.logger.info("Loading database....")
-            data_ = self._session.execute(text("SELECT data FROM persistence")).first()
-            data = data_[0] if data_ is not None else {}
-            data = json.loads(data) if data else {}
+            
+            # chat data
+            chat_data_ = self._session.execute(text("SELECT chat_data FROM Persistence")).first()
+            chat_data = chat_data_[0] if chat_data_ is not None else {}
+            chat_data_json = json.loads(chat_data) if chat_data else {}
 
-            chat_data_json = data.get("chat_data", "")
-            user_data_json = data.get("user_data", "")
-            bot_data_json = data.get("bot_data", "")
-            conversations_json = data.get("conversations", "{}")
-            callback_data_json = data.get("callback_data_json", "")
+            # user data
+            user_data_ = self._session.execute(text("SELECT user_data FROM Persistence")).first()
+            user_data = user_data_[0] if user_data_ is not None else {}
+            user_data_json = json.loads(user_data) if user_data else {}
+
+            # bot data
+            bot_data_ = self._session.execute(text("SELECT bot_data FROM Persistence")).first()
+            bot_data = bot_data_[0] if bot_data_ is not None else {}
+            bot_data_json = json.loads(bot_data) if bot_data else {}
+
+            # conversations data
+            # converstations is always "null" in the database
+            conversations_data_ = self._session.execute(text("SELECT conversations FROM Persistence")).first()
+            conversations_data = conversations_data_[0] if conversations_data_[0] is not None else {}
+            conversations_json_data = {}
+
+            # callback data
+            callback_data_ = self._session.execute(text("SELECT callback_data FROM Persistence")).first()
+            callback_data = callback_data_[0] if callback_data_ is not None else {}
+            callback_data_json = json.loads(callback_data) if callback_data else {}
 
             self.logger.info("Database loaded successfully!")
 
             # if it is a fresh setup we'll add some placeholder data so we
             # can perform `UPDATE` operations on it, cause SQL only allows
             # `UPDATE` operations if column have some data already present inside it.
-            if not data:
-                insert_qry = "INSERT INTO persistence (data) VALUES (:jsondata)"
-                self._session.execute(text(insert_qry), {"jsondata": "{}"})
-                self._session.commit()
+            if not chat_data:
+                insert_qry = "INSERT INTO Persistence (chat_data) VALUES ('{}')"
+                self._session.execute(text(insert_qry))
+            if not user_data:
+                insert_qry = "INSERT INTO Persistence (user_data) VALUES ('{}')"
+                self._session.execute(text(insert_qry))
+            if not bot_data:
+                insert_qry = "INSERT INTO Persistence (bot_data) VALUES ('{}')"
+                self._session.execute(text(insert_qry))
+            if not conversations_data:
+                insert_qry = "INSERT INTO Persistence (conversations) VALUES ('{}')"
+                self._session.execute(text(insert_qry))
+            if not callback_data:
+                insert_qry = "INSERT INTO Persistence (callback_data) VALUES ('{}')"
+                self._session.execute(text(insert_qry))
+            
+            self._session.commit()
 
             super().__init__(
                 **kwargs,
@@ -100,7 +130,7 @@ class MySQLPersistence(DictPersistence):
                 user_data_json=user_data_json,
                 bot_data_json=bot_data_json,
                 callback_data_json=callback_data_json,
-                conversations_json=conversations_json,
+                conversations_json=conversations_json_data,
             )
         finally:
             self._session.close()
@@ -110,9 +140,18 @@ class MySQLPersistence(DictPersistence):
         creates table for storing the data if table
         doesn't exist already inside database.
         """
+        self.logger.info("Initializing database since it did not exist...")
         create_table_qry = """
-            CREATE TABLE IF NOT EXISTS persistence(
-            data json NOT NULL);"""
+                CREATE TABLE IF NOT EXISTS Persistence (
+                bot_data json,
+                chat_data json,
+                user_data json,
+                callback_data json,
+                conversations json,
+                updatedAt datetime(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+                PRIMARY KEY (updatedAt)
+            );"""
+
         self._session.execute(text(create_table_qry))
         self._session.commit()
 
@@ -132,9 +171,31 @@ class MySQLPersistence(DictPersistence):
     def _update_database(self) -> None:
         self.logger.debug("Updating database...")
         try:
-            insert_qry = "UPDATE persistence SET data = :jsondata"
-            params = {"jsondata": self._dump_into_json()}
+            # update chat data 
+            insert_qry = "UPDATE Persistence SET chat_data = :jsondata"
+            params = {"jsondata": json.dumps(self.chat_data_json)}
             self._session.execute(text(insert_qry), params)
+
+            # update user data
+            insert_qry = "UPDATE Persistence SET user_data = :jsondata"
+            params = {"jsondata": json.dumps(self.user_data_json)}
+            self._session.execute(text(insert_qry), params)
+
+            # update bot data
+            insert_qry = "UPDATE Persistence SET bot_data = :jsondata"
+            params = {"jsondata": json.dumps(self.bot_data_json)}
+            self._session.execute(text(insert_qry), params)
+
+            # update conversations data
+            insert_qry = "UPDATE Persistence SET conversations = :jsondata"
+            params = {"jsondata": json.dumps(self.conversations_json)}
+            self._session.execute(text(insert_qry), params)
+
+            # update callback data
+            insert_qry = "UPDATE Persistence SET callback_data = :jsondata"
+            params = {"jsondata": json.dumps(self.callback_data_json)}
+            self._session.execute(text(insert_qry), params)
+
             self._session.commit()
         except Exception as excp:  # pylint: disable=W0703
             self._session.close()
@@ -200,7 +261,7 @@ class MySQLPersistence(DictPersistence):
 
     async def flush(self) -> None:
         """Will be called by :class:`telegram.ext.Updater` upon receiving a stop signal. Gives the
-        persistence a chance to finish up saving or close a database connection gracefully.
+        Persistence a chance to finish up saving or close a database connection gracefully.
         """
         self._update_database()
         if not self.on_flush:

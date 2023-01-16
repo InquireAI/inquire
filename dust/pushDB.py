@@ -8,7 +8,7 @@ connection = pymysql.connect(
     host="localhost",
     user="root",
     passwd="root",
-    db="inquireai",
+    db="inquire",
     ssl={
         'ca': os.getenv("SSL_CERT")
     }
