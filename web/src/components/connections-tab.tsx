@@ -3,6 +3,7 @@ import { TrashIcon } from "@heroicons/react/24/outline";
 import Image from "next/image";
 import { Fragment, useState } from "react";
 import Skeleton from "react-loading-skeleton";
+import { env } from "../env/client.mjs";
 import { trpc } from "../utils/trpc";
 import Modal from "./modal";
 import Spinner from "./spinner";
@@ -135,7 +136,7 @@ const ConnectionsTab: React.FC = () => {
               isOn={!isConnectTelegramAccountLoading}
               onComponent={
                 <TelegramLoginButton
-                  botName="inquireai_dev_bot"
+                  botName={env.NEXT_PUBLIC_TELEGRAM_BOT_NAME}
                   cornerRadius={5}
                   dataOnauth={(res) => {
                     connectTelegramAccount(res);
