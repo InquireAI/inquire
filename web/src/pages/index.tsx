@@ -20,11 +20,11 @@ import type { AlgoliaPersona } from "../utils/searchClient";
 import { searchClient } from "../utils/searchClient";
 
 const CustomSearchBox: React.FC = () => {
-  const [inputText, setInputText] = useState<string>();
+  const [inputText, setInputText] = useState<string>("");
   const { query, refine, clear } = useSearchBox();
 
   return (
-    <div className="flex w-1/3 flex-row rounded bg-white py-2 pl-4 pr-2">
+    <div className="flex w-full flex-row rounded bg-white py-2 pl-4 pr-2 xl:w-1/3">
       <input
         className="w-full border-none focus:outline-none"
         placeholder="find a persona"
@@ -39,7 +39,10 @@ const CustomSearchBox: React.FC = () => {
         onComponent={
           <button
             className="flex items-center justify-end focus:outline-none"
-            onClick={() => clear()}
+            onClick={() => {
+              clear();
+              setInputText("");
+            }}
           >
             <XMarkIcon height={20} width={20} />
           </button>
@@ -54,7 +57,7 @@ const PersonaHits: React.FC = () => {
   const { hits } = useHits<AlgoliaPersona>();
 
   return (
-    <div className="grid grid-cols-4 gap-2 py-4">
+    <div className="grid gap-2 py-4 lg:grid-cols-3 xl:grid-cols-4">
       {hits.map((h, idx) => {
         return <PersonaHit key={idx} personaHit={h} />;
       })}
@@ -154,19 +157,19 @@ const Home: NextPage = () => {
       </Head>
       <main className="flex min-h-screen flex-grow flex-col bg-gradient-to-tr from-neutral-300 to-neutral-100">
         <div className="flex flex-grow bg-[url('/background_pattern.svg')]">
-          <div className="px-40">
+          <div className="px-10 xl:px-40">
             <Navbar />
-            <div className="flex flex-grow flex-row items-center text-neutral-900">
-              <div className="flex w-3/5 flex-col gap-12">
+            <div className="flex flex-grow flex-col items-center gap-4 text-neutral-900 xl:flex-row">
+              <div className="flex flex-col items-center gap-12 xl:w-3/5 xl:items-start">
                 <h1 className="text-5xl font-extrabold tracking-tight text-neutral-900 sm:text-[5rem]">
                   inquire
                 </h1>
-                <p className="text-2xl text-neutral-900/50">
+                <p className="text-center text-2xl text-neutral-900/50 xl:text-left">
                   Interact with a variety of ai personas to solve any problem
                   you have. Inquire makes sure you get the most out of your ai
                   assistant.
                 </p>
-                <div>
+                <div className="flex justify-center xl:justify-start">
                   <button
                     className="rounded-xl bg-neutral-900/10 px-10 py-3 font-semibold text-neutral-900 no-underline transition hover:bg-neutral-900/20"
                     onClick={() => {
@@ -184,8 +187,8 @@ const Home: NextPage = () => {
               {
                 // TODO: add different text colors for commands and prompts
               }
-              <div className="flex w-2/5">
-                <div className="flex flex-col gap-12 rounded-xl bg-neutral-900 p-8 font-mono text-xl text-white/75">
+              <div className="flex w-full justify-center xl:w-2/5">
+                <div className="flex w-full flex-col gap-12 rounded-xl bg-neutral-900 p-8 font-mono text-xl text-white/75">
                   <div>
                     <p className="py-2">/trainer</p>
                     <p>How can I build muscle?</p>
@@ -204,14 +207,15 @@ const Home: NextPage = () => {
                 </div>
               </div>
             </div>
-
-            <InstantSearch
-              indexName={env.NEXT_PUBLIC_ALGOLIA_PERSONA_INDEX_NAME}
-              searchClient={searchClient}
-            >
-              <CustomSearchBox />
-              <PersonaHits />
-            </InstantSearch>
+            <div className="mt-4">
+              <InstantSearch
+                indexName={env.NEXT_PUBLIC_ALGOLIA_PERSONA_INDEX_NAME}
+                searchClient={searchClient}
+              >
+                <CustomSearchBox />
+                <PersonaHits />
+              </InstantSearch>
+            </div>
           </div>
         </div>
       </main>

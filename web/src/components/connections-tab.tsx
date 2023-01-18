@@ -53,7 +53,7 @@ const ConnectionItem: React.FC<ConnectionItemProps> = (props) => {
               </Dialog.Title>
               <div className="mt-2">
                 <p className="text-sm text-neutral-500">
-                  If so, you will still be able to use inquire with
+                  If so, you will still be able to use inquire with{" "}
                   {displayName}, but only within the free tier limits
                 </p>
               </div>
@@ -118,7 +118,7 @@ const ConnectionsTab: React.FC = () => {
     trpc.user.connections.useQuery();
 
   return (
-    <div className="flex min-h-full flex-grow flex-col px-10">
+    <div className="flex min-h-full flex-grow flex-col xl:px-10">
       <p className="text-3xl font-medium">Connections</p>
       <p className="font-medium text-neutral-700">
         Connect your inquire account with to get unlimited usage across all

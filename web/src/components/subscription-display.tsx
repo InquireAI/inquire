@@ -231,6 +231,9 @@ const SubscriptionDisplay: React.FC<Props> = (props) => {
           );
         })}
       </div>
+      {/*
+       * // TODO: fix responsiveness of view for when subscription is to be cancelled at period end
+       */}
       {subscription.cancelAtPeriodEnd ? (
         <button
           onClick={() => setShow(true)}
