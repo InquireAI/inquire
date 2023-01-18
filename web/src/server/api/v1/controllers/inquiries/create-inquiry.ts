@@ -15,7 +15,6 @@ import { env } from "../../../../../env/server.mjs";
 import { Configuration, OpenAIApi } from "openai";
 import axios, { type AxiosRequestConfig } from "axios";
 import logger from "consola";
-import { enumUtil } from "zod/lib/helpers/enumUtil";
 
 // configure the openai api
 const configuration = new Configuration({
@@ -39,7 +38,7 @@ type DustResponse = {
     created: number;
     run_type: string;
     config: {
-      blocks: {};
+      blocks: Record<string, any>;
     };
     status: {
       run: DustStatus;
@@ -176,7 +175,9 @@ export async function createInquiry(
       // NOTE: may be multiple products/prices/subscription in future, but currently we only have one, so just look for the first element
       const subscription = user?.customer?.subscriptions[0];
       if (!subscription) {
-        logger.info(`Connection with type: ${bodyData.connectionType} and connectionUserId: ${bodyData.connectionUserId} has reached inquiry limit and no subscription found`)
+        logger.info(
+          `Connection with type: ${bodyData.connectionType} and connectionUserId: ${bodyData.connectionUserId} has reached inquiry limit and no subscription found`
+        );
         return res.status(400).json({
           code: "INVALID_SUBSCRIPTION",
           message: "Limit has been reached and subscription not found",
@@ -185,8 +186,8 @@ export async function createInquiry(
 
       // if subscription is not one of these statuses it's invalid
       if (
-        subscription.status !== "ACTIVE" &&
-        subscription.status !== "TRIALING"
+        subscription.status !== "active" &&
+        subscription.status !== "trialing"
       ) {
         return res.status(400).json({
           code: "INVALID_SUBSCRIPTION",
@@ -236,6 +237,7 @@ export async function createInquiry(
     if (!formattedResponse)
       return res.status(500).json({
         code: "INTERNAL_ERROR",
+        message: "An internal error occurred",
       });
 
     logger.success(
@@ -299,6 +301,7 @@ export async function createInquiry(
       logger.error("Error in querying Dust app", error);
       return res.status(500).json({
         code: "INTERNAL_ERROR",
+        message: "An internal error occurred",
       });
     }
 
@@ -306,6 +309,7 @@ export async function createInquiry(
       logger.error("Dust API error");
       return res.status(500).json({
         code: "INTERNAL_ERROR",
+        message: "An internal error occurred",
       });
     }
 
