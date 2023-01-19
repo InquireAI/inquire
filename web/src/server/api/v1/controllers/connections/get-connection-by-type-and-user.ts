@@ -8,7 +8,7 @@ import type {
   SuccessRes,
 } from "../../../api-responses";
 import { zodIssuesToBadRequestIssues } from "../../../utils";
-import logger from 'consola'
+import { log } from "../../../../log";
 
 const QuerySchema = z.object({
   type: z.enum(["WEB", "TELEGRAM"]),
@@ -24,7 +24,11 @@ export async function getConnectionByTypeAndUser(
   const queryParse = await QuerySchema.spa(req.query);
 
   if (!queryParse.success) {
-    logger.error(`Invalid query parameters: ${queryParse.error.issues}`)
+    log.info("Invalid query parameters", {
+      type: "BAD_REQUEST",
+      error: queryParse.error,
+    });
+
     return res.status(400).json({
       code: "BAD_REQUEST",
       message: "Invalid query parameters",
@@ -44,7 +48,10 @@ export async function getConnectionByTypeAndUser(
   });
 
   if (!connection) {
-    logger.error(`Connection with type ${queryData.type} and connectionUserId ${queryData.connectionUserId} not found`)
+    log.warn(
+      "Connection with type ${queryData.type} and connectionUserId ${queryData.connectionUserId} not found"
+    );
+
     return res.status(404).json({
       code: "NOT_FOUND",
       message: `Connection with type ${queryData.type} and connectionUserId ${queryData.connectionUserId}`,

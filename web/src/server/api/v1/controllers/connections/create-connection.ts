@@ -21,7 +21,7 @@ export async function createConnection(
   const bodyParse = await BodySchema.spa(req.body);
 
   if (!bodyParse.success) {
-    log.error("Invalid request body", {
+    log.info("Invalid request body", {
       type: "BAD_REQUEST",
       error: bodyParse.error.issues,
     });

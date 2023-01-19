@@ -14,6 +14,10 @@ type InfoArgs =
       };
     }
   | {
+      type: "BAD_REQUEST";
+      error: { [key: string]: any };
+    }
+  | {
       [key: string]: any;
     };
 
