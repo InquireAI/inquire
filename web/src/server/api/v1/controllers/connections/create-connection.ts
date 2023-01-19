@@ -4,7 +4,7 @@ import type { Connection } from "../../../../db/client";
 import { prisma } from "../../../../db/client";
 import type { BadRequestRes, SuccessRes } from "../../../api-responses";
 import { zodIssuesToBadRequestIssues } from "../../../utils";
-import logger from 'consola'
+import { log } from "../../../../log";
 
 const BodySchema = z.object({
   userId: z.string().optional(),
@@ -21,7 +21,11 @@ export async function createConnection(
   const bodyParse = await BodySchema.spa(req.body);
 
   if (!bodyParse.success) {
-    logger.error(`Invalid request body: ${bodyParse.error.issues}`)
+    log.error("Invalid request body", {
+      type: "BAD_REQUEST",
+      error: bodyParse.error.issues,
+    });
+
     return res.status(400).json({
       code: "BAD_REQUEST",
       message: "Invalid request body",
@@ -38,6 +42,18 @@ export async function createConnection(
       connectionUserId: bodyData.connectionUserId,
     },
   });
+
+  log.info(
+    `Connection with connectionUserId: ${connection.connectionUserId} and connectionType: ${connection.connectionType} created`,
+    {
+      type: "DATABASE_CALL",
+      resource: {
+        name: "Connection",
+        connectionType: connection.connectionType,
+        connectionUserId: connection.connectionUserId,
+      },
+    }
+  );
 
   return res.status(200).json({
     data: connection,
