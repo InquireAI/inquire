@@ -53,7 +53,7 @@ model Persona {
   prompt            String @db.Text
   description       String @db.VarChar(10000)
   specificationHash String
-  config            String
+  config            String @db.Text
 
   @@index([id])
   @@index([name])
