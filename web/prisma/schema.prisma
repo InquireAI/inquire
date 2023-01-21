@@ -50,10 +50,10 @@ model Inquiry {
 model Persona {
   id                String @id
   name              String @unique
-  prompt            String                 @db.VarChar(5000)
-  description       String                 @db.VarChar(5000)
+  prompt            String @db.Text
+  description       String @db.VarChar(10000)
   specificationHash String
-  config            String
+  config            String @db.Text
 
   @@index([id])
   @@index([name])
@@ -288,11 +288,11 @@ model VerificationToken {
 }
 
 model Persistence {
-  bot_data Json?
-  chat_data Json?
-  user_data Json?
+  bot_data      Json?
+  chat_data     Json?
+  user_data     Json?
   callback_data Json?
   conversations Json?
 
-  updatedAt DateTime @updatedAt @id @default(now())
+  updatedAt DateTime @id @default(now()) @updatedAt
 }
