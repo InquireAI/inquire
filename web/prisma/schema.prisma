@@ -31,6 +31,9 @@ model Connection {
   user             User?          @relation(fields: [userId], references: [id])
   inquiries        Inquiry[]
 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
   @@id([connectionType, connectionUserId])
   @@index([userId])
 }
@@ -44,6 +47,8 @@ model Inquiry {
 
   connection Connection @relation(fields: [connectionType, connectionUserId], references: [connectionType, connectionUserId])
 
+  createdAt DateTime @default(now())
+
   @@index([connectionType, connectionUserId])
 }
 
@@ -54,6 +59,8 @@ model Persona {
   description       String @db.VarChar(10000)
   specificationHash String
   config            String @db.Text
+
+  createdAt DateTime @default(now())
 
   @@index([id])
   @@index([name])
@@ -170,6 +177,9 @@ model PaymentMethod {
   type         PaymentMethodType
   card         Json?
   subscription Subscription[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
 
   @@index([customerId])
 }
