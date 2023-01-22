@@ -4,7 +4,7 @@ import type { Connection } from "../../../../db/client";
 import { prisma } from "../../../../db/client";
 import type { BadRequestRes, SuccessRes } from "../../../api-responses";
 import { zodIssuesToBadRequestIssues } from "../../../utils";
-import type { NextApiRequestWithLogger } from "../../../../log/with-logger";
+import type { NextApiRequestWithLogger } from "../../../../logger/with-logger";
 
 const BodySchema = z.object({
   userId: z.string().optional(),
@@ -18,12 +18,12 @@ export async function createConnection(
   req: NextApiRequestWithLogger,
   res: NextApiResponse<Res>
 ) {
-  const { log } = req;
+  const { logger } = req;
 
   const bodyParse = await BodySchema.spa(req.body);
 
   if (!bodyParse.success) {
-    log.info("Invalid request body", {
+    logger.info("Invalid request body", {
       type: "BAD_REQUEST",
       error: bodyParse.error.issues,
     });
@@ -45,7 +45,7 @@ export async function createConnection(
     },
   });
 
-  log.info(
+  logger.info(
     `Connection with connectionUserId: ${connection.connectionUserId} and connectionType: ${connection.connectionType} created`,
     {
       type: "DATABASE_CALL",

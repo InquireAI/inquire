@@ -14,8 +14,7 @@ import { zodIssuesToBadRequestIssues } from "../../../utils";
 import { env } from "../../../../../env/server.mjs";
 import { Configuration, OpenAIApi } from "openai";
 import axios, { AxiosError, type AxiosRequestConfig } from "axios";
-import { withLogger } from "../../../../log/with-logger";
-import type { NextApiRequestWithLogger } from "../../../../log/with-logger";
+import type { NextApiRequestWithLogger } from "../../../../logger/with-logger";
 
 // configure the openai api
 const configuration = new Configuration({
@@ -80,17 +79,17 @@ type Res =
   | InvalidSubscription
   | QuotaReached;
 
-async function createInquiry(
+export async function createInquiry(
   req: NextApiRequestWithLogger,
   res: NextApiResponse<Res>
 ) {
-  const { log } = req;
+  const { logger } = req;
   // validate the body
   const bodyParse = await BodySchema.spa(req.body);
 
   // return if the body is invalid
   if (!bodyParse.success) {
-    log.info(
+    logger.info(
       `Invalid request body: ${JSON.stringify(bodyParse.error.issues)}`,
       {
         type: "BAD_REQUEST",
@@ -109,7 +108,7 @@ async function createInquiry(
 
   // we check the connections table beacuse a user
   // might not have signed up via the website but we want
-  // to still log the # of inquiries
+  // to still logger the # of inquiries
   // in this case the `userId` is unique to the user _and_
   // the `connection`. It is not unique to the user alone.
   let connection = await prisma.connection.findUnique({
@@ -125,7 +124,7 @@ async function createInquiry(
   // if not create a connection
   // else continue
   if (!connection) {
-    log.info(
+    logger.info(
       `Connection with connectionType: ${bodyData.connectionType} and connectionUserId: ${bodyData.connectionUserId} does not exist. Creating`
     );
     connection = await prisma.connection.create({
@@ -134,7 +133,7 @@ async function createInquiry(
         connectionUserId: bodyData.connectionUserId,
       },
     });
-    log.info(
+    logger.info(
       `Connection with connectionType: ${connection.connectionType} and connectionUserId: ${connection.connectionUserId} created`,
       {
         type: "DATABASE_CALL",
@@ -146,7 +145,7 @@ async function createInquiry(
       }
     );
   } else {
-    log.info(
+    logger.info(
       `Retrieved connection with connectionType: ${connection?.connectionType} and connectionUserId: ${connection?.connectionUserId}`,
       {
         type: "DATABASE_CALL",
@@ -194,7 +193,7 @@ async function createInquiry(
       // NOTE: may be multiple products/prices/subscription in future, but currently we only have one, so just look for the first element
       const subscription = user?.customer?.subscriptions[0];
       if (!subscription) {
-        log.info(
+        logger.info(
           `Connection with type: ${bodyData.connectionType} and connectionUserId: ${bodyData.connectionUserId} has reached inquiry limit and no subscription found`
         );
         return res.status(400).json({
@@ -215,7 +214,7 @@ async function createInquiry(
       }
     } else {
       if (inquiries.length > env.USER_INQUIRY_LIMIT) {
-        log.info(
+        logger.info(
           `Connection with type: ${bodyData.connectionType} and connectionUserId: ${bodyData.connectionUserId} has reached inquiry limit`
         );
 
@@ -229,7 +228,7 @@ async function createInquiry(
 
   // check if queryType is chat or use the dust app to query the persona
   if (bodyData.queryType === "chat") {
-    log.info(`Query type is chat, sending to OpenAI`);
+    logger.info(`Query type is chat, sending to OpenAI`);
 
     // hit raw dv3 no need for dust
     const response = await openai.createCompletion({
@@ -244,7 +243,7 @@ async function createInquiry(
 
     // check if response is undefined
     if (!response.data.choices[0]) {
-      log.error(`OpenAI response is missing`, {
+      logger.error(`OpenAI response is missing`, {
         type: "OPENAI_CALL",
       });
       return res.status(500).json({
@@ -256,7 +255,7 @@ async function createInquiry(
     const formattedResponse = response.data.choices[0].text;
 
     if (!formattedResponse) {
-      log.error(`OpenAI response is missing`, {
+      logger.error(`OpenAI response is missing`, {
         type: "OPENAI_CALL",
       });
       return res.status(500).json({
@@ -265,7 +264,7 @@ async function createInquiry(
       });
     }
 
-    log.info(`Prompt ${bodyData.query} and received response from OpenAI`, {
+    logger.info(`Prompt ${bodyData.query} and received response from OpenAI`, {
       type: "OPENAI_CALL",
     });
 
@@ -274,7 +273,7 @@ async function createInquiry(
       data: formattedResponse,
     });
   } else {
-    log.info(`Query type is ${bodyData.queryType}, sending to Dust`);
+    logger.info(`Query type is ${bodyData.queryType}, sending to Dust`);
 
     // hit dust app
     // define headers with auth
@@ -292,7 +291,7 @@ async function createInquiry(
     });
 
     if (!persona) {
-      log.error(`No persona found with name: ${bodyData.queryType}`, {
+      logger.error(`No persona found with name: ${bodyData.queryType}`, {
         type: "DATABASE_CALL",
         resource: {
           name: "Persona",
@@ -330,7 +329,7 @@ async function createInquiry(
       data = res.data;
     } catch (error) {
       if (error instanceof AxiosError) {
-        log.error("Error starting DUST run", {
+        logger.error("Error starting DUST run", {
           type: "DUST_CALL",
           error: {
             request: error.request,
@@ -338,7 +337,7 @@ async function createInquiry(
           },
         });
       } else {
-        log.error("Error starting DUST run", {
+        logger.error("Error starting DUST run", {
           type: "DUST_CALL",
           error: {
             unknown: error,
@@ -352,7 +351,7 @@ async function createInquiry(
     }
 
     if (data.run.status.run === "errored") {
-      log.error("Dust run failed", {
+      logger.error("Dust run failed", {
         type: "DUST_CALL",
       });
       return res.status(500).json({
@@ -375,7 +374,7 @@ async function createInquiry(
     // parse the response
     const formattedResponse = data.run.results[0][0].value.completion.text;
 
-    log.info(`Prompt ${bodyData.query} and received response from DUST`, {
+    logger.info(`Prompt ${bodyData.query} and received response from DUST`, {
       type: "DUST_CALL",
     });
 
@@ -394,5 +393,3 @@ async function createInquiry(
     });
   }
 }
-
-export const handler = withLogger(createInquiry);

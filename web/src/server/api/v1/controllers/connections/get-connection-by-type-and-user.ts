@@ -8,7 +8,7 @@ import type {
   SuccessRes,
 } from "../../../api-responses";
 import { zodIssuesToBadRequestIssues } from "../../../utils";
-import { log } from "../../../../log";
+import { log } from "../../../../logger";
 
 const QuerySchema = z.object({
   type: z.enum(["WEB", "TELEGRAM"]),

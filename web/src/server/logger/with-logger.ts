@@ -1,22 +1,23 @@
-import type { AxiomAPIRequest } from "next-axiom";
+import type { AxiomAPIRequest, Logger as AxiomLogger } from "next-axiom";
 import { withAxiom } from "next-axiom";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { Logger } from "./index";
 
 export type NextApiHandlerWithLogger<T = unknown> = (
-  res: NextApiRequest & { log: Logger },
+  res: NextApiRequest & { logger: Logger },
   req: NextApiResponse<T>
 ) => unknown | Promise<unknown>;
 
-export type NextApiRequestWithLogger = NextApiRequest & { log: Logger };
+export type NextApiRequestWithLogger = NextApiRequest & { logger: Logger };
 
 export function withLogger(handler: NextApiHandlerWithLogger) {
-  async function f(req: AxiomAPIRequest, res: NextApiResponse) {
-    const axiomLog = req.log;
+  async function f(req: NextApiRequest, res: NextApiResponse) {
+    const axiomReq = req as AxiomAPIRequest;
+    const axiomLog = axiomReq.log as AxiomLogger;
     const log = new Logger(axiomLog);
 
     const logRequest = req as unknown as NextApiRequestWithLogger;
-    logRequest.log = log;
+    logRequest.logger = log;
 
     await handler(logRequest, res);
   }
