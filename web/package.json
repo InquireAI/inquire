@@ -9,7 +9,8 @@
     "lint": "next lint",
     "start": "next start",
     "db:seed:personas": "ts-node -O '{\"module\":\"commonjs\"}' ./prisma/seed-personas.ts",
-    "algolia:seed:personas": "ts-node -O '{\"module\":\"commonjs\"}' ./algolia/seed-personas.ts"
+    "algolia:seed:personas": "ts-node -O '{\"module\":\"commonjs\"}' ./algolia/seed-personas.ts",
+    "generate:apikey": "ts-node -O '{\"module\":\"commonjs\"}' ./apikey/generate-api-key.ts"
   },
   "dependencies": {
     "@headlessui/react": "^1.7.5",
