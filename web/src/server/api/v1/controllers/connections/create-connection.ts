@@ -1,10 +1,10 @@
-import type { NextApiRequest, NextApiResponse } from "next";
+import type { NextApiResponse } from "next";
 import { z } from "zod";
 import type { Connection } from "../../../../db/client";
 import { prisma } from "../../../../db/client";
 import type { BadRequestRes, SuccessRes } from "../../../api-responses";
 import { zodIssuesToBadRequestIssues } from "../../../utils";
-import { log } from "../../../../log";
+import type { NextApiRequestWithLogger } from "../../../../log/with-logger";
 
 const BodySchema = z.object({
   userId: z.string().optional(),
@@ -15,9 +15,11 @@ const BodySchema = z.object({
 type Res = SuccessRes<Connection> | BadRequestRes;
 
 export async function createConnection(
-  req: NextApiRequest,
+  req: NextApiRequestWithLogger,
   res: NextApiResponse<Res>
 ) {
+  const { log } = req;
+
   const bodyParse = await BodySchema.spa(req.body);
 
   if (!bodyParse.success) {

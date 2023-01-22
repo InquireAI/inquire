@@ -1,13 +1,16 @@
-import type { NextApiHandler, NextApiRequest, NextApiResponse } from "next";
+import type { NextApiHandler, NextApiResponse } from "next";
 import { createHash } from "crypto";
 import { z } from "zod";
 import { prisma } from "../db/client";
-import { log } from "../log";
+import type { NextApiRequestWithLogger } from "../log/with-logger";
+import { withLogger } from "../log/with-logger";
 
 const ApiKeySchema = z.string();
 
 export function withApiKeyAuth(handler: NextApiHandler) {
-  return async function (req: NextApiRequest, res: NextApiResponse) {
+  async function f(req: NextApiRequestWithLogger, res: NextApiResponse) {
+    const { log } = req;
+
     const apiKeyParse = await ApiKeySchema.spa(req.headers["x-api-key"]);
 
     if (!apiKeyParse.success) {
@@ -40,5 +43,7 @@ export function withApiKeyAuth(handler: NextApiHandler) {
     }
 
     await handler(req, res);
-  };
+  }
+
+  return withLogger(f);
 }

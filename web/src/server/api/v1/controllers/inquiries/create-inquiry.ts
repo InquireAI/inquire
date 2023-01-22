@@ -1,4 +1,4 @@
-import type { NextApiRequest, NextApiResponse } from "next";
+import type { NextApiResponse } from "next";
 import { z } from "zod";
 import type {
   BadRequestRes,
@@ -14,7 +14,8 @@ import { zodIssuesToBadRequestIssues } from "../../../utils";
 import { env } from "../../../../../env/server.mjs";
 import { Configuration, OpenAIApi } from "openai";
 import axios, { AxiosError, type AxiosRequestConfig } from "axios";
-import { log } from "../../../../log";
+import { withLogger } from "../../../../log/with-logger";
+import type { NextApiRequestWithLogger } from "../../../../log/with-logger";
 
 // configure the openai api
 const configuration = new Configuration({
@@ -79,10 +80,11 @@ type Res =
   | InvalidSubscription
   | QuotaReached;
 
-export async function createInquiry(
-  req: NextApiRequest,
+async function createInquiry(
+  req: NextApiRequestWithLogger,
   res: NextApiResponse<Res>
 ) {
+  const { log } = req;
   // validate the body
   const bodyParse = await BodySchema.spa(req.body);
 
@@ -392,3 +394,5 @@ export async function createInquiry(
     });
   }
 }
+
+export const handler = withLogger(createInquiry);

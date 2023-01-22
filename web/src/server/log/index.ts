@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { log as axiomLog, type Logger as AxiomLogger } from "next-axiom";
+import { type Logger as AxiomLogger } from "next-axiom";
 
 type DebugArgs = {
   [key: string]: any;
@@ -74,7 +74,7 @@ type ErrorArgs =
       [key: string]: any;
     };
 
-class Logger {
+export class Logger {
   constructor(private log: AxiomLogger) {}
 
   debug(message: string, args?: DebugArgs) {
@@ -93,5 +93,3 @@ class Logger {
     this.log.error(message, args);
   }
 }
-
-export const log = new Logger(axiomLog);

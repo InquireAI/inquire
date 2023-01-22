@@ -1,15 +1,17 @@
-import type { NextApiRequest, NextApiResponse } from "next";
+import type { NextApiResponse } from "next";
 import type { BadRequestRes, SuccessRes } from "../../../api-responses";
 import type { Persona } from "../../../../db/client";
 import { prisma } from "../../../../db/client";
-import { log } from "../../../../log";
+import type { NextApiRequestWithLogger } from "../../../../log/with-logger";
 
 type Res = SuccessRes<Persona[]> | BadRequestRes;
 
 export async function listInquiry(
-  req: NextApiRequest,
+  req: NextApiRequestWithLogger,
   res: NextApiResponse<Res>
 ) {
+  const { log } = req;
+
   // query db for all personas available
   const data = await prisma.persona.findMany({});
 
