@@ -8,8 +8,8 @@
     "postinstall": "prisma generate",
     "lint": "next lint",
     "start": "next start",
-    "db:seed:personas": "ts-node -O '{\"module\":\"commonjs\"}' ./prisma/seedPersonas.ts",
-    "algolia:seed:personas": "ts-node -O '{\"module\":\"commonjs\"}' ./algolia/seedPersonas.ts"
+    "db:seed:personas": "ts-node -O '{\"module\":\"commonjs\"}' ./prisma/seed-personas.ts",
+    "algolia:seed:personas": "ts-node -O '{\"module\":\"commonjs\"}' ./algolia/seed-personas.ts"
   },
   "dependencies": {
     "@headlessui/react": "^1.7.5",
