@@ -38,7 +38,7 @@ type DustResponse = {
     created: number;
     run_type: string;
     config: {
-      blocks: Record<string, any>;
+      blocks: Record<string, unknown>;
     };
     status: {
       run: DustStatus;
