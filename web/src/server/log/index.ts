@@ -1,7 +1,7 @@
 import { log as axiomLog, type Logger as AxiomLogger } from "next-axiom";
 
 type DebugArgs = {
-  [key: string]: any;
+  [key: string]: unknown;
 };
 
 type InfoArgs =
@@ -15,24 +15,24 @@ type InfoArgs =
     }
   | {
       type: "BAD_REQUEST";
-      error: { [key: string]: any };
+      error: { [key: string]: unknown };
     }
   | {
-      [key: string]: any;
+      [key: string]: unknown;
     };
 
 type WarnArgs = {
-  [key: string]: any;
+  [key: string]: unknown;
 };
 
 type ErrorArgs =
   | {
       type: "BAD_REQUEST";
-      error: { [key: string]: any };
-      [key: string]: any;
+      error: { [key: string]: unknown };
+      [key: string]: unknown;
     }
   | {
-      [key: string]: any;
+      [key: string]: unknown;
     };
 
 class Logger {
