@@ -8,14 +8,27 @@ type DebugArgs = {
 type InfoArgs =
   | {
       type: "DATABASE_CALL";
-      resource: {
-        name: "Connection";
-        connectionUserId: string;
-        connectionType: string;
-      };
+      resource:
+        | {
+            name: "Connection";
+            connectionUserId?: string;
+            connectionType?: string;
+          }
+        | {
+            name: "Persona";
+            id?: string;
+          };
     }
   | {
       type: "BAD_REQUEST";
+      error: { [key: string]: any };
+    }
+  | {
+      type: "OPENAI_CALL";
+      error: { [key: string]: any };
+    }
+  | {
+      type: "DUST_CALL";
       error: { [key: string]: any };
     }
   | {
@@ -28,9 +41,34 @@ type WarnArgs = {
 
 type ErrorArgs =
   | {
+      type: "DATABASE_CALL";
+      resource:
+        | {
+            name: "Connection";
+            connectionUserId?: string;
+            connectionType?: string;
+          }
+        | {
+            name: "Persona";
+            id?: string;
+          };
+    }
+  | {
       type: "BAD_REQUEST";
       error: { [key: string]: any };
       [key: string]: any;
+    }
+  | {
+      type: "BAD_REQUEST";
+      error: { [key: string]: any };
+    }
+  | {
+      type: "OPENAI_CALL";
+      error: { [key: string]: any };
+    }
+  | {
+      type: "DUST_CALL";
+      error: { [key: string]: any };
     }
   | {
       [key: string]: any;

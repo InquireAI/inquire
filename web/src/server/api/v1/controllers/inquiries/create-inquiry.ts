@@ -13,8 +13,8 @@ import { prisma } from "../../../../db/client";
 import { zodIssuesToBadRequestIssues } from "../../../utils";
 import { env } from "../../../../../env/server.mjs";
 import { Configuration, OpenAIApi } from "openai";
-import axios, { type AxiosRequestConfig } from "axios";
-import logger from "consola";
+import axios, { AxiosError, type AxiosRequestConfig } from "axios";
+import { log } from "../../../../log";
 
 // configure the openai api
 const configuration = new Configuration({
@@ -88,8 +88,12 @@ export async function createInquiry(
 
   // return if the body is invalid
   if (!bodyParse.success) {
-    logger.error(
-      `Invalid request body: ${JSON.stringify(bodyParse.error.issues)}`
+    log.info(
+      `Invalid request body: ${JSON.stringify(bodyParse.error.issues)}`,
+      {
+        type: "BAD_REQUEST",
+        error: bodyParse.error,
+      }
     );
     return res.status(400).json({
       code: "BAD_REQUEST",
@@ -100,12 +104,6 @@ export async function createInquiry(
 
   // parse the body
   const { data: bodyData } = bodyParse;
-
-  logger.info(
-    `Received POST /api/v1/inquiries request with body: ${JSON.stringify(
-      bodyData
-    )}`
-  );
 
   // we check the connections table beacuse a user
   // might not have signed up via the website but we want
@@ -125,18 +123,37 @@ export async function createInquiry(
   // if not create a connection
   // else continue
   if (!connection) {
+    log.info(
+      `Connection with connectionType: ${bodyData.connectionType} and connectionUserId: ${bodyData.connectionUserId} does not exist. Creating`
+    );
     connection = await prisma.connection.create({
       data: {
         connectionType: bodyData.connectionType,
         connectionUserId: bodyData.connectionUserId,
       },
     });
-    logger.info(
-      `New connection with type: ${bodyData.connectionType} and connectionUserId: ${bodyData.connectionUserId} created`
+    log.info(
+      `Connection with connectionType: ${connection.connectionType} and connectionUserId: ${connection.connectionUserId} created`,
+      {
+        type: "DATABASE_CALL",
+        resource: {
+          name: "Connection",
+          connectionType: connection.connectionType,
+          connectionUserId: connection.connectionUserId,
+        },
+      }
     );
   } else {
-    logger.info(
-      `Connection with type: ${bodyData.connectionType} and connectionUserId: ${bodyData.connectionUserId} already exists`
+    log.info(
+      `Retrieved connection with connectionType: ${connection?.connectionType} and connectionUserId: ${connection?.connectionUserId}`,
+      {
+        type: "DATABASE_CALL",
+        resource: {
+          name: "Connection",
+          connectionType: connection.connectionType,
+          connectionUserId: connection.connectionUserId,
+        },
+      }
     );
   }
 
@@ -175,7 +192,7 @@ export async function createInquiry(
       // NOTE: may be multiple products/prices/subscription in future, but currently we only have one, so just look for the first element
       const subscription = user?.customer?.subscriptions[0];
       if (!subscription) {
-        logger.info(
+        log.info(
           `Connection with type: ${bodyData.connectionType} and connectionUserId: ${bodyData.connectionUserId} has reached inquiry limit and no subscription found`
         );
         return res.status(400).json({
@@ -196,7 +213,7 @@ export async function createInquiry(
       }
     } else {
       if (inquiries.length > env.USER_INQUIRY_LIMIT) {
-        logger.info(
+        log.info(
           `Connection with type: ${bodyData.connectionType} and connectionUserId: ${bodyData.connectionUserId} has reached inquiry limit`
         );
 
@@ -210,7 +227,7 @@ export async function createInquiry(
 
   // check if queryType is chat or use the dust app to query the persona
   if (bodyData.queryType === "chat") {
-    logger.info(`Query type is chat, sending to OpenAI`);
+    log.info(`Query type is chat, sending to OpenAI`);
 
     // hit raw dv3 no need for dust
     const response = await openai.createCompletion({
@@ -225,30 +242,37 @@ export async function createInquiry(
 
     // check if response is undefined
     if (!response.data.choices[0]) {
-      logger.error(`OpenAI response is undefined`);
-      return res.status(400).json({
-        code: "BAD_REQUEST",
-        message: `Bad Request`,
+      log.error(`OpenAI response is missing`, {
+        type: "OPENAI_CALL",
+      });
+      return res.status(500).json({
+        code: "INTERNAL_ERROR",
+        message: "Unable to complete inquiry",
       });
     }
 
     const formattedResponse = response.data.choices[0].text;
 
-    if (!formattedResponse)
+    if (!formattedResponse) {
+      log.error(`OpenAI response is missing`, {
+        type: "OPENAI_CALL",
+      });
       return res.status(500).json({
         code: "INTERNAL_ERROR",
         message: "An internal error occurred",
       });
+    }
 
-    logger.success(
-      `Prompt ${bodyData.query}\n Received response from OpenAI: ${formattedResponse}`
-    );
+    log.info(`Prompt ${bodyData.query} and received response from OpenAI`, {
+      type: "OPENAI_CALL",
+    });
+
     // return the response
     res.status(200).json({
       data: formattedResponse,
     });
   } else {
-    logger.info(`Query type is ${bodyData.queryType}, sending to Dust`);
+    log.info(`Query type is ${bodyData.queryType}, sending to Dust`);
 
     // hit dust app
     // define headers with auth
@@ -266,7 +290,12 @@ export async function createInquiry(
     });
 
     if (!persona) {
-      logger.error(`No persona found with name: ${bodyData.queryType}`);
+      log.error(`No persona found with name: ${bodyData.queryType}`, {
+        type: "DATABASE_CALL",
+        resource: {
+          name: "Persona",
+        },
+      });
       return res.status(400).json({
         code: "NOT_FOUND",
         message: `Persona not found`,
@@ -298,7 +327,22 @@ export async function createInquiry(
       const res = await axios.post(`${id}/runs`, options, requestConfig);
       data = res.data;
     } catch (error) {
-      logger.error("Error in querying Dust app", error);
+      if (error instanceof AxiosError) {
+        log.error("Error starting DUST run", {
+          type: "DUST_CALL",
+          error: {
+            request: error.request,
+            response: error.response,
+          },
+        });
+      } else {
+        log.error("Error starting DUST run", {
+          type: "DUST_CALL",
+          error: {
+            unknown: error,
+          },
+        });
+      }
       return res.status(500).json({
         code: "INTERNAL_ERROR",
         message: "An internal error occurred",
@@ -306,7 +350,9 @@ export async function createInquiry(
     }
 
     if (data.run.status.run === "errored") {
-      logger.error("Dust API error");
+      log.error("Dust run failed", {
+        type: "DUST_CALL",
+      });
       return res.status(500).json({
         code: "INTERNAL_ERROR",
         message: "An internal error occurred",
@@ -327,9 +373,9 @@ export async function createInquiry(
     // parse the response
     const formattedResponse = data.run.results[0][0].value.completion.text;
 
-    logger.success(
-      `Prompt ${bodyData.query}\n Received response from OpenAI: ${formattedResponse}`
-    );
+    log.info(`Prompt ${bodyData.query} and received response from DUST`, {
+      type: "DUST_CALL",
+    });
 
     await prisma.inquiry.create({
       data: {
