@@ -1,7 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { log as axiomLog, type Logger as AxiomLogger } from "next-axiom";
 
 type DebugArgs = {
-  [key: string]: unknown;
+  [key: string]: any;
 };
 
 type InfoArgs =
@@ -15,24 +16,24 @@ type InfoArgs =
     }
   | {
       type: "BAD_REQUEST";
-      error: { [key: string]: unknown };
+      error: { [key: string]: any };
     }
   | {
-      [key: string]: unknown;
+      [key: string]: any;
     };
 
 type WarnArgs = {
-  [key: string]: unknown;
+  [key: string]: any;
 };
 
 type ErrorArgs =
   | {
       type: "BAD_REQUEST";
-      error: { [key: string]: unknown };
-      [key: string]: unknown;
+      error: { [key: string]: any };
+      [key: string]: any;
     }
   | {
-      [key: string]: unknown;
+      [key: string]: any;
     };
 
 class Logger {
