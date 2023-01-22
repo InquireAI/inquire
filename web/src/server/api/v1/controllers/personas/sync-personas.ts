@@ -1,12 +1,12 @@
-import type { NextApiRequest, NextApiResponse } from "next";
+import type { NextApiResponse } from "next";
 import { z } from "zod";
-import { log } from "../../../../logger";
 import type { BadRequestRes, SuccessRes } from "../../../api-responses";
 import { zodIssuesToBadRequestIssues } from "../../../utils";
 import { prisma } from "../../../../db/client";
 import type { AlgoliaPersona } from "../../../../algolia/client";
 import { algolia } from "../../../../algolia/client";
 import { env } from "../../../../../env/server.mjs";
+import type { NextApiRequestWithLogger } from "../../../../logger/with-logger";
 
 type Res = SuccessRes<{ success: boolean }> | BadRequestRes;
 
@@ -24,13 +24,15 @@ const BodySchema = z.object({
 });
 
 export async function syncPersonas(
-  req: NextApiRequest,
+  req: NextApiRequestWithLogger,
   res: NextApiResponse<Res>
 ) {
+  const { logger } = req;
+
   const bodyParse = await BodySchema.spa(req.body);
 
   if (!bodyParse.success) {
-    log.error("Invalid request body", {
+    logger.error("Invalid request body", {
       type: "BAD_REQUEST",
       error: bodyParse.error.format(),
     });
