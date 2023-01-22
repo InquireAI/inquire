@@ -16,8 +16,8 @@ import Navbar from "../components/navbar";
 import Switch from "../components/switch";
 import { env } from "../env/client.mjs";
 import { classNames } from "../utils/classnames";
-import type { AlgoliaPersona } from "../utils/searchClient";
-import { searchClient } from "../utils/searchClient";
+import type { AlgoliaPersona } from "../utils/search-client";
+import { searchClient } from "../utils/search-client";
 
 const CustomSearchBox: React.FC = () => {
   const [inputText, setInputText] = useState<string>("");
