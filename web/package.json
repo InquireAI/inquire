@@ -13,6 +13,7 @@
     "generate:apikey": "ts-node -O '{\"module\":\"commonjs\"}' ./apikey/generate-api-key.ts"
   },
   "dependencies": {
+    "@aws-sdk/client-eventbridge": "^3.259.0",
     "@headlessui/react": "^1.7.5",
     "@heroicons/react": "^2.0.13",
     "@next-auth/prisma-adapter": "^1.0.5",
