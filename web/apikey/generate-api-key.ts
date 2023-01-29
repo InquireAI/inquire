@@ -11,7 +11,9 @@ function hash(s: string) {
 
 function main() {
   const apikey = generateKey();
-  const hashedApiKey = hash(apikey);
+  const hashedApiKey = hash(
+    "5febaebb7fd6c2659612eb1d6413f85fd7e2f20b13cf5ff9ddfaede4def7fcfa"
+  );
   console.log({
     apikey,
     hashedApiKey,

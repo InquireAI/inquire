@@ -1,6 +1,6 @@
 import { Dialog } from "@headlessui/react";
 import { TrashIcon } from "@heroicons/react/24/outline";
-import Image from "next/image";
+import Image from "next/image.js";
 import { Fragment, useState } from "react";
 import Skeleton from "react-loading-skeleton";
 import { env } from "../env/client.mjs";

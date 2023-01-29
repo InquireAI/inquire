@@ -1,5 +1,5 @@
 import { type PrismaClient } from "../../db/client";
-import { type Stripe } from "../../stripe/client";
+import { type Stripe } from "../client";
 
 export type Ctx = {
   prisma: PrismaClient;

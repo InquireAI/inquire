@@ -19,12 +19,16 @@ export class EventBridgeEventEmitter implements EventEmitter {
   async emit(events: EventArgs[]): Promise<EventResult[]> {
     const results = await this.client.send(
       new PutEventsCommand({
-        Entries: events.map((e) => ({
-          Detail: JSON.stringify(e.payload),
-          DetailType: e.eventType,
-          EventBusName: this.args.eventBusName,
-          Source: e.source,
-        })),
+        Entries: events.map((e) => {
+          console.log(e);
+          console.log(this.args.eventBusName);
+          return {
+            Detail: JSON.stringify(e.payload),
+            DetailType: e.eventType,
+            EventBusName: this.args.eventBusName,
+            Source: e.source,
+          };
+        }),
       })
     );
 
@@ -49,6 +53,10 @@ export class EventBridgeEventEmitter implements EventEmitter {
 export const eventEmitter = new EventBridgeEventEmitter(
   new EventBridgeClient({
     region: env.INQUIRE_AWS_REGION,
+    credentials: {
+      accessKeyId: env.INQUIRE_AWS_ACCESS_KEY,
+      secretAccessKey: env.INQUIRE_AWS_SECRET_ACCESS_KEY,
+    },
   }),
   {
     eventBusName: env.INQUIRE_EVENT_BUS_NAME,

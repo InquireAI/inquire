@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "sst start",
+    "start": "sst start --profile admin-personal",
     "build": "sst build",
     "deploy": "sst deploy",
     "remove": "sst remove",
@@ -23,6 +23,7 @@
     "@serverless-stack/node": "^1.18.4"
   },
   "workspaces": [
-    "services"
+    "services",
+    "web"
   ]
 }

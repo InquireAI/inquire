@@ -34,6 +34,8 @@ export const serverSchema = z.object({
   ALGOLIA_SEARCH_KEY: z.string(),
   INQUIRE_AWS_REGION: z.string(),
   INQUIRE_EVENT_BUS_NAME: z.string(),
+  INQUIRE_AWS_ACCESS_KEY: z.string(),
+  INQUIRE_AWS_SECRET_ACCESS_KEY: z.string(),
 });
 
 /**
