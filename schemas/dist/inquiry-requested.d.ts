@@ -12,12 +12,18 @@ export interface InquiryRequested {
   queryType: string;
   query: string;
   persona?: {
-    id?: string;
-    name?: string;
+    id: string;
+    name: string;
+    description: string;
+    /**
+     * JSON string format config
+     */
+    config: string;
+    specificationHash: string;
     /**
      * gzipped then base64 encoded prompt
      */
-    prompt?: string;
+    prompt: string;
   };
   status: 'REQUESTED';
   [k: string]: unknown;

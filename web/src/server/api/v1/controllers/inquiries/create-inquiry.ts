@@ -41,7 +41,6 @@ export async function createInquiry(
 ) {
   const { logger } = req;
   // validate the body
-  console.log(typeof req.body);
   const bodyParse = await BodySchema.spa(req.body);
 
   // return if the body is invalid
@@ -233,6 +232,9 @@ export async function createInquiry(
               id: persona.id,
               name: persona.name,
               prompt: gzipSync(persona.prompt).toString("base64"),
+              config: persona.config,
+              description: persona.description,
+              specificationHash: persona.specificationHash,
             }
           : undefined,
       } satisfies InquiryRequested,

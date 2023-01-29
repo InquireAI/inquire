@@ -25,7 +25,7 @@ export function Stack({ stack }: StackContext) {
     getEnv(stack).AWS_IAM_WEB_BACKEND_USER_ARN
   );
 
-  const TEST_SECRET = new Config.Secret(stack, "TEST_SECRET");
+  const OPENAI_API_KEY = new Config.Secret(stack, "OPENAI_API_KEY");
 
   const eventBus = new EventBus(stack, "EventBus", {
     rules: {
@@ -38,7 +38,7 @@ export function Stack({ stack }: StackContext) {
           inquiryRequestedHandler: {
             function: {
               handler: "functions/inquiry-requested/handler.main",
-              bind: [TEST_SECRET],
+              bind: [OPENAI_API_KEY],
             },
           },
         },

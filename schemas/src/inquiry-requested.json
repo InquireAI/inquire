@@ -28,11 +28,29 @@
     },
     "persona": {
       "type": "object",
+      "required": [
+        "id",
+        "name",
+        "description",
+        "config",
+        "specificationHash",
+        "prompt"
+      ],
       "properties": {
         "id": {
           "type": "string"
         },
         "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "config": {
+          "type": "string",
+          "description": "JSON string format config"
+        },
+        "specificationHash": {
           "type": "string"
         },
         "prompt": {
