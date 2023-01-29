@@ -214,6 +214,7 @@ export async function createInquiry(
       connectionUserId: bodyData.connectionUserId,
       queryType: bodyData.queryType,
       query: bodyData.query,
+      status: "REQUESTED",
     },
   });
 

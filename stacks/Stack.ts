@@ -26,6 +26,7 @@ export function Stack({ stack }: StackContext) {
   );
 
   const OPENAI_API_KEY = new Config.Secret(stack, "OPENAI_API_KEY");
+  const DUST_API_KEY = new Config.Secret(stack, "DUST_API_KEY");
 
   const eventBus = new EventBus(stack, "EventBus", {
     rules: {
@@ -38,7 +39,7 @@ export function Stack({ stack }: StackContext) {
           inquiryRequestedHandler: {
             function: {
               handler: "functions/inquiry-requested/handler.main",
-              bind: [OPENAI_API_KEY],
+              bind: [OPENAI_API_KEY, DUST_API_KEY],
             },
           },
         },

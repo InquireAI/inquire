@@ -1,6 +1,8 @@
 import { Config } from "@serverless-stack/node/config";
 import axios from "axios";
 import { Configuration, OpenAIApi } from "openai";
+import { createDustRun } from "./create-dust-run";
+import { getDustRunById } from "./get-dust-run";
 
 type Args = {
   id: string;
@@ -44,93 +46,49 @@ async function getOpenAIResult(args: OpenAIQueryArgs) {
 }
 
 type DustQueryArgs = {
-  id: string;
+  personaId: string;
   specificationHash: string;
   config: string;
   query: string;
   queryType: string;
 };
 
-type DustStatus = "succeeded" | "running" | "errored";
-
-type DustResponse = {
-  run: {
-    run_id: string;
-    created: number;
-    run_type: string;
-    config: {
-      blocks: Record<string, unknown>;
-    };
-    status: {
-      run: DustStatus;
-      blocks: [];
-    };
-    traces: [];
-    specification_hash: string;
-    results: [
-      [
-        {
-          value: {
-            prompt: {
-              text: string;
-              tokens: [];
-              logprobs: number[];
-              top_logprobs: number;
-            };
-            completion: {
-              text: string;
-              tokens: [];
-              logprobs: number[];
-              top_logprobs: number;
-            };
-          };
-          error: string;
-        }
-      ]
-    ];
-  };
-};
-
 class DustError extends Error {}
 
 function setTimeoutAsync(time: number) {
-  return new Promise((r) => setTimeout(r, 300));
+  return new Promise((r) => setTimeout(r, time));
 }
 
 async function getDustResult(args: DustQueryArgs) {
   try {
-    const res = await axios.post(
-      `https://dust.tt/api/v1/apps/Lucas-Kohorst/${args.id}/runs`,
-      {
-        specification_hash: args.specificationHash,
-        config: JSON.parse(args.config),
-        block: false,
-        inputs: [{ question: args.query }],
-      }
-    );
+    const newRun = await createDustRun({
+      config: args.config,
+      personaId: args.personaId,
+      query: args.query,
+      specificationHash: args.specificationHash,
+    });
 
-    const run = res.data as DustResponse;
-
-    if (run.run.status.run === "errored")
-      throw new DustError(`Dust run: ${run.run.run_id} failed`);
+    if (newRun.run.status.run === "errored")
+      throw new DustError(`Dust run: ${newRun.run.run_id} failed`);
 
     while (true) {
       await setTimeoutAsync(3000);
-      const res = await axios.get(
-        `https://dust.tt/api/v1/apps/Lucas-Kohorst/${args.id}/runs/${run.run.run_id}`
-      );
 
-      const data = res.data as DustResponse;
+      const updatedRun = await getDustRunById({
+        personaId: args.personaId,
+        runId: newRun.run.run_id,
+      });
 
-      if (data.run.status.run === "running") {
+      if (updatedRun.run.status.run === "running") {
         continue;
       }
 
-      if (data.run.status.run === "succeeded") {
-        return data.run.results[0][0].value.completion.text;
+      if (updatedRun.run.status.run === "succeeded") {
+        return updatedRun.run.results[0][0].value.completion.text;
       }
     }
   } catch (error) {
+    console.log(error);
     throw new DustError("Failed to start dust run");
   }
 }
@@ -142,7 +100,7 @@ export async function processInqiury(args: Args) {
   } else {
     const result = await getDustResult({
       config: args.persona.config,
-      id: args.persona.id,
+      personaId: args.persona.id,
       query: args.query,
       queryType: args.queryType,
       specificationHash: args.persona.specificationHash,
