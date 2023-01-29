@@ -1,10 +1,12 @@
 {
-  "name": "@sst/services",
+  "name": "@inquire/services",
   "version": "0.0.0",
   "type": "module",
   "scripts": {},
   "dependencies": {
-    "aws-sdk": "^2.1303.0"
+    "@inquire/schemas": "^0.0.0",
+    "aws-sdk": "^2.1303.0",
+    "zod": "^3.20.2"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.110"

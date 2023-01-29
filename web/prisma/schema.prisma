@@ -38,12 +38,19 @@ model Connection {
   @@index([userId])
 }
 
+enum InquiryStatus {
+  REQUESTED
+  COMPLETED
+  FAILED
+}
+
 model Inquiry {
   id               String         @id @default(cuid())
   connectionType   ConnectionType
   connectionUserId String
   queryType        String
   query            String
+  status           InquiryStatus  @default(COMPLETED)
 
   connection Connection @relation(fields: [connectionType, connectionUserId], references: [connectionType, connectionUserId])
 

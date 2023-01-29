@@ -1,5 +1,5 @@
 {
-  "name": "sst",
+  "name": "inquire",
   "version": "0.0.0",
   "private": true,
   "scripts": {
@@ -24,6 +24,7 @@
   },
   "workspaces": [
     "services",
-    "web"
+    "web",
+    "schemas"
   ]
 }
