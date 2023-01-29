@@ -1,4 +1,4 @@
-import { createNextApiHandler } from "@trpc/server/adapters/next/index.js";
+import { createNextApiHandler } from "@trpc/server/adapters/next";
 
 import { env } from "../../../env/server.mjs";
 import { withLogger } from "../../../server/logger/with-logger";

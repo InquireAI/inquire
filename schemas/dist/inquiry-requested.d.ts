@@ -11,6 +11,14 @@ export interface InquiryRequested {
   connectionUserId: string;
   queryType: string;
   query: string;
+  persona?: {
+    id?: string;
+    name?: string;
+    /**
+     * gzipped then base64 encoded prompt
+     */
+    prompt?: string;
+  };
   status: 'REQUESTED';
   [k: string]: unknown;
 }

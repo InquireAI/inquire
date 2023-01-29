@@ -26,6 +26,21 @@
     "query": {
       "type": "string"
     },
+    "persona": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "prompt": {
+          "description": "gzipped then base64 encoded prompt",
+          "type": "string"
+        }
+      }
+    },
     "status": {
       "type": "string",
       "const": "REQUESTED"
