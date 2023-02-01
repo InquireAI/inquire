@@ -1,7 +1,7 @@
 import type { NextApiResponse } from "next";
 import { z } from "zod";
 import type { BadRequestRes, SuccessRes } from "../../../api-responses";
-import { zodIssuesToBadRequestIssues } from "../../../utils";
+import { zodIssuesToValidationIssues } from "../../../utils";
 import { prisma } from "../../../../db/client";
 import type { AlgoliaPersona } from "../../../../algolia/client";
 import { algolia } from "../../../../algolia/client";
@@ -39,7 +39,7 @@ export async function syncPersonas(
     return res.status(400).json({
       code: "BAD_REQUEST",
       message: "Invalid request body",
-      issues: zodIssuesToBadRequestIssues(bodyParse.error.issues),
+      issues: zodIssuesToValidationIssues(bodyParse.error.issues),
     });
   }
 

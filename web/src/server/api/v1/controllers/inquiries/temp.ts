@@ -10,7 +10,7 @@ import type {
   QuotaReached,
 } from "../../../api-responses";
 import { prisma } from "../../../../db/client";
-import { zodIssuesToBadRequestIssues } from "../../../utils";
+import { zodIssuesToValidationIssues } from "../../../utils";
 import { env } from "../../../../../env/server.mjs";
 import { Configuration, OpenAIApi } from "openai";
 import axios, { AxiosError, type AxiosRequestConfig } from "axios";
@@ -99,7 +99,7 @@ export async function createInquiry(
     return res.status(400).json({
       code: "BAD_REQUEST",
       message: "Invalid request body",
-      issues: zodIssuesToBadRequestIssues(bodyParse.error.issues),
+      issues: zodIssuesToValidationIssues(bodyParse.error.issues),
     });
   }
 

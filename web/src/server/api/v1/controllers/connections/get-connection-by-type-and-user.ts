@@ -8,7 +8,7 @@ import type {
   NotFoundRes,
   SuccessRes,
 } from "../../../api-responses";
-import { zodIssuesToBadRequestIssues } from "../../../utils";
+import { zodIssuesToValidationIssues } from "../../../utils";
 
 const QuerySchema = z.object({
   type: z.enum(["WEB", "TELEGRAM"]),
@@ -34,7 +34,7 @@ export async function getConnectionByTypeAndUser(
     return res.status(400).json({
       code: "BAD_REQUEST",
       message: "Invalid query parameters",
-      issues: zodIssuesToBadRequestIssues(queryParse.error.issues),
+      issues: zodIssuesToValidationIssues(queryParse.error.issues),
     });
   }
 

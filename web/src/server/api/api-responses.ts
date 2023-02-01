@@ -2,7 +2,7 @@ export type SuccessRes<Data> = {
   data: Data;
 };
 
-export type BadRequestIssue = {
+export type ValidationIssue = {
   code: string;
   path: (string | number)[];
   message: string;
@@ -11,7 +11,7 @@ export type BadRequestIssue = {
 export type BadRequestRes = {
   code: "BAD_REQUEST";
   message: string;
-  issues?: BadRequestIssue[];
+  issues?: ValidationIssue[];
 };
 
 export type UnauthorizedRes = {
@@ -37,4 +37,4 @@ export type InvalidSubscription = {
 export type QuotaReached = {
   code: "QUOTA_REACHED";
   message: string;
-}
+};

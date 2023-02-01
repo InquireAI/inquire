@@ -3,7 +3,7 @@ import { z } from "zod";
 import type { Connection } from "../../../../db/client";
 import { prisma } from "../../../../db/client";
 import type { BadRequestRes, SuccessRes } from "../../../api-responses";
-import { zodIssuesToBadRequestIssues } from "../../../utils";
+import { zodIssuesToValidationIssues } from "../../../utils";
 import type { NextApiRequestWithLogger } from "../../../../logger/with-logger";
 
 const BodySchema = z.object({
@@ -31,7 +31,7 @@ export async function createConnection(
     return res.status(400).json({
       code: "BAD_REQUEST",
       message: "Invalid request body",
-      issues: zodIssuesToBadRequestIssues(bodyParse.error.issues),
+      issues: zodIssuesToValidationIssues(bodyParse.error.issues),
     });
   }
 

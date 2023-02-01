@@ -51,6 +51,7 @@ model Inquiry {
   queryType        String
   query            String
   status           InquiryStatus  @default(COMPLETED)
+  result           String?        @db.Text
 
   connection Connection @relation(fields: [connectionType, connectionUserId], references: [connectionType, connectionUserId])
 

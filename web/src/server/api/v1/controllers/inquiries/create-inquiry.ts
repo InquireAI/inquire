@@ -11,7 +11,7 @@ import type {
 } from "../../../api-responses";
 import type { Inquiry, Persona } from "../../../../db/client";
 import { prisma } from "../../../../db/client";
-import { zodIssuesToBadRequestIssues } from "../../../utils";
+import { zodIssuesToValidationIssues } from "../../../utils";
 import { env } from "../../../../../env/server.mjs";
 import type { NextApiRequestWithLogger } from "../../../../logger/with-logger";
 import { eventEmitter } from "../../../../eventEmitter/event-bridge-event-emitter";
@@ -55,7 +55,7 @@ export async function createInquiry(
     return res.status(400).json({
       code: "BAD_REQUEST",
       message: "Invalid request body",
-      issues: zodIssuesToBadRequestIssues(bodyParse.error.issues),
+      issues: zodIssuesToValidationIssues(bodyParse.error.issues),
     });
   }
 
