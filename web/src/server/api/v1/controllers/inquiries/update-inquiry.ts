@@ -6,7 +6,7 @@ type Args = {
 };
 
 export async function updateInquiry(id: string, args: Args) {
-  return await prisma.inquiry.update({
+  return prisma.inquiry.update({
     where: {
       id,
     },

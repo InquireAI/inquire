@@ -3,6 +3,7 @@ import axios from "axios";
 import { Configuration, OpenAIApi } from "openai";
 import { createDustRun } from "./create-dust-run";
 import { getDustRunById } from "./get-dust-run";
+import { updateInquiry } from "./update-inquiry";
 
 type Args = {
   id: string;
@@ -94,17 +95,31 @@ async function getDustResult(args: DustQueryArgs) {
 }
 
 export async function processInqiury(args: Args) {
-  if (!args.persona) {
-    const result = await getOpenAIResult({ query: args.query });
-    console.log(result);
-  } else {
-    const result = await getDustResult({
-      config: args.persona.config,
-      personaId: args.persona.id,
-      query: args.query,
-      queryType: args.queryType,
-      specificationHash: args.persona.specificationHash,
+  try {
+    if (!args.persona) {
+      const result = await getOpenAIResult({ query: args.query });
+      await updateInquiry(args.id, {
+        status: "COMPLETED",
+        result,
+      });
+    } else {
+      const result = await getDustResult({
+        config: args.persona.config,
+        personaId: args.persona.id,
+        query: args.query,
+        queryType: args.queryType,
+        specificationHash: args.persona.specificationHash,
+      });
+      await updateInquiry(args.id, {
+        status: "COMPLETED",
+        result,
+      });
+    }
+  } catch (error) {
+    await updateInquiry(args.id, {
+      status: "FAILED",
     });
-    console.log(result);
+
+    throw error;
   }
 }
