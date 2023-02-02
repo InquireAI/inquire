@@ -1,3 +1,4 @@
+import { Config } from "@serverless-stack/node/config";
 import axios, { AxiosResponse } from "axios";
 
 const ConnectionType = {
@@ -33,10 +34,15 @@ type Args = {
 
 export async function updateInquiry(id: string, args: Args) {
   const res = await axios.patch<Inquiry, AxiosResponse<Inquiry>, Args>(
-    `http://127.0.0.1/api/v1/inquiries/${id}`,
+    `${Config.INQUIRE_URL}/api/v1/inquiries/${id}`,
     {
       result: args.result,
       status: args.status,
+    },
+    {
+      headers: {
+        "x-api-key": Config.INQUIRE_API_KEY,
+      },
     }
   );
 

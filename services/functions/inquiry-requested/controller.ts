@@ -1,9 +1,9 @@
 import { Config } from "@serverless-stack/node/config";
-import axios from "axios";
 import { Configuration, OpenAIApi } from "openai";
 import { createDustRun } from "./create-dust-run";
 import { getDustRunById } from "./get-dust-run";
 import { updateInquiry } from "./update-inquiry";
+import { logger } from "../../utils/logger";
 
 type Args = {
   id: string;
@@ -69,11 +69,14 @@ async function getDustResult(args: DustQueryArgs) {
       specificationHash: args.specificationHash,
     });
 
+    logger.info(`Created dust run with id: ${newRun.run.run_id}`, {});
+
     if (newRun.run.status.run === "errored")
       throw new DustError(`Dust run: ${newRun.run.run_id} failed`);
 
+    logger.info(`Polling dust run for status`, {});
     while (true) {
-      await setTimeoutAsync(3000);
+      await setTimeoutAsync(1000);
 
       const updatedRun = await getDustRunById({
         personaId: args.personaId,
@@ -81,20 +84,22 @@ async function getDustResult(args: DustQueryArgs) {
       });
 
       if (updatedRun.run.status.run === "running") {
+        logger.info(`Dust run is running`, {});
         continue;
       }
 
       if (updatedRun.run.status.run === "succeeded") {
+        logger.info(`Dust run succeeded`, {});
         return updatedRun.run.results[0][0].value.completion.text;
       }
     }
   } catch (error) {
-    console.log(error);
-    throw new DustError("Failed to start dust run");
+    logger.error("Failed to start dust run", { err: error });
+    throw error;
   }
 }
 
-export async function processInqiury(args: Args) {
+export async function processInquiry(args: Args) {
   try {
     if (!args.persona) {
       const result = await getOpenAIResult({ query: args.query });

@@ -74,7 +74,14 @@ type ErrorArgs =
       [key: string]: any;
     };
 
-export class Logger {
+interface ILogger {
+  debug(message: string, args: { [k: string]: any }): void;
+  info(message: string, args: { [k: string]: any }): void;
+  warn(message: string, args: { [k: string]: any }): void;
+  error(message: string, args: { [k: string]: any }): void;
+}
+
+export class Logger implements ILogger {
   constructor(private log: AxiomLogger) {}
 
   debug(message: string, args?: DebugArgs) {

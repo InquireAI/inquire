@@ -1,13 +1,14 @@
 import { EventBridgeHandler } from "aws-lambda";
 import type { InquiryRequested } from "@inquire/schemas/dist/inquiry-requested";
-import { processInqiury } from "./controller";
+import { processInquiry } from "./controller";
+import { logger } from "../../utils/logger";
 
 export const main: EventBridgeHandler<
   "InquiryRequested",
   InquiryRequested,
   void
 > = async (event) => {
-  await processInqiury({
+  await processInquiry({
     id: event.detail.id,
     query: event.detail.query,
     queryType: event.detail.queryType,
