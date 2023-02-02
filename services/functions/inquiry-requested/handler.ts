@@ -1,7 +1,6 @@
 import { EventBridgeHandler } from "aws-lambda";
 import type { InquiryRequested } from "@inquire/schemas/dist/inquiry-requested";
 import { processInquiry } from "./controller";
-import { logger } from "../../utils/logger";
 
 export const main: EventBridgeHandler<
   "InquiryRequested",
