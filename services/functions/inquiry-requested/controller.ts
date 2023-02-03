@@ -4,6 +4,7 @@ import { createDustRun } from "./create-dust-run";
 import { getDustRunById } from "./get-dust-run";
 import { updateInquiry } from "./update-inquiry";
 import { logger } from "../../utils/logger";
+import { env } from "./env";
 
 type Args = {
   id: string;
@@ -18,7 +19,7 @@ type Args = {
 
 const openai = new OpenAIApi(
   new Configuration({
-    apiKey: Config.OPENAI_API_KEY,
+    apiKey: env.OPENAI_API_KEY,
   })
 );
 

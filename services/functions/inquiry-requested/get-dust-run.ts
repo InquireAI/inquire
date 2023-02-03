@@ -1,6 +1,7 @@
 import { Config } from "@serverless-stack/node/config";
 import axios from "axios";
 import { DustResponse } from "./dust-response";
+import { env } from "./env";
 
 type Args = {
   personaId: string;
@@ -12,7 +13,7 @@ export async function getDustRunById(args: Args) {
     `https://dust.tt/api/v1/apps/Lucas-Kohorst/${args.personaId}/runs/${args.runId}`,
     {
       headers: {
-        Authorization: `Bearer ${Config.DUST_API_KEY}`,
+        Authorization: `Bearer ${env.DUST_API_KEY}`,
         "Content-Type": "application/json",
       },
     }
