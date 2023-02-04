@@ -1,12 +1,15 @@
 import { connect } from "@planetscale/database";
 import { env } from "./env";
-import fetch from "node-fetch";
+import { fetch } from "undici";
+import { logger } from "../../utils/logger";
 
 console.log(env);
 
 const conn = connect({
   fetch,
-  url: env.DATABASE_URL,
+  host: env.DATABASE_HOST,
+  password: env.DATABASE_PASSWORD,
+  username: env.DATABASE_USERNAME,
 });
 
 const ConnectionType = {
@@ -40,26 +43,39 @@ type Args = {
   result?: string;
 };
 
-function createSetFragment(args: Args) {
-  const fragmentArray: string[] = ["SET"];
+function createSetFragmentAndArgs(args: Args) {
+  const fragmentArray: string[] = [];
+  const argsArray: string[] = [];
 
-  if (args.result) fragmentArray.push(`result = ${args.result}`);
-  if (args.status) fragmentArray.push(`status = ${args.status}`);
+  if (args.result) {
+    fragmentArray.push(`result = ?`);
+    argsArray.push(args.result);
+  }
+  if (args.status) {
+    fragmentArray.push(`status = ?`);
+    argsArray.push(args.status);
+  }
 
-  if (fragmentArray.length === 1) return undefined;
+  if (fragmentArray.length === 0) return undefined;
 
   const fragment = fragmentArray.join(", ");
 
-  return fragment;
+  return { fragment: `SET ${fragment}`, args: argsArray };
 }
 
 export async function updateInquiry(id: string, args: Args) {
-  const setFragment = createSetFragment(args);
+  const setFragmentAndArgs = createSetFragmentAndArgs(args);
 
-  if (!setFragment)
-    await conn.execute(`UPDATE Inquiry ${setFragment} WHERE id = ? LIMIT 1;`, [
-      id,
-    ]);
+  if (setFragmentAndArgs !== undefined) {
+    logger.info("SET query not empty. executing UPDATE", {});
+    const { fragment, args: setArgs } = setFragmentAndArgs;
+
+    await conn.execute(
+      `UPDATE Inquiry ${fragment} WHERE id = ? LIMIT 1`,
+      setArgs.concat([id])
+    );
+    logger.info("UPDATE query succeeded", {});
+  }
 
   const result = await conn.execute(
     `SELECT * FROM Inquiry WHERE id = ?`,
@@ -67,7 +83,7 @@ export async function updateInquiry(id: string, args: Args) {
     { as: "object" }
   );
 
-  console.log(result);
+  logger.info("Got updated row", {});
 
   return result.rows[0] as Inquiry;
 }

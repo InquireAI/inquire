@@ -76,6 +76,7 @@ async function getDustResult(args: DustQueryArgs) {
       throw new DustError(`Dust run: ${newRun.run.run_id} failed`);
 
     logger.info(`Polling dust run for status`, {});
+
     while (true) {
       await setTimeoutAsync(1000);
 

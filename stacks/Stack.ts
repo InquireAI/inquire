@@ -12,6 +12,9 @@ import { env } from "./env";
 const EnvSchema = z.object({
   // db
   DATABASE_URL: z.string(),
+  DATABASE_HOST: z.string(),
+  DATABASE_USERNAME: z.string(),
+  DATABASE_PASSWORD: z.string(),
   // nextauth
   NEXTAUTH_SECRET: z.string(),
   NEXTAUTH_URL: z.string(),
@@ -71,7 +74,9 @@ export function Stack({ stack }: StackContext) {
               environment: {
                 OPENAI_API_KEY: env.OPENAI_API_KEY,
                 DUST_API_KEY: env.DUST_API_KEY,
-                DATABASE_URL: env.DATABASE_URL,
+                DATABASE_HOST: env.DATABASE_HOST,
+                DATABASE_USERNAME: env.DATABASE_USERNAME,
+                DATABASE_PASSWORD: env.DATABASE_PASSWORD,
               },
             },
           },
