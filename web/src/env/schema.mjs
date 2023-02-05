@@ -22,20 +22,19 @@ export const serverSchema = z.object({
   GOOGLE_CLIENT_ID: z.string(),
   GOOGLE_CLIENT_SECRET: z.string(),
   TELEGRAM_SECRET_KEY: z.string(),
+
   STRIPE_API_KEY: z.string(),
   STRIPE_PRICE_ID: z.string(),
   STRIPE_WH_SECRET: z.string(),
-  OPENAI_API_KEY: z.string(),
-  DUST_API_KEY: z.string(),
+
   USER_INQUIRY_LIMIT: z.string().transform((str) => parseInt(str, 10)),
+
   ALGOLIA_ADMIN_KEY: z.string(),
   ALGOLIA_PERSONA_INDEX_NAME: z.string(),
   ALGOLIA_APP_ID: z.string(),
   ALGOLIA_SEARCH_KEY: z.string(),
-  INQUIRE_AWS_REGION: z.string(),
-  INQUIRE_EVENT_BUS_NAME: z.string(),
-  INQUIRE_AWS_ACCESS_KEY: z.string(),
-  INQUIRE_AWS_SECRET_ACCESS_KEY: z.string(),
+
+  EVENT_BUS_NAME: z.string(),
 });
 
 /**

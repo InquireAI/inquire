@@ -51,14 +51,8 @@ export class EventBridgeEventEmitter implements EventEmitter {
 }
 
 export const eventEmitter = new EventBridgeEventEmitter(
-  new EventBridgeClient({
-    region: env.INQUIRE_AWS_REGION,
-    credentials: {
-      accessKeyId: env.INQUIRE_AWS_ACCESS_KEY,
-      secretAccessKey: env.INQUIRE_AWS_SECRET_ACCESS_KEY,
-    },
-  }),
+  new EventBridgeClient({}),
   {
-    eventBusName: env.INQUIRE_EVENT_BUS_NAME,
+    eventBusName: env.EVENT_BUS_NAME,
   }
 );

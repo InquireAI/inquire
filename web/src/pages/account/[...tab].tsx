@@ -47,41 +47,39 @@ const Account: NextPageWithLayout<Props> = () => {
   ]);
 
   return (
-    <>
-      <main className="pt-20">
-        <div className="mx-auto max-w-7xl">
-          <div className="flex flex-col xl:flex-row">
-            <Tab.Group as={Fragment} vertical selectedIndex={tabIndex}>
-              <Tab.List className="flex flex-row gap-4 space-y-1 rounded-xl p-1 xl:flex-col">
-                {tabs.map((t, idx) => (
-                  <Tab
-                    key={idx}
-                    className={({ selected }) =>
-                      classNames(
-                        "w-full px-2.5 text-left text-lg font-medium",
-                        "focus:outline-none ",
-                        selected
-                          ? "border-b-2 border-neutral-900 text-neutral-900 xl:border-r-2 xl:border-b-0"
-                          : "text-neutral-900/50 hover:text-neutral-900"
-                      )
-                    }
-                  >
-                    <Link href={t.href}>{t.name}</Link>
-                  </Tab>
-                ))}
-              </Tab.List>
-              <Tab.Panels as={Fragment}>
-                {tabs.map((t, idx) => (
-                  <Tab.Panel key={idx} className="flex flex-grow">
-                    {t.component}
-                  </Tab.Panel>
-                ))}
-              </Tab.Panels>
-            </Tab.Group>
-          </div>
+    <main className="pt-20">
+      <div className="mx-auto max-w-7xl">
+        <div className="flex flex-col xl:flex-row">
+          <Tab.Group as={Fragment} vertical selectedIndex={tabIndex}>
+            <Tab.List className="flex flex-row gap-4 space-y-1 rounded-xl p-1 xl:flex-col">
+              {tabs.map((t, idx) => (
+                <Tab
+                  key={idx}
+                  className={({ selected }) =>
+                    classNames(
+                      "w-full px-2.5 text-left text-lg font-medium",
+                      "focus:outline-none",
+                      selected
+                        ? "border-b-2 border-neutral-900 text-neutral-900 xl:border-r-2 xl:border-b-0"
+                        : "text-neutral-900/50 hover:text-neutral-900"
+                    )
+                  }
+                >
+                  <Link href={t.href}>{t.name}</Link>
+                </Tab>
+              ))}
+            </Tab.List>
+            <Tab.Panels as={Fragment}>
+              {tabs.map((t, idx) => (
+                <Tab.Panel key={idx} className="flex flex-grow">
+                  {t.component}
+                </Tab.Panel>
+              ))}
+            </Tab.Panels>
+          </Tab.Group>
         </div>
-      </main>
-    </>
+      </div>
+    </main>
   );
 };
 

@@ -42,6 +42,8 @@ const EnvSchema = z.object({
   // dust
   DUST_API_KEY: z.string(),
   AWS_IAM_WEB_BACKEND_USER_ARN: z.string(),
+  // inquire
+  USER_INQUIRY_LIMIT: z.string().transform((str) => parseInt(str, 10)),
 });
 
 function getWebUrl(stack: SSTSTack) {
@@ -87,15 +89,34 @@ export function Stack({ stack }: StackContext) {
 
   eventBus.cdk.eventBus.grantPutEventsTo(webBackendUser);
 
-  // new NextjsSite(stack, "NextSite", {
-  //   path: "web",
-  //   environment: {
-  //     EVENT_BUS_NAME: eventBus.eventBusName,
-  //   },
-  //   defaults: {
-  //     function: {
-  //       permissions: [eventBus],
-  //     },
-  //   },
-  // });
+  new NextjsSite(stack, "NextSite", {
+    path: "web",
+    environment: {
+      EVENT_BUS_NAME: eventBus.eventBusName,
+      NEXTAUTH_SECRET: env.NEXTAUTH_SECRET,
+      NEXTAUTH_URL: env.NEXTAUTH_URL,
+      GOOGLE_CLIENT_ID: env.GOOGLE_CLIENT_ID,
+      GOOGLE_CLIENT_SECRET: env.GOOGLE_CLIENT_SECRET,
+      TELEGRAM_SECRET_KEY: env.TELEGRAM_SECRET_KEY,
+      STRIPE_API_KEY: env.STRIPE_API_KEY,
+      STRIPE_PRICE_ID: env.STRIPE_PRICE_ID,
+      STRIPE_WH_SECRET: env.STRIPE_WH_SECRET,
+      USER_INQUIRY_LIMIT: env.USER_INQUIRY_LIMIT.toString(),
+      ALGOLIA_ADMIN_KEY: env.ALGOLIA_ADMIN_KEY,
+      ALGOLIA_PERSONA_INDEX_NAME: env.ALGOLIA_PERSONA_INDEX_NAME,
+      ALGOLIA_APP_ID: env.ALGOLIA_APP_ID,
+      ALGOLIA_SEARCH_KEY: env.ALGOLIA_SEARCH_KEY,
+      NEXT_PUBLIC_STRIPE_PUB_KEY: env.NEXT_PUBLIC_STRIPE_PUB_KEY,
+      NEXT_PUBLIC_ALGOLIA_PERSONA_INDEX_NAME:
+        env.NEXT_PUBLIC_ALGOLIA_PERSONA_INDEX_NAME,
+      NEXT_PUBLIC_ALGOLIA_APP_ID: env.NEXT_PUBLIC_ALGOLIA_APP_ID,
+      NEXT_PUBLIC_ALGOLIA_SEARCH_KEY: env.NEXT_PUBLIC_ALGOLIA_SEARCH_KEY,
+      NEXT_PUBLIC_TELEGRAM_BOT_NAME: env.NEXT_PUBLIC_TELEGRAM_BOT_NAME,
+    },
+    defaults: {
+      function: {
+        permissions: [eventBus],
+      },
+    },
+  });
 }
