@@ -1,13 +1,9 @@
-import {
-  Stack as SSTSTack,
-  StackContext,
-  EventBus,
-  Config,
-  NextjsSite,
-} from "@serverless-stack/resources";
-import { aws_iam } from "aws-cdk-lib";
+import { StackContext, EventBus, NextjsSite } from "sst/constructs";
 import { z } from "zod";
-import { env } from "./env";
+import {
+  OriginRequestHeaderBehavior,
+  OriginRequestPolicy,
+} from "aws-cdk-lib/aws-cloudfront";
 
 const EnvSchema = z.object({
   // db
@@ -46,20 +42,8 @@ const EnvSchema = z.object({
   USER_INQUIRY_LIMIT: z.string().transform((str) => parseInt(str, 10)),
 });
 
-function getWebUrl(stack: SSTSTack) {
-  if (stack.stage === "prod") return `https://inquire.run`;
-  else if (stack.stage === "staging") return `https://staging.inquire.run`;
-  return undefined;
-}
-
 export function Stack({ stack }: StackContext) {
   const env = EnvSchema.parse(process.env);
-
-  const webBackendUser = aws_iam.User.fromUserArn(
-    stack,
-    "WebBackendUser",
-    env.AWS_IAM_WEB_BACKEND_USER_ARN
-  );
 
   const eventBus = new EventBus(stack, "EventBus", {
     rules: {
@@ -72,7 +56,7 @@ export function Stack({ stack }: StackContext) {
           inquiryRequestedHandler: {
             function: {
               timeout: "30 seconds",
-              handler: "functions/inquiry-requested/handler.main",
+              handler: "services/functions/inquiry-requested/handler.main",
               environment: {
                 OPENAI_API_KEY: env.OPENAI_API_KEY,
                 DUST_API_KEY: env.DUST_API_KEY,
@@ -87,11 +71,19 @@ export function Stack({ stack }: StackContext) {
     },
   });
 
-  eventBus.cdk.eventBus.grantPutEventsTo(webBackendUser);
+  const originRequestPolicy = new OriginRequestPolicy(
+    stack,
+    "NextSiteOriginRequestPolicy",
+    {
+      headerBehavior: OriginRequestHeaderBehavior.allowList("x-api-key"),
+    }
+  );
 
   new NextjsSite(stack, "NextSite", {
     path: "web",
     environment: {
+      DATABASE_URL: env.DATABASE_URL,
+      NODE_ENV: "production",
       EVENT_BUS_NAME: eventBus.eventBusName,
       NEXTAUTH_SECRET: env.NEXTAUTH_SECRET,
       NEXTAUTH_URL: env.NEXTAUTH_URL,
@@ -113,9 +105,12 @@ export function Stack({ stack }: StackContext) {
       NEXT_PUBLIC_ALGOLIA_SEARCH_KEY: env.NEXT_PUBLIC_ALGOLIA_SEARCH_KEY,
       NEXT_PUBLIC_TELEGRAM_BOT_NAME: env.NEXT_PUBLIC_TELEGRAM_BOT_NAME,
     },
-    defaults: {
-      function: {
-        permissions: [eventBus],
+    permissions: [eventBus],
+    cdk: {
+      distribution: {
+        defaultBehavior: {
+          originRequestPolicy,
+        },
       },
     },
   });

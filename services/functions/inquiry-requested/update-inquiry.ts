@@ -3,8 +3,6 @@ import { env } from "./env";
 import { fetch } from "undici";
 import { logger } from "../../utils/logger";
 
-console.log(env);
-
 const conn = connect({
   fetch,
   host: env.DATABASE_HOST,

@@ -3,30 +3,27 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "sst start --profile admin-personal",
+    "start": "sst dev --profile admin-personal",
     "build": "sst build",
-    "deploy": "sst deploy",
+    "deploy": "sst deploy --profile admin-personal",
     "remove": "sst remove",
     "console": "sst console",
     "typecheck": "tsc --noEmit",
     "test": "sst bind -- vitest run"
   },
   "devDependencies": {
-    "@serverless-stack/cli": "^1.18.4",
-    "@serverless-stack/resources": "^1.18.4",
     "@tsconfig/node16": "^1.0.3",
     "aws-cdk-lib": "2.50.0",
     "typescript": "^4.9.4",
     "vitest": "^0.28.2"
   },
   "dependencies": {
-    "@serverless-stack/node": "^1.18.4",
-    "@sls-next/lambda-at-edge": "^3.7.0",
+    "constructs": "^10.1.156",
+    "sst": "^2.0.0-rc.68",
     "zod": "^3.20.2"
   },
   "workspaces": [
     "services",
-    "web",
     "schemas"
   ]
 }

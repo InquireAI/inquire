@@ -69,7 +69,7 @@ const PersonaHit: React.FC<{ personaHit: AlgoliaPersona }> = ({
   personaHit,
 }) => {
   const [showModal, setShowModal] = useState(false);
-  console.log(showModal);
+
   return (
     <>
       <Modal
@@ -174,10 +174,10 @@ const Home: NextPage = () => {
                     className="rounded-xl bg-neutral-900/10 px-10 py-3 font-semibold text-neutral-900 no-underline transition hover:bg-neutral-900/20"
                     onClick={() => {
                       if (sessionData) {
-                        router.push("/account");
+                        router.push("/account/billing");
                         return;
                       }
-                      signIn(undefined, { callbackUrl: "/account" });
+                      signIn(undefined, { callbackUrl: "/account/billing" });
                     }}
                   >
                     {sessionData ? "Account" : "Sign Up"}
