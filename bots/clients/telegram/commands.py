@@ -5,6 +5,7 @@ from uuid import uuid4
 import random
 import time
 import json
+import polling2
 
 from telegram import __version__ as TG_VER
 
@@ -42,7 +43,7 @@ class Commands:
 
         # Help text
         self.help_text = f"""
-Inquire is a converstational chatbot that can take the form of just about any persona.
+Inquire is a conversational chatbot that can take the form of just about any persona.
 
 To get started start typing `@inquireai_bot` followed by the persona you want to chat with (e.g. `@inquireai_bot math-teacher`). Any message after will be answered!
 
@@ -63,7 +64,7 @@ Learn more about Inquire at https://inquire.run
 
         MAX_TEXT_LENGTH = 4096
         if len(text) <= MAX_TEXT_LENGTH:
-            return await update.message.reply_text(text, **kwargs)
+            return await update.message.reply_text(text, **kwargs, parse_mode="Markdown")
 
         parts = []
         while len(text) > 0:
@@ -274,6 +275,12 @@ Learn more about Inquire at https://inquire.run
 
         await query.edit_message_text(text=f"You are now chatting with a {persona} bot, any chat will be returned with an answer")
 
+    # check if the response is correct
+    def is_correct_response(self, response):
+        """Check if the API returns 'COMPLETED'"""
+        content = json.loads(response.content)
+        return content['data']['status'] == 'COMPLETED'
+
     # Call the Inquire API to query the persona
     async def query_persona(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """
@@ -310,12 +317,24 @@ Learn more about Inquire at https://inquire.run
         }
 
         response = requests.post(url, headers=headers, data=payload)
+        content = json.loads(response.content)
 
-        # handle api errors
-        if response.status_code != 200:
-            raise Exception(response.status_code, response.text)
-
-        await self.send_message(update, response.json()['data'])
+        # poll the API until the response is ready
+        poll_url = self.inquireApi + "/inquiries/" + content['data']['id']
+        try:
+            poll = polling2.poll(
+                lambda: requests.get(
+                    poll_url,
+                    headers=headers
+                ),
+                check_success=self.is_correct_response,
+                step=0.5,
+                timeout=30
+            )
+            await self.send_message(update, poll.json()['data']['result'])
+        except polling2.TimeoutException:
+            await self.send_message(update, 'Sorry, I am having trouble answering your question. Please try again later.')
+            raise Exception("Timeout waiting for response")
 
     # Chat command to handle chats in groups
     async def chat_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:

@@ -140,20 +140,20 @@ class MySQLPersistence(DictPersistence):
         creates table for storing the data if table
         doesn't exist already inside database.
         """
-        self.logger.info("Initializing database since it did not exist...")
-        create_table_qry = """
-                CREATE TABLE IF NOT EXISTS Persistence (
-                bot_data json,
-                chat_data json,
-                user_data json,
-                callback_data json,
-                conversations json,
-                updatedAt datetime(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-                PRIMARY KEY (updatedAt)
-            );"""
+        self.logger.info("Passing database initialization...")
+        # create_table_qry = """
+        #         CREATE TABLE Persistence (
+        #         bot_data json,
+        #         chat_data json,
+        #         user_data json,
+        #         callback_data json,
+        #         conversations json,
+        #         updatedAt datetime(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+        #         PRIMARY KEY (updatedAt)
+        #     );"""
 
-        self._session.execute(text(create_table_qry))
-        self._session.commit()
+        # self._session.execute(text(create_table_qry))
+        # self._session.commit()
 
     def _dump_into_json(self) -> Any:
         """Dumps data into json format for inserting in db."""
