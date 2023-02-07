@@ -1,17 +1,25 @@
-import type { NextApiHandler, NextApiRequest, NextApiResponse } from "next";
+import type { NextApiResponse } from "next";
 import { createHash } from "crypto";
 import { z } from "zod";
 import { prisma } from "../db/client";
-import logger from 'consola'
+import type {
+  NextApiHandlerWithLogger,
+  NextApiRequestWithLogger,
+} from "../logger/with-logger";
 
 const ApiKeySchema = z.string();
 
-export function withApiKeyAuth(handler: NextApiHandler) {
-  return async function (req: NextApiRequest, res: NextApiResponse) {
+export function withApiKeyAuth(handler: NextApiHandlerWithLogger) {
+  return async function (req: NextApiRequestWithLogger, res: NextApiResponse) {
+    const { logger } = req;
+
     const apiKeyParse = await ApiKeySchema.spa(req.headers["x-api-key"]);
 
     if (!apiKeyParse.success) {
-      logger.error(`Invalid API key: ${apiKeyParse.error}`)
+      logger.info(`Invalid API key`, {
+        type: "BAD_REQUEST",
+        error: apiKeyParse.error,
+      });
       return res.status(401).json({
         code: "UNAUTHORIZED",
         message: "Invalid API key",
@@ -28,8 +36,10 @@ export function withApiKeyAuth(handler: NextApiHandler) {
       },
     });
 
+    logger.info("Api Key is valid");
+
     if (!dbApikey) {
-      logger.error(`Invalid DB API key: ${dbApikey}`)
+      logger.info("Could not find api key");
       return res.status(401).json({
         code: "UNAUTHORIZED",
         message: "Invalid API key",

@@ -2,7 +2,8 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-arm64-openssl-1.0.x"]
 }
 
 datasource db {
@@ -31,8 +32,17 @@ model Connection {
   user             User?          @relation(fields: [userId], references: [id])
   inquiries        Inquiry[]
 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
   @@id([connectionType, connectionUserId])
   @@index([userId])
+}
+
+enum InquiryStatus {
+  REQUESTED
+  COMPLETED
+  FAILED
 }
 
 model Inquiry {
@@ -41,8 +51,13 @@ model Inquiry {
   connectionUserId String
   queryType        String
   query            String
+  status           InquiryStatus  @default(COMPLETED)
+  result           String?        @db.Text
 
   connection Connection @relation(fields: [connectionType, connectionUserId], references: [connectionType, connectionUserId])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
 
   @@index([connectionType, connectionUserId])
 }
@@ -50,10 +65,12 @@ model Inquiry {
 model Persona {
   id                String @id
   name              String @unique
-  prompt            String                 @db.VarChar(5000)
-  description       String                 @db.VarChar(5000)
+  prompt            String @db.Text
+  description       String @db.VarChar(10000)
   specificationHash String
-  config            String
+  config            String @db.Text
+
+  createdAt DateTime @default(now())
 
   @@index([id])
   @@index([name])
@@ -128,6 +145,7 @@ enum SubscriptionStatus {
   past_due
   canceled
   unpaid
+  paused
 }
 
 enum PaymentMethodType {
@@ -170,6 +188,9 @@ model PaymentMethod {
   type         PaymentMethodType
   card         Json?
   subscription Subscription[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
 
   @@index([customerId])
 }
@@ -288,11 +309,11 @@ model VerificationToken {
 }
 
 model Persistence {
-  bot_data Json?
-  chat_data Json?
-  user_data Json?
+  bot_data      Json?
+  chat_data     Json?
+  user_data     Json?
   callback_data Json?
   conversations Json?
 
-  updatedAt DateTime @updatedAt @id @default(now())
+  updatedAt DateTime @id @default(now()) @updatedAt
 }

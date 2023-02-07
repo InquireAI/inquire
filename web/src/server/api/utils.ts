@@ -1,9 +1,9 @@
 import type { ZodIssue } from "zod";
-import type { BadRequestIssue } from "./api-responses";
+import type { ValidationIssue } from "./api-responses";
 
-export function zodIssuesToBadRequestIssues(
+export function zodIssuesToValidationIssues(
   zodIssues: ZodIssue[]
-): BadRequestIssue[] {
+): ValidationIssue[] {
   return zodIssues.map((issue) => {
     return {
       code: issue.code,

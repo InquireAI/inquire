@@ -1,0 +1,14 @@
+{
+  "name": "@inquire/schemas",
+  "version": "0.0.0",
+  "main": "./dist/index.d.ts",
+  "scripts": {
+    "build": "node build.js"
+  },
+  "dependencies": {
+    "zod": "^3.20.2"
+  },
+  "devDependencies": {
+    "json-schema-to-typescript": "^11.0.3"
+  }
+}

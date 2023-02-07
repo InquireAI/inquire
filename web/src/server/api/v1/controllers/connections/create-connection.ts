@@ -1,10 +1,10 @@
-import type { NextApiRequest, NextApiResponse } from "next";
+import type { NextApiResponse } from "next";
 import { z } from "zod";
 import type { Connection } from "../../../../db/client";
 import { prisma } from "../../../../db/client";
 import type { BadRequestRes, SuccessRes } from "../../../api-responses";
-import { zodIssuesToBadRequestIssues } from "../../../utils";
-import logger from 'consola'
+import { zodIssuesToValidationIssues } from "../../../utils";
+import type { NextApiRequestWithLogger } from "../../../../logger/with-logger";
 
 const BodySchema = z.object({
   userId: z.string().optional(),
@@ -15,17 +15,23 @@ const BodySchema = z.object({
 type Res = SuccessRes<Connection> | BadRequestRes;
 
 export async function createConnection(
-  req: NextApiRequest,
+  req: NextApiRequestWithLogger,
   res: NextApiResponse<Res>
 ) {
+  const { logger } = req;
+
   const bodyParse = await BodySchema.spa(req.body);
 
   if (!bodyParse.success) {
-    logger.error(`Invalid request body: ${bodyParse.error.issues}`)
+    logger.info("Invalid request body", {
+      type: "BAD_REQUEST",
+      error: bodyParse.error.issues,
+    });
+
     return res.status(400).json({
       code: "BAD_REQUEST",
       message: "Invalid request body",
-      issues: zodIssuesToBadRequestIssues(bodyParse.error.issues),
+      issues: zodIssuesToValidationIssues(bodyParse.error.issues),
     });
   }
 
@@ -38,6 +44,18 @@ export async function createConnection(
       connectionUserId: bodyData.connectionUserId,
     },
   });
+
+  logger.info(
+    `Connection with connectionUserId: ${connection.connectionUserId} and connectionType: ${connection.connectionType} created`,
+    {
+      type: "DATABASE_CALL",
+      resource: {
+        name: "Connection",
+        connectionType: connection.connectionType,
+        connectionUserId: connection.connectionUserId,
+      },
+    }
+  );
 
   return res.status(200).json({
     data: connection,

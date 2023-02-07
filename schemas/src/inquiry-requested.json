@@ -1,0 +1,67 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "id",
+    "connectionType",
+    "connectionUserId",
+    "queryType",
+    "query",
+    "status"
+  ],
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "connectionType": {
+      "type": "string"
+    },
+    "connectionUserId": {
+      "type": "string"
+    },
+    "queryType": {
+      "type": "string"
+    },
+    "query": {
+      "type": "string"
+    },
+    "persona": {
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "description",
+        "config",
+        "specificationHash",
+        "prompt"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "config": {
+          "type": "string",
+          "description": "JSON string format config"
+        },
+        "specificationHash": {
+          "type": "string"
+        },
+        "prompt": {
+          "description": "gzipped then base64 encoded prompt",
+          "type": "string"
+        }
+      }
+    },
+    "status": {
+      "type": "string",
+      "const": "REQUESTED"
+    }
+  }
+}

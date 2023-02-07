@@ -17,7 +17,7 @@ const Navbar: React.FC = () => {
               TODO: replace with logo
             /> */}
       </div>
-      <div className="hidden items-center justify-end md:flex md:flex-1 lg:w-0">
+      <div className="items-center justify-end md:flex md:flex-1 lg:w-0">
         <AuthButton />
       </div>
     </div>

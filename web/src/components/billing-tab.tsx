@@ -38,7 +38,7 @@ const BillingTab: React.FC = () => {
   }
 
   return (
-    <div className="flex min-h-full flex-grow flex-col gap-5 px-10">
+    <div className="flex min-h-full flex-grow flex-col gap-5 xl:px-10">
       <Switch
         isOn={!isLoading}
         onComponent={<p className="text-3xl font-medium">Subscription</p>}

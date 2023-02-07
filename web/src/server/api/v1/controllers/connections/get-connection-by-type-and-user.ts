@@ -1,14 +1,14 @@
-import type { NextApiRequest, NextApiResponse } from "next";
+import type { NextApiResponse } from "next";
 import { z } from "zod";
 import type { Connection } from "../../../../db/client";
 import { prisma } from "../../../../db/client";
+import type { NextApiRequestWithLogger } from "../../../../logger/with-logger";
 import type {
   BadRequestRes,
   NotFoundRes,
   SuccessRes,
 } from "../../../api-responses";
-import { zodIssuesToBadRequestIssues } from "../../../utils";
-import logger from 'consola'
+import { zodIssuesToValidationIssues } from "../../../utils";
 
 const QuerySchema = z.object({
   type: z.enum(["WEB", "TELEGRAM"]),
@@ -18,17 +18,23 @@ const QuerySchema = z.object({
 type Res = SuccessRes<Connection> | BadRequestRes | NotFoundRes;
 
 export async function getConnectionByTypeAndUser(
-  req: NextApiRequest,
+  req: NextApiRequestWithLogger,
   res: NextApiResponse<Res>
 ) {
+  const { logger } = req;
+
   const queryParse = await QuerySchema.spa(req.query);
 
   if (!queryParse.success) {
-    logger.error(`Invalid query parameters: ${queryParse.error.issues}`)
+    logger.info("Invalid query parameters", {
+      type: "BAD_REQUEST",
+      error: queryParse.error,
+    });
+
     return res.status(400).json({
       code: "BAD_REQUEST",
       message: "Invalid query parameters",
-      issues: zodIssuesToBadRequestIssues(queryParse.error.issues),
+      issues: zodIssuesToValidationIssues(queryParse.error.issues),
     });
   }
 
@@ -44,7 +50,10 @@ export async function getConnectionByTypeAndUser(
   });
 
   if (!connection) {
-    logger.error(`Connection with type ${queryData.type} and connectionUserId ${queryData.connectionUserId} not found`)
+    logger.warn(
+      "Connection with type ${queryData.type} and connectionUserId ${queryData.connectionUserId} not found"
+    );
+
     return res.status(404).json({
       code: "NOT_FOUND",
       message: `Connection with type ${queryData.type} and connectionUserId ${queryData.connectionUserId}`,

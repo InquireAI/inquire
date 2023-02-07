@@ -9,7 +9,9 @@ const SignIn: NextPage = () => {
         <div className="flex w-full flex-col justify-evenly gap-5 rounded-xl border border-neutral-200 bg-neutral-100 p-10 md:w-1/2 lg:w-1/3 xl:w-1/4">
           <button
             className="flex flex-row justify-evenly gap-4 rounded bg-white p-5 font-medium"
-            onClick={() => signIn("google", { callbackUrl: "/account" })}
+            onClick={() =>
+              signIn("google", { callbackUrl: "/account/billing" })
+            }
           >
             <Image
               src="/google_g_logo.svg"
