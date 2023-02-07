@@ -3,9 +3,9 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "sst dev --profile admin-personal",
+    "start": "sst dev --profile inquire",
     "build": "sst build",
-    "deploy": "sst deploy --profile admin-personal",
+    "deploy": "sst deploy --profile inquire",
     "remove": "sst remove",
     "console": "sst console",
     "typecheck": "tsc --noEmit",
@@ -13,12 +13,12 @@
   },
   "devDependencies": {
     "@tsconfig/node16": "^1.0.3",
-    "aws-cdk-lib": "2.50.0",
+    "aws-cdk-lib": "^2.62.2",
     "typescript": "^4.9.4",
     "vitest": "^0.28.2"
   },
   "dependencies": {
-    "constructs": "^10.1.156",
+    "constructs": "10.1.156",
     "sst": "^2.0.0-rc.68",
     "zod": "^3.20.2"
   },
