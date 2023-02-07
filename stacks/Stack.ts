@@ -37,7 +37,6 @@ const EnvSchema = z.object({
   OPENAI_API_KEY: z.string(),
   // dust
   DUST_API_KEY: z.string(),
-  AWS_IAM_WEB_BACKEND_USER_ARN: z.string(),
   // inquire
   USER_INQUIRY_LIMIT: z.string().transform((str) => parseInt(str, 10)),
 });
