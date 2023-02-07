@@ -6,7 +6,6 @@ export default {
     return {
       name: "inquire",
       region: "us-east-1",
-      profile: "admin-personal",
     };
   },
   stacks(app) {

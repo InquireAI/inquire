@@ -4,12 +4,12 @@
   "private": true,
   "scripts": {
     "start": "sst dev --profile inquire",
-    "build": "sst build",
+    "build": "sst build --profile inquire",
     "deploy": "sst deploy --profile inquire",
-    "remove": "sst remove",
-    "console": "sst console",
+    "remove": "sst remove --profile inquire",
+    "console": "sst console --profile inquire",
     "typecheck": "tsc --noEmit",
-    "test": "sst bind -- vitest run"
+    "test": "sst bind -- vitest run --profile inquire"
   },
   "devDependencies": {
     "@tsconfig/node16": "^1.0.3",
