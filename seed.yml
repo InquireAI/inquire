@@ -1,2 +1,0 @@
-deploy:
-  - npx sst deploy --stage $SEED_STAGE_NAME --vebose
