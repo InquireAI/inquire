@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "constructs": "10.1.156",
-    "sst": "^2.0.0-rc.68",
+    "sst": "^2.0.1",
     "zod": "^3.20.2"
   },
   "workspaces": [
