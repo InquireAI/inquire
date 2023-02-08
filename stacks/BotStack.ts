@@ -5,6 +5,7 @@ import * as ec2 from "aws-cdk-lib/aws-ec2";
 import { GlobalResourcesStack } from "./GlobalResourcesStack";
 import path from "path";
 import { z } from "zod";
+import { RetentionDays } from "aws-cdk-lib/aws-logs";
 
 const EnvSchema = z.object({
   TELEGRAM_API_KEY: z.string(),
@@ -39,6 +40,10 @@ export function BotStack({ stack }: StackContext) {
       AXIOM_TOKEN: env.AXIOM_TOKEN,
       DB_URI: env.DATABASE_URL,
     },
+    logging: ecs.LogDriver.awsLogs({
+      streamPrefix: "bots",
+      logRetention: RetentionDays.TWO_MONTHS,
+    }),
   });
 
   new ecs.Ec2Service(stack, "EC2Service", {
