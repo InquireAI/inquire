@@ -50,7 +50,7 @@ model Inquiry {
   connectionType   ConnectionType
   connectionUserId String
   queryType        String
-  query            String
+  query            String         @db.Text
   status           InquiryStatus  @default(COMPLETED)
   result           String?        @db.Text
 
