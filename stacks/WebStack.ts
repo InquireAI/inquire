@@ -79,12 +79,12 @@ export function WebStack({ stack }: StackContext) {
     }
   );
 
-  const inquireUrl =
-    stack.stage === "prod"
-      ? "inquire.run"
-      : stack.stage === "dev" || stack.stage === "staging"
-      ? `${stack.stage}.inquire.run`
-      : undefined;
+  // const inquireUrl =
+  //   stack.stage === "prod"
+  //     ? "inquire.run"
+  //     : stack.stage === "dev" || stack.stage === "staging"
+  //     ? `${stack.stage}.inquire.run`
+  //     : undefined;
 
   const nextSite = new NextjsSite(stack, "NextSite", {
     path: "web",
@@ -136,7 +136,7 @@ export function WebStack({ stack }: StackContext) {
   });
 
   return {
-    inquireUrl: inquireUrl || (nextSite.url as string),
+    inquireUrl: nextSite.url as string,
     nextSite,
     eventBus,
   };
