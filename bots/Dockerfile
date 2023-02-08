@@ -11,7 +11,6 @@ COPY ./clients /app/clients/
 ARG TELEGRAM_API_KEY
 ARG INQUIRE_API
 ARG INQUIRE_API_KEY
-ARG AXIOM_TOKEN
 ARG DB_URI
 
 # Install requirements

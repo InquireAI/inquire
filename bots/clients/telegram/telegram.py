@@ -14,8 +14,6 @@ import nest_asyncio
 from utils.commands import Commands
 from functools import wraps
 
-import axiom
-
 nest_asyncio.apply()
 dotenv.load_dotenv()
 
@@ -62,9 +60,6 @@ class Telegram:
         if os.environ.get('TELEGRAM_USER_ID'):
             self.USER_ID = int(os.environ.get('TELEGRAM_USER_ID'))
 
-        # create instance of axiom client
-        self.client = axiom.Client(os.environ.get('AXIOM_TOKEN'))
-        
         self.MAX_TIMEOUT = 30
 
         # create new instance of commands
@@ -109,7 +104,6 @@ class Telegram:
         # Log errors
         self.logger.error(msg="Exception while handling an update:", exc_info=context.error)
         self.logger.error(msg=message)
-        self.client.ingest_events('query_data', [{"error": message}])
         
     # Extract the status change from a ChatMemberUpdated object
     def extract_status_change(self, chat_member_update: ChatMemberUpdated) -> Optional[Tuple[bool, bool]]:
@@ -155,76 +149,19 @@ class Telegram:
         if chat.type == Chat.PRIVATE:
             if not was_member and is_member:
                 context.bot_data.setdefault("user_ids", set()).add(chat.id)
-                # Log new users to axiom
-                self.client.ingest_events('user_data', [
-                    {
-                        "user_id": update.effective_user.id, 
-                        "is_bot": update.effective_user.is_bot,
-                        "first_name": update.effective_user.first_name,
-                        "last_name": update.effective_user.last_name,
-                        "username": update.effective_user.username,
-                        "language_code": update.effective_user.language_code,
-                        "is_premium": update.effective_user.is_premium,
-                        "removed": False
-                    }
-                ])
 
                 self.logger.info(f"New user: {update.effective_user.id}")
             elif was_member and not is_member:
                 context.bot_data.setdefault("user_ids", set()).discard(chat.id)
-                # Remove users to axiom
-                self.client.ingest_events('user_data', [
-                    {
-                        "user_id": update.effective_user.id, 
-                        "is_bot": update.effective_user.is_bot,
-                        "first_name": update.effective_user.first_name,
-                        "last_name": update.effective_user.last_name,
-                        "username": update.effective_user.username,
-                        "language_code": update.effective_user.language_code,
-                        "is_premium": update.effective_user.is_premium,
-                        "removed": True,
-                        "group_id": -1
-                    }
-                ])
 
                 self.logger.info(f"Removed user: {update.effective_user.id}")
         elif chat.type in [Chat.GROUP, Chat.SUPERGROUP]:
             if not was_member and is_member:
                 context.bot_data.setdefault("group_ids", set()).add(chat.id)
 
-                # Log new groups to axiom
-                self.client.ingest_events('user_data', [
-                    {
-                        "user_id": update.effective_user.id, 
-                        "is_bot": update.effective_user.is_bot,
-                        "first_name": update.effective_user.first_name,
-                        "last_name": update.effective_user.last_name,
-                        "username": update.effective_user.username,
-                        "language_code": update.effective_user.language_code,
-                        "is_premium": update.effective_user.is_premium,
-                        "removed": False,
-                        "group_id": chat.id,
-                    }
-                ])
-
                 self.logger.info(f"New group: {chat.id}")
             elif was_member and not is_member:
                 context.bot_data.setdefault("group_ids", set()).discard(chat.id)
-
-                # Remvove groups to axiom
-                self.client.ingest_events('user_data', [
-                    {
-                        "user_id": update.effective_user.id, 
-                        "is_bot": update.effective_user.is_bot,
-                        "first_name": update.effective_user.first_name,
-                        "last_name": update.effective_user.last_name,
-                        "username": update.effective_user.username,
-                        "language_code": update.effective_user.language_code,
-                        "is_premium": update.effective_user.is_premium,
-                        "removed": True,
-                        "group_id": chat.id,
-                    }
-                ])
 
                 self.logger.info(f"Removed group: {chat.id}")
 
@@ -286,8 +223,6 @@ f"inquire.run\n",
         message = update.message.text.replace('/draw','')
         self.logger.info(f"User: {update.effective_user.id} used /draw with prompt {message}")
 
-        self.client.ingest_events('query_data', [{"draw": message}])
-
         (prompt, photo) = await self.commands.draw(message)
         if photo is None:
             await update.message.reply_text(prompt)
@@ -300,8 +235,6 @@ f"inquire.run\n",
         await self.application.bot.send_chat_action(update.effective_chat.id, "typing")
         message = update.message.text.replace('/search','')
         self.logger.info(f"User: {update.effective_user.id} used /search with prompt {message}")
-
-        self.client.ingest_events('query_data', [{"search": message}])
 
         response = await self.commands.search(message)
         await update.message.reply_text(response, parse_mode=telegram.constants.ParseMode.MARKDOWN)
@@ -317,8 +250,6 @@ f"inquire.run\n",
         await self.application.bot.send_chat_action(update.effective_chat.id, "typing")
         message = update.message.text.replace('/chat','')
         self.logger.info(f"User: {update.effective_user.id} used /chat with prompt {message}")
-
-        self.client.ingest_events('query_data', [{"chat": message}])
 
         response = await self.commands.chat(message)
         await update.message.reply_text(response, parse_mode=telegram.constants.ParseMode.MARKDOWN)

@@ -4,8 +4,5 @@ python-dotenv==0.21.0
 requests==2.28.1
 polling2
 
-# db
-axiom-py==0.1.0b5
-
 # telegram
 python-telegram-bot==20.0a6
