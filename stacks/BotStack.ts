@@ -11,7 +11,7 @@ const EnvSchema = z.object({
   TELEGRAM_API_KEY: z.string(),
   INQUIRE_API_KEY: z.string(),
   AXIOM_TOKEN: z.string(),
-  DATABASE_URL: z.string(),
+  DB_URI: z.string(),
 });
 
 export function BotStack({ stack }: StackContext) {
@@ -37,7 +37,7 @@ export function BotStack({ stack }: StackContext) {
       TELEGRAM_API_KEY: env.TELEGRAM_API_KEY,
       INQUIRE_API: `${inquireUrl}/api/v1`,
       INQUIRE_API_KEY: env.INQUIRE_API_KEY,
-      DB_URI: env.DATABASE_URL,
+      DB_URI: env.DB_URI,
     },
     logging: ecs.LogDriver.awsLogs({
       streamPrefix: "bots",
