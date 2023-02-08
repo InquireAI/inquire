@@ -29,7 +29,7 @@ export function BotStack({ stack }: StackContext) {
   const taskDef = new ecs.Ec2TaskDefinition(stack, "TaskDef");
 
   taskDef.addContainer("Container", {
-    image: ecs.ContainerImage.fromAsset(path.join(path.resolve(), "../bots")),
+    image: ecs.ContainerImage.fromAsset(path.join(path.resolve(), "./bots")),
     memoryLimitMiB: 512,
     essential: true,
     environment: {
