@@ -18,6 +18,6 @@ export default {
       },
     });
 
-    app.stack(GlobalResourcesStack).stack(WebStack).stack(BotStack);
+    app.stack(GlobalResourcesStack).stack(WebStack);
   },
 } satisfies SSTConfig;
