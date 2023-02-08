@@ -79,12 +79,12 @@ export function WebStack({ stack }: StackContext) {
     }
   );
 
-  // const inquireUrl =
-  //   stack.stage === "prod"
-  //     ? "inquire.run"
-  //     : stack.stage === "dev" || stack.stage === "staging"
-  //     ? `${stack.stage}.inquire.run`
-  //     : undefined;
+  const inquireUrl =
+    stack.stage === "prod"
+      ? "inquire.run"
+      : stack.stage === "dev" || stack.stage === "staging"
+      ? `${stack.stage}.inquire.run`
+      : undefined;
 
   const nextSite = new NextjsSite(stack, "NextSite", {
     path: "web",
@@ -113,19 +113,19 @@ export function WebStack({ stack }: StackContext) {
       NEXT_PUBLIC_TELEGRAM_BOT_NAME: env.NEXT_PUBLIC_TELEGRAM_BOT_NAME,
     },
     permissions: [eventBus],
-    // customDomain: inquireUrl
-    //   ? {
-    //       isExternalDomain: true,
-    //       domainName: `${stack.stage}.inquire.run`,
-    //       cdk: {
-    //         certificate: Certificate.fromCertificateArn(
-    //           stack,
-    //           "InquireCert",
-    //           "arn:aws:acm:us-east-1:719393270237:certificate/69072da1-0847-4ae6-b7be-e244d405d6a8"
-    //         ),
-    //       },
-    //     }
-    //   : undefined,
+    customDomain: inquireUrl
+      ? {
+          isExternalDomain: true,
+          domainName: `${stack.stage}.inquire.run`,
+          cdk: {
+            certificate: Certificate.fromCertificateArn(
+              stack,
+              "InquireCert",
+              "arn:aws:acm:us-east-1:719393270237:certificate/69072da1-0847-4ae6-b7be-e244d405d6a8"
+            ),
+          },
+        }
+      : undefined,
     cdk: {
       distribution: {
         defaultBehavior: {
@@ -136,7 +136,7 @@ export function WebStack({ stack }: StackContext) {
   });
 
   return {
-    inquireUrl: nextSite.url as string,
+    inquireUrl: `https://${inquireUrl}` || (nextSite.url as string),
     nextSite,
     eventBus,
   };
