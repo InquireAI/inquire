@@ -35,9 +35,8 @@ export function BotStack({ stack }: StackContext) {
     essential: true,
     environment: {
       TELEGRAM_API_KEY: env.TELEGRAM_API_KEY,
-      INQUIRE_API: inquireUrl,
-      INQUIRE_API_KEY: `${env.INQUIRE_API_KEY}/api/v1`,
-      AXIOM_TOKEN: env.AXIOM_TOKEN,
+      INQUIRE_API: `${inquireUrl}/api/v1`,
+      INQUIRE_API_KEY: env.INQUIRE_API_KEY,
       DB_URI: env.DATABASE_URL,
     },
     logging: ecs.LogDriver.awsLogs({
