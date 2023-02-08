@@ -93,7 +93,7 @@ class MySQLPersistence(DictPersistence):
             # conversations data
             # converstations is always "null" in the database
             conversations_data_ = self._session.execute(text("SELECT conversations FROM Persistence")).first()
-            conversations_data = conversations_data_[0] if conversations_data_[0] is not None else {}
+            conversations_data = conversations_data_[0] if conversations_data_ is not None else {}
             conversations_json_data = {}
 
             # callback data
