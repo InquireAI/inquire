@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { type Logger as AxiomLogger } from "next-axiom";
+import type { Logger as PinoLogger } from "pino";
 
 type DebugArgs = {
   [key: string]: any;
@@ -74,7 +74,7 @@ type ErrorArgs =
       [key: string]: any;
     };
 
-interface ILogger {
+export interface ILogger {
   debug(message: string, args: { [k: string]: any }): void;
   info(message: string, args: { [k: string]: any }): void;
   warn(message: string, args: { [k: string]: any }): void;
@@ -82,21 +82,21 @@ interface ILogger {
 }
 
 export class Logger implements ILogger {
-  constructor(private log: AxiomLogger) {}
+  constructor(private log: PinoLogger) {}
 
   debug(message: string, args?: DebugArgs) {
-    this.log.debug(message, args);
+    this.log.debug(args, message);
   }
 
   info(message: string, args?: InfoArgs) {
-    this.log.debug(message, args);
+    this.log.info(args, message);
   }
 
   warn(message: string, args?: WarnArgs) {
-    this.log.warn(message, args);
+    this.log.warn(args, message);
   }
 
   error(message: string, args?: ErrorArgs) {
-    this.log.error(message, args);
+    this.log.error(args, message);
   }
 }

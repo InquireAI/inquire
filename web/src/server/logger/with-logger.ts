@@ -1,26 +1,54 @@
-import type { AxiomAPIRequest, Logger as AxiomLogger } from "next-axiom";
-import { withAxiom } from "next-axiom";
 import type { NextApiRequest, NextApiResponse } from "next";
+import type { ILogger } from "./index";
 import { Logger } from "./index";
+import Pino from "pino";
+
+const pino = Pino({
+  formatters: {
+    level: (label) => {
+      return {
+        level: label.toUpperCase(),
+      };
+    },
+  },
+});
 
 export type NextApiHandlerWithLogger<T = unknown> = (
-  res: NextApiRequest & { logger: Logger },
+  res: NextApiRequest & { logger: ILogger },
   req: NextApiResponse<T>
 ) => unknown | Promise<unknown>;
 
-export type NextApiRequestWithLogger = NextApiRequest & { logger: Logger };
+export type NextApiRequestWithLogger = NextApiRequest & { logger: ILogger };
 
 export function withLogger(handler: NextApiHandlerWithLogger) {
-  async function f(req: NextApiRequest, res: NextApiResponse) {
-    const axiomReq = req as AxiomAPIRequest;
-    const axiomLog = axiomReq.log as AxiomLogger;
-    const log = new Logger(axiomLog);
+  return async function f(req: NextApiRequest, res: NextApiResponse) {
+    const logger = new Logger(pino);
 
     const logRequest = req as unknown as NextApiRequestWithLogger;
-    logRequest.logger = log;
+    logRequest.logger = logger;
+
+    logger.info("Start Request", {
+      request: {
+        path: req.url,
+        method: req.method,
+        host: req.headers["host"],
+        userAgent: req.headers["user-agent"],
+        scheme: "https",
+        ip: req.headers["x-forwarded-for"],
+      },
+    });
 
     await handler(logRequest, res);
-  }
 
-  return withAxiom(f);
+    logger.info("End Request", {
+      request: {
+        path: req.url,
+        method: req.method,
+        host: req.headers["host"],
+        userAgent: req.headers["user-agent"],
+        scheme: "https",
+        ip: req.headers["x-forwarded-for"],
+      },
+    });
+  };
 }
