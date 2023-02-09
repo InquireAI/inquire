@@ -9,7 +9,7 @@ import type {
 import { zodIssuesToValidationIssues } from "../../../../server/api/utils";
 import { updateInquiry } from "../../../../server/api/v1/controllers/inquiries/update-inquiry";
 import { withApiKeyAuth } from "../../../../server/api/with-api-key-auth";
-import type { Logger } from "../../../../server/logger";
+import type { ILogger } from "../../../../server/logger";
 import type { NextApiRequestWithLogger } from "../../../../server/logger/with-logger";
 import { withLogger } from "../../../../server/logger/with-logger";
 import type { Inquiry } from "../../../../server/db/client";
@@ -22,7 +22,7 @@ const PatchBodySchema = z.object({
 
 async function validatePatchBody(
   body: unknown,
-  ctx: { logger: Logger }
+  ctx: { logger: ILogger }
 ): Promise<
   | { success: true; data: z.infer<typeof PatchBodySchema> }
   | { success: false; issues: ValidationIssue[] }
