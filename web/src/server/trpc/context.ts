@@ -4,12 +4,12 @@ import { type Session } from "next-auth";
 
 import { getServerAuthSession } from "../common/get-server-auth-session";
 import { prisma } from "../db/client";
-import type { Logger } from "../logger";
+import type { ILogger } from "../logger";
 import type { NextApiRequestWithLogger } from "../logger/with-logger";
 
 type CreateContextOptions = {
   session: Session | null;
-  logger: Logger;
+  logger: ILogger;
 };
 
 /** Use this helper for:
