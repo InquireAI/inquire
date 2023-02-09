@@ -49,7 +49,7 @@ export function withLogger(handler: NextApiHandlerWithLogger) {
         userAgent: req.headers["user-agent"],
         scheme: "https",
         ip: req.headers["x-forwarded-for"],
-        statusCode: req.statusCode,
+        statusCode: res.statusCode,
       },
     });
   };
