@@ -61,6 +61,7 @@ export function WebStack({ stack }: StackContext) {
     {
       timeout: "30 seconds",
       handler: "services/functions/inquiry-requested/handler.main",
+      logRetention: "one_month",
       environment: {
         OPENAI_API_KEY: env.OPENAI_API_KEY,
         DUST_API_KEY: env.DUST_API_KEY,

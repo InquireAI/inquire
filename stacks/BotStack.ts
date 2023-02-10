@@ -51,7 +51,6 @@ export function BotStack({ stack }: StackContext) {
     },
     logging: ecs.LogDriver.awsLogs({
       streamPrefix: "bots",
-      logRetention: logs.RetentionDays.ONE_MONTH,
       logGroup,
     }),
   });
