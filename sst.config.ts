@@ -2,6 +2,7 @@ import { SSTConfig } from "sst";
 import { WebStack } from "./stacks/WebStack";
 import { GlobalResourcesStack } from "./stacks/GlobalResourcesStack";
 import { BotStack } from "./stacks/BotStack";
+import { LoggingStack } from "./stacks/LoggingStack";
 
 export default {
   config() {
@@ -19,6 +20,10 @@ export default {
       },
     });
 
-    app.stack(GlobalResourcesStack).stack(WebStack).stack(BotStack);
+    app
+      .stack(GlobalResourcesStack)
+      .stack(LoggingStack)
+      .stack(WebStack)
+      .stack(BotStack);
   },
 } satisfies SSTConfig;
