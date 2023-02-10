@@ -15,6 +15,7 @@ export function LoggingStack({ stack }: StackContext) {
     handler: "services/functions/grafana-promtail/main",
     timeout: "1 minute",
     memorySize: "512 MB",
+    runtime: "go1.x",
     environment: {
       EXTRA_LABELS: "",
       KEEP_STREAM: "false",
