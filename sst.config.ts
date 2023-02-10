@@ -8,6 +8,7 @@ export default {
     return {
       name: "inquire",
       region: "us-east-1",
+      profile: "inquire",
     };
   },
   stacks(app) {

@@ -5,12 +5,12 @@ import * as ec2 from "aws-cdk-lib/aws-ec2";
 import { GlobalResourcesStack } from "./GlobalResourcesStack";
 import path from "path";
 import { z } from "zod";
-import { RetentionDays } from "aws-cdk-lib/aws-logs";
+import * as logs from "aws-cdk-lib/aws-logs";
+import { LoggingStack } from "./LoggingStack";
 
 const EnvSchema = z.object({
   TELEGRAM_API_KEY: z.string(),
   INQUIRE_API_KEY: z.string(),
-  AXIOM_TOKEN: z.string(),
   DB_URI: z.string(),
 });
 
@@ -19,6 +19,7 @@ export function BotStack({ stack }: StackContext) {
 
   const { inquireUrl } = use(WebStack);
   const { vpc } = use(GlobalResourcesStack);
+  const { lambdaDestination } = use(LoggingStack);
 
   const cluster = new ecs.Cluster(stack, "BotCluster", {
     vpc,
@@ -28,6 +29,15 @@ export function BotStack({ stack }: StackContext) {
   });
 
   const taskDef = new ecs.Ec2TaskDefinition(stack, "TaskDef");
+
+  const logGroup = new logs.LogGroup(stack, "ContainerLogs", {
+    retention: logs.RetentionDays.ONE_MONTH,
+  });
+
+  logGroup.addSubscriptionFilter("SubscriptionFilter", {
+    destination: lambdaDestination,
+    filterPattern: logs.FilterPattern.allEvents(),
+  });
 
   taskDef.addContainer("Container", {
     image: ecs.ContainerImage.fromAsset(path.join(path.resolve(), "./bots")),
@@ -41,7 +51,8 @@ export function BotStack({ stack }: StackContext) {
     },
     logging: ecs.LogDriver.awsLogs({
       streamPrefix: "bots",
-      logRetention: RetentionDays.TWO_MONTHS,
+      logRetention: logs.RetentionDays.ONE_MONTH,
+      logGroup,
     }),
   });
 

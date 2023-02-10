@@ -1,10 +1,18 @@
-import { StackContext, EventBus, NextjsSite } from "sst/constructs";
+import {
+  StackContext,
+  EventBus,
+  NextjsSite,
+  Function,
+  use,
+} from "sst/constructs";
 import { z } from "zod";
 import {
   OriginRequestHeaderBehavior,
   OriginRequestPolicy,
 } from "aws-cdk-lib/aws-cloudfront";
 import { Certificate } from "aws-cdk-lib/aws-certificatemanager";
+import { LoggingStack } from "./LoggingStack";
+import * as logs from "aws-cdk-lib/aws-logs";
 
 const EnvSchema = z.object({
   // db
@@ -45,6 +53,29 @@ const EnvSchema = z.object({
 export function WebStack({ stack }: StackContext) {
   const env = EnvSchema.parse(process.env);
 
+  const { lambdaDestination } = use(LoggingStack);
+
+  const inquiryRequestedHandler = new Function(
+    stack,
+    "InquiryRequestedHandler",
+    {
+      timeout: "30 seconds",
+      handler: "services/functions/inquiry-requested/handler.main",
+      environment: {
+        OPENAI_API_KEY: env.OPENAI_API_KEY,
+        DUST_API_KEY: env.DUST_API_KEY,
+        DATABASE_HOST: env.DATABASE_HOST,
+        DATABASE_USERNAME: env.DATABASE_USERNAME,
+        DATABASE_PASSWORD: env.DATABASE_PASSWORD,
+      },
+    }
+  );
+
+  inquiryRequestedHandler.logGroup.addSubscriptionFilter("SubscriptionFilter", {
+    destination: lambdaDestination,
+    filterPattern: logs.FilterPattern.allEvents(),
+  });
+
   const eventBus = new EventBus(stack, "EventBus", {
     rules: {
       inquiryRequested: {
@@ -54,17 +85,7 @@ export function WebStack({ stack }: StackContext) {
         },
         targets: {
           inquiryRequestedHandler: {
-            function: {
-              timeout: "30 seconds",
-              handler: "services/functions/inquiry-requested/handler.main",
-              environment: {
-                OPENAI_API_KEY: env.OPENAI_API_KEY,
-                DUST_API_KEY: env.DUST_API_KEY,
-                DATABASE_HOST: env.DATABASE_HOST,
-                DATABASE_USERNAME: env.DATABASE_USERNAME,
-                DATABASE_PASSWORD: env.DATABASE_PASSWORD,
-              },
-            },
+            function: inquiryRequestedHandler,
           },
         },
       },
