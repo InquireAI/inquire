@@ -53,7 +53,7 @@ const EnvSchema = z.object({
 export function WebStack({ stack }: StackContext) {
   const env = EnvSchema.parse(process.env);
 
-  const { lambdaDestination } = use(LoggingStack);
+  // const { lambdaDestination } = use(LoggingStack);
 
   const inquiryRequestedHandler = new Function(
     stack,
@@ -72,10 +72,10 @@ export function WebStack({ stack }: StackContext) {
     }
   );
 
-  inquiryRequestedHandler.logGroup.addSubscriptionFilter("SubscriptionFilter", {
-    destination: lambdaDestination,
-    filterPattern: logs.FilterPattern.allEvents(),
-  });
+  // inquiryRequestedHandler.logGroup.addSubscriptionFilter("SubscriptionFilter", {
+  //   destination: lambdaDestination,
+  //   filterPattern: logs.FilterPattern.allEvents(),
+  // });
 
   const eventBus = new EventBus(stack, "EventBus", {
     rules: {

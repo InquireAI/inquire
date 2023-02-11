@@ -1,8 +1,8 @@
 import { StackContext } from "sst/constructs";
 import * as destinations from "aws-cdk-lib/aws-logs-destinations";
 import * as lambda from "aws-cdk-lib/aws-lambda";
-import * as ecr from "aws-cdk-lib/aws-ecr";
 import { z } from "zod";
+import path from "path";
 import { Duration } from "aws-cdk-lib";
 import { ServicePrincipal } from "aws-cdk-lib/aws-iam";
 
@@ -15,17 +15,15 @@ const EnvSchema = z.object({
 export function LoggingStack({ stack }: StackContext) {
   const env = EnvSchema.parse(process.env);
 
-  const grafanaLambdaPromtailRepo = ecr.Repository.fromRepositoryName(
-    stack,
-    "GrafanaLambdaPromtailRepo",
-    "public.ecr.aws/grafana/lambda-promtail"
-  );
   const ingesterFunction = new lambda.Function(stack, "LogIngester", {
-    runtime: lambda.Runtime.FROM_IMAGE,
-    code: lambda.Code.fromEcrImage(grafanaLambdaPromtailRepo, {
-      tagOrDigest: "main-4c227bd",
-    }),
-    handler: lambda.Handler.FROM_IMAGE,
+    runtime: lambda.Runtime.GO_1_X,
+    code: lambda.Code.fromAsset(
+      path.join(
+        path.resolve(),
+        "./services/functions/grafana-promtail/main.zip"
+      )
+    ),
+    handler: "main",
     memorySize: 512,
     timeout: Duration.minutes(1),
     environment: {
