@@ -21,7 +21,7 @@ export function LoggingStack({ stack }: StackContext) {
     "grafana/lambda-promtail"
   );
   const ingesterFunction = new lambda.Function(stack, "LogIngester", {
-    runtime: lambda.Runtime.GO_1_X,
+    runtime: lambda.Runtime.FROM_IMAGE,
     code: lambda.Code.fromEcrImage(grafanaLambdaPromtailRepo),
     handler: lambda.Handler.FROM_IMAGE,
     memorySize: 512,
