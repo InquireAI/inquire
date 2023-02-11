@@ -98,7 +98,10 @@ export function WebStack({ stack }: StackContext) {
     stack,
     "NextSiteOriginRequestPolicy",
     {
-      headerBehavior: OriginRequestHeaderBehavior.allowList("x-api-key"),
+      headerBehavior: OriginRequestHeaderBehavior.allowList(
+        "x-api-key",
+        "stripe-signature"
+      ),
     }
   );
 
