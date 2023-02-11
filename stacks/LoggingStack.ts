@@ -1,6 +1,9 @@
 import { Function, StackContext } from "sst/constructs";
 import * as destinations from "aws-cdk-lib/aws-logs-destinations";
+import * as lambda from "aws-cdk-lib/aws-lambda";
 import { z } from "zod";
+import path from "path";
+import { Duration } from "aws-cdk-lib";
 
 const EnvSchema = z.object({
   GRAFANA_API_KEY: z.string(),
@@ -11,11 +14,17 @@ const EnvSchema = z.object({
 export function LoggingStack({ stack }: StackContext) {
   const env = EnvSchema.parse(process.env);
 
-  const ingesterFunction = new Function(stack, "LogIngester", {
-    handler: "services/functions/grafana-promtail/main",
-    timeout: "1 minute",
-    memorySize: "512 MB",
-    runtime: "go1.x",
+  const ingesterFunction = new lambda.Function(stack, "LogIngester", {
+    runtime: lambda.Runtime.GO_1_X,
+    code: lambda.Code.fromAsset(
+      path.join(
+        path.resolve(),
+        "./services/functions/grafana-promtail/main.zip"
+      )
+    ),
+    handler: "main",
+    memorySize: 512,
+    timeout: Duration.minutes(1),
     environment: {
       EXTRA_LABELS: "",
       KEEP_STREAM: "false",
