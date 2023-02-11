@@ -18,8 +18,8 @@ const ChangePaymentMethodButton: React.FC<{
       className="flex flex-row items-center justify-center gap-1 rounded-lg px-2 py-1 font-medium text-neutral-700 hover:border-transparent hover:bg-neutral-700 hover:text-white"
       onClick={() =>
         createCheckoutSession({
-          successUrl: "/account",
-          cancelUrl: "/account",
+          successUrl: "/account/billing",
+          cancelUrl: "/account/billing",
           subscriptionId,
         })
       }
