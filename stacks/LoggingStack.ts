@@ -18,7 +18,7 @@ export function LoggingStack({ stack }: StackContext) {
   const grafanaLambdaPromtailRepo = ecr.Repository.fromRepositoryName(
     stack,
     "GrafanaLambdaPromtailRepo",
-    "grafana/lambda-promtail"
+    "public.ecr.aws/grafana/lambda-promtail"
   );
   const ingesterFunction = new lambda.Function(stack, "LogIngester", {
     runtime: lambda.Runtime.FROM_IMAGE,
