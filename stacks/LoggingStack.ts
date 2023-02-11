@@ -23,7 +23,7 @@ export function LoggingStack({ stack }: StackContext) {
   const ingesterFunction = new lambda.Function(stack, "LogIngester", {
     runtime: lambda.Runtime.GO_1_X,
     code: lambda.Code.fromEcrImage(grafanaLambdaPromtailRepo),
-    handler: "main",
+    handler: lambda.Handler.FROM_IMAGE,
     memorySize: 512,
     timeout: Duration.minutes(1),
     environment: {
