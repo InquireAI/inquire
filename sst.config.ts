@@ -21,7 +21,7 @@ export default {
 
     app
       .stack(GlobalResourcesStack)
-      // .stack(LoggingStack)
+      .stack(LoggingStack)
       .stack(WebStack)
       .stack(BotStack);
   },

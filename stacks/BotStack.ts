@@ -19,7 +19,7 @@ export function BotStack({ stack }: StackContext) {
 
   const { inquireUrl } = use(WebStack);
   const { vpc } = use(GlobalResourcesStack);
-  // const { lambdaDestination } = use(LoggingStack);
+  const { lambdaDestination } = use(LoggingStack);
 
   const cluster = new ecs.Cluster(stack, "BotCluster", {
     vpc,
@@ -34,10 +34,10 @@ export function BotStack({ stack }: StackContext) {
     retention: logs.RetentionDays.ONE_MONTH,
   });
 
-  // logGroup.addSubscriptionFilter("SubscriptionFilter", {
-  //   destination: lambdaDestination,
-  //   filterPattern: logs.FilterPattern.allEvents(),
-  // });
+  logGroup.addSubscriptionFilter("SubscriptionFilter", {
+    destination: lambdaDestination,
+    filterPattern: logs.FilterPattern.allEvents(),
+  });
 
   taskDef.addContainer("Container", {
     image: ecs.ContainerImage.fromAsset(path.join(path.resolve(), "./bots")),
