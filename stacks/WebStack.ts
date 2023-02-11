@@ -157,6 +157,11 @@ export function WebStack({ stack }: StackContext) {
     },
   });
 
+  nextSite.cdk.function?.logGroup.addSubscriptionFilter("SubscriptionFilter", {
+    destination: lambdaDestination,
+    filterPattern: logs.FilterPattern.allEvents(),
+  });
+
   return {
     inquireUrl: `https://${inquireUrl}` || (nextSite.url as string),
     nextSite,
