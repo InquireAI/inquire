@@ -10,7 +10,7 @@
     "bootstrap": "sst bootstrap --profile inquire",
     "console": "sst console --profile inquire",
     "typecheck": "tsc --noEmit",
-    "test": "sst bind -- vitest run --profile inquire"
+    "test": "sst bind --profile inquire \"vitest run\""
   },
   "devDependencies": {
     "@tsconfig/node16": "^1.0.3",

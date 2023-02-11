@@ -1,7 +1,8 @@
 {
   "extends": "../tsconfig.json",
-  "include": ["functions"],
+  "include": ["functions", "dust", "inquiries", "utils"],
   "compilerOptions": {
+    "strict": true,
     "module": "esnext",
     "target": "es2017",
     "moduleResolution": "node",

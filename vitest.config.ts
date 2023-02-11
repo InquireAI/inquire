@@ -12,7 +12,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      "@sst/core": "./services/core",
+      "@inquire/core": "./services/core",
     },
   },
 });
