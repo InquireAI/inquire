@@ -20,8 +20,9 @@ export type Inquiry = {
   queryType: string;
   query: string;
   status: InquiryStatus;
-  result: string | null;
+  result?: string | null;
   createdAt: Date;
+  updatedAt: Date;
 };
 
 export type UpdateInquiryHandlerArgs = {

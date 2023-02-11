@@ -1,7 +1,7 @@
 import { CompleteInquiryHandler } from "../../inquiries/complete-inquiry.interface";
 import { UpdateInquiryHandler } from "../../inquiries/update-inquiry.interface";
 
-type Args = {
+export type Args = {
   id: string;
   queryType: string;
   query: string;
