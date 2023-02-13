@@ -8,7 +8,7 @@ import { completeInquiryWithOpenAI } from "../../inquiries/complete-inquiry-open
 import { completeInquiryWithDust } from "../../inquiries/complete-inquiry-dust";
 import { updateInquiryWithPlanetScale } from "../../inquiries/update-inquiry-planetscale";
 import { UpdateInquiryHandler } from "../../inquiries/update-inquiry.interface";
-import { connect } from "@planetscale/database/dist";
+import { connect } from "@planetscale/database";
 import { fetch } from "undici";
 
 const conn = connect({
