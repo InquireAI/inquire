@@ -46,4 +46,24 @@ describe("processInquiry tests", () => {
       result: completeInquiryResult,
     });
   });
+
+  it("should call updateInquiry with FAILED if completeInquiry fails", async () => {
+    const completeInquiryError = new Error("This is a completed inquiry error");
+    const completeInquiry = vi.fn().mockRejectedValueOnce(completeInquiryError);
+
+    const updateInquiry = vi.fn().mockResolvedValueOnce(inquiry);
+
+    try {
+      await processInquiry(args, {
+        completeInquiry,
+        updateInquiry,
+      });
+    } catch (error) {
+      expect(completeInquiry).toHaveBeenCalledWith(args);
+      expect(updateInquiry).toHaveBeenCalledWith(args.id, {
+        status: "FAILED",
+      });
+      expect(error).toEqual(completeInquiryError);
+    }
+  });
 });

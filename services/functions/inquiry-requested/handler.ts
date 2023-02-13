@@ -18,13 +18,13 @@ const conn = connect({
   username: env.DATABASE_USERNAME,
 });
 
-const openai = new OpenAIApi(
+export const openai = new OpenAIApi(
   new Configuration({
     apiKey: env.OPENAI_API_KEY,
   })
 );
 
-const completeInquiry: CompleteInquiryHandler = async (args) => {
+export const completeInquiry: CompleteInquiryHandler = async (args) => {
   const { id, query, queryType, persona } = args;
   if (!persona) {
     return completeInquiryWithOpenAI({ query: args.query }, { openai });
@@ -43,7 +43,7 @@ const completeInquiry: CompleteInquiryHandler = async (args) => {
   }
 };
 
-const updateInquiry: UpdateInquiryHandler = (id, args) => {
+export const updateInquiry: UpdateInquiryHandler = (id, args) => {
   return updateInquiryWithPlanetScale(id, args, {
     conn,
   });
