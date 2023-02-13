@@ -31,6 +31,7 @@ type Inquiry = {
   status: InquiryStatus;
   result: string | null;
   createdAt: Date;
+  updatedAt: Date;
 };
 
 type Args = {
