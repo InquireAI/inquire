@@ -7,7 +7,7 @@ interface DustQueryArgs extends CompleteInquiryHandlerArgs {
   persona: NonNullable<CompleteInquiryHandlerArgs["persona"]>;
 }
 
-class DustError extends Error {}
+export class DustError extends Error {}
 
 function setTimeoutAsync(time: number) {
   return new Promise((r) => setTimeout(r, time));
