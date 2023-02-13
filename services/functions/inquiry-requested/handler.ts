@@ -49,6 +49,7 @@ export const updateInquiry: UpdateInquiryHandler = (id, args) => {
   });
 };
 
+/* c8 ignore next 22 */
 export const main: EventBridgeHandler<
   "InquiryRequested",
   InquiryRequested,
