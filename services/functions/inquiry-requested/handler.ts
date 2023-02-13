@@ -11,7 +11,7 @@ import { UpdateInquiryHandler } from "../../inquiries/update-inquiry.interface";
 import { connect } from "@planetscale/database";
 import { fetch } from "undici";
 
-const conn = connect({
+export const conn = connect({
   fetch,
   host: env.DATABASE_HOST,
   password: env.DATABASE_PASSWORD,

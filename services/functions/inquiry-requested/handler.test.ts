@@ -1,7 +1,9 @@
 import { describe, vi, it, expect } from "vitest";
-import { completeInquiry, openai } from "./handler";
+import { completeInquiry, updateInquiry, openai, conn } from "./handler";
 import { completeInquiryWithOpenAI } from "../../inquiries/complete-inquiry-openai";
 import { completeInquiryWithDust } from "../../inquiries/complete-inquiry-dust";
+import { updateInquiryWithPlanetScale } from "../../inquiries/update-inquiry-planetscale";
+import { Inquiry } from "../../inquiries/update-inquiry.interface";
 import { env } from "./env";
 
 vi.mock("../../inquiries/complete-inquiry-openai", () => {
@@ -13,6 +15,22 @@ vi.mock("../../inquiries/complete-inquiry-openai", () => {
 vi.mock("../../inquiries/complete-inquiry-dust", () => {
   return {
     completeInquiryWithDust: vi.fn().mockResolvedValueOnce("mock result"),
+  };
+});
+
+vi.mock("../../inquiries/update-inquiry-planetscale", () => {
+  return {
+    updateInquiryWithPlanetScale: vi.fn().mockResolvedValueOnce({
+      id: "id",
+      connectionType: "TELEGRAM",
+      connectionUserId: "connectionUserId",
+      createdAt: new Date(),
+      query: "query",
+      queryType: "queryType",
+      status: "COMPLETED",
+      updatedAt: new Date(),
+      result: "result",
+    } satisfies Inquiry),
   };
 });
 
@@ -63,5 +81,25 @@ describe("completeInquiry tests", () => {
       }
     );
     expect(result).toEqual("mock result");
+  });
+});
+
+describe("updateInquiry tests", () => {
+  it("should call updateInquiryWithPlanetScale", async () => {
+    await updateInquiry("id", {
+      result: "result",
+      status: "COMPLETED",
+    });
+
+    expect(updateInquiryWithPlanetScale).toHaveBeenCalledWith(
+      "id",
+      {
+        result: "result",
+        status: "COMPLETED",
+      },
+      {
+        conn,
+      }
+    );
   });
 });
