@@ -72,6 +72,7 @@ export const completeInquiryWithDust = async (
     }
   } catch (error) {
     logger.error("Dust run failed", { err: error });
-    throw error;
+    if (error instanceof DustError) throw error;
+    throw new DustError("Dust run failed");
   }
 };

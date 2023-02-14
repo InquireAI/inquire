@@ -2,7 +2,6 @@ import { createDustRun } from "../dust/create-dust-run";
 import { it, afterAll, describe, vi, expect, Mock } from "vitest";
 import { completeInquiryWithDust, DustError } from "./complete-inquiry-dust";
 import { getDustRunById } from "../dust/get-dust-run";
-import { setTimeoutAsync } from "../utils/set-timeout-async";
 
 vi.mock("../utils/set-timeout-async", () => {
   return {
@@ -28,6 +27,42 @@ const mockGetDustRunById = getDustRunById as Mock;
 describe("completeInquiryWithDust tests", () => {
   afterAll(() => {
     vi.clearAllMocks();
+  });
+
+  it("should throw a new DustError createDustRun fails", async () => {
+    const mockError = new Error("Mock Error");
+    mockCreateDustRun.mockRejectedValueOnce(mockError);
+
+    try {
+      await completeInquiryWithDust(
+        {
+          id: "id",
+          query: "query",
+          queryType: "queryType",
+          persona: {
+            id: "id",
+            config: "config",
+            specificationHash: "specificationHash",
+          },
+        },
+        {
+          dustApiKey: "dustApiKey",
+        }
+      );
+    } catch (error) {
+      expect(createDustRun).toHaveBeenCalledWith(
+        {
+          config: "config",
+          personaId: "id",
+          query: "query",
+          specificationHash: "specificationHash",
+        },
+        {
+          dustApiKey: "dustApiKey",
+        }
+      );
+      expect(error).toBeInstanceOf(DustError);
+    }
   });
 
   it("should throw a new DustError if the status is errored", async () => {
