@@ -1,6 +1,12 @@
 import Pino from "pino";
 
 const pino = Pino({
+  level:
+    process.env.NODE_ENV === "development"
+      ? "debug"
+      : process.env.NODE_ENV === "test"
+      ? "silent"
+      : "info",
   formatters: {
     level: (label) => {
       return {

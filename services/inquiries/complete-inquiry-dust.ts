@@ -13,6 +13,8 @@ function setTimeoutAsync(time: number) {
   return new Promise((r) => setTimeout(r, time));
 }
 
+const MAX_RETRY_TIME = 25_000;
+
 export const completeInquiryWithDust = async (
   args: DustQueryArgs,
   ctx: { dustApiKey: string }
@@ -32,14 +34,16 @@ export const completeInquiryWithDust = async (
 
     logger.info(`Created dust run with id: ${newRun.run.run_id}`, {});
 
-    if (newRun.run.status.run === "errored")
-      throw new DustError(`Dust run: ${newRun.run.run_id} failed`);
-
     logger.info(`Polling dust run for status`, {});
 
-    while (true) {
-      await setTimeoutAsync(1000);
+    const startTime = new Date().getTime();
 
+    let reqNum = 0;
+    let waitTime = Math.random() * 1000;
+
+    // retry with exponential backoff until we've retried
+    // for more than 25 seconds
+    while (new Date().getTime() - startTime < MAX_RETRY_TIME) {
       const updatedRun = await getDustRunById(
         {
           personaId: args.persona.id,
@@ -55,13 +59,21 @@ export const completeInquiryWithDust = async (
         continue;
       }
 
+      if (updatedRun.run.status.run === "errored")
+        throw new DustError(`Dust run: ${newRun.run.run_id} failed`);
+
       if (updatedRun.run.status.run === "succeeded") {
         logger.info(`Dust run succeeded`, {});
         return updatedRun.run.results[0][0].value.completion.text;
       }
+
+      await setTimeoutAsync(waitTime);
+
+      reqNum += 1;
+      waitTime += Math.pow(2, reqNum) * Math.random() * 1000;
     }
   } catch (error) {
-    logger.error("Failed to start dust run", { err: error });
+    logger.error("Dust run failed", { err: error });
     throw error;
   }
 };
