@@ -1,3 +1,4 @@
+import { setTimeoutAsync } from "../utils/set-timeout-async";
 import { createDustRun } from "../dust/create-dust-run";
 import { getDustRunById } from "../dust/get-dust-run";
 import { logger } from "../utils/logger";
@@ -8,10 +9,6 @@ interface DustQueryArgs extends CompleteInquiryHandlerArgs {
 }
 
 export class DustError extends Error {}
-
-function setTimeoutAsync(time: number) {
-  return new Promise((r) => setTimeout(r, time));
-}
 
 const MAX_RETRY_TIME = 25_000;
 
@@ -56,6 +53,12 @@ export const completeInquiryWithDust = async (
 
       if (updatedRun.run.status.run === "running") {
         logger.info(`Dust run is running`, {});
+
+        await setTimeoutAsync(waitTime);
+
+        reqNum += 1;
+        waitTime += Math.pow(2, reqNum) * Math.random() * 1000;
+
         continue;
       }
 
@@ -66,11 +69,6 @@ export const completeInquiryWithDust = async (
         logger.info(`Dust run succeeded`, {});
         return updatedRun.run.results[0][0].value.completion.text;
       }
-
-      await setTimeoutAsync(waitTime);
-
-      reqNum += 1;
-      waitTime += Math.pow(2, reqNum) * Math.random() * 1000;
     }
   } catch (error) {
     logger.error("Dust run failed", { err: error });
