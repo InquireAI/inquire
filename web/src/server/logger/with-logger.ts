@@ -2,8 +2,15 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import type { ILogger } from "./index";
 import { Logger } from "./index";
 import Pino from "pino";
+import { env } from "../../env/server.mjs";
 
 const pino = Pino({
+  level:
+    env.NODE_ENV === "development"
+      ? "debug"
+      : env.NODE_ENV === "test"
+      ? "silent"
+      : "info",
   formatters: {
     level: (label) => {
       return {

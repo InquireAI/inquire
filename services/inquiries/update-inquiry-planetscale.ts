@@ -30,7 +30,8 @@ type Inquiry = {
   query: string;
   status: InquiryStatus;
   result: string | null;
-  createdAt: Date;
+  createdAt: string;
+  updatedAt: string;
 };
 
 type Args = {
@@ -89,5 +90,11 @@ export const updateInquiryWithPlanetScale: UpdateInquiryWithPlanetScaleHandler =
 
     logger.info("Got updated row", {});
 
-    return result.rows[0] as Inquiry;
+    const inquiry = result.rows[0] as Inquiry;
+
+    return {
+      ...inquiry,
+      createdAt: new Date(inquiry.createdAt),
+      updatedAt: new Date(inquiry.updatedAt),
+    };
   };
