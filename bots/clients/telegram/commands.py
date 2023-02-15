@@ -29,7 +29,7 @@ class Commands:
     def __init__(self, application, persona, personas, api_keys):
         # Enable logging
         logging.basicConfig(
-            format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
+            level=logging.INFO
         )
 
         self.logger = logging.getLogger(__name__)
