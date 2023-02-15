@@ -1,4 +1,5 @@
 import logging
+from pythonjsonlogger import jsonlogger
 import requests
 from uuid import uuid4
 
@@ -23,13 +24,19 @@ if __version_info__ < (20, 0, 0, "alpha", 1):
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, InlineQueryResultArticle, InputTextMessageContent
 from telegram.ext import ContextTypes
 
+
 class Commands:
     def __init__(self, application, persona, personas, api_keys):
-         # Enable logging
+        # Enable logging
         logging.basicConfig(
             format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
         )
+
         self.logger = logging.getLogger(__name__)
+        logHandler = logging.StreamHandler()
+        formatter = jsonlogger.JsonFormatter()
+        logHandler.setFormatter(formatter)
+        self.logger.addHandler(logHandler)
 
         self.application = application
         self.personas = personas
@@ -94,7 +101,7 @@ Learn more about Inquire at https://inquire.run
         :param update: Update object
         :param context: CallbackContext object
         """
-        # response could either be a chat or a callback 
+        # response could either be a chat or a callback
         # query, so we need to check which one it is
         try:
             key = update.message.chat_id
@@ -111,7 +118,7 @@ Learn more about Inquire at https://inquire.run
         :param update: Update object
         :param context: CallbackContext object
         """
-        # response could either be a chat or a callback 
+        # response could either be a chat or a callback
         # query, so we need to check which one it is
         try:
             key = update.message.chat_id
@@ -123,7 +130,7 @@ Learn more about Inquire at https://inquire.run
 
         return value
 
-    ### Chat Commands
+    # Chat Commands
 
     # Help command handler
     async def help_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -135,7 +142,7 @@ Learn more about Inquire at https://inquire.run
         await self.application.bot.send_chat_action(update.effective_chat.id, "typing")
 
         await update.message.reply_text(self.help_text, parse_mode="Markdown")
-    
+
     # Set deeplink persona
     async def set_deeplink_persona(self, new_persona, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """
@@ -175,7 +182,7 @@ Learn more about Inquire at https://inquire.run
         except:
             persona_data = chat_data[0]
 
-        # if its in a group chat the set command will look like either 
+        # if its in a group chat the set command will look like either
         # `math-teacher@inquireai_bot` or `/set math-teacher@inquireai_bot`
         # remove @inquireai_bot
         persona_data = persona_data.split('@')[0]
@@ -186,7 +193,7 @@ Learn more about Inquire at https://inquire.run
         # get the persona
         persona = await self.get(update, context)
 
-        # check to see if persona exists 
+        # check to see if persona exists
         if persona not in self.persona_list:
             await update.message.reply_text(f"Sorry, {persona} is not a valid persona")
             return
@@ -206,17 +213,18 @@ Learn more about Inquire at https://inquire.run
         :param update: Update object
         :param context: CallbackContext object
         """
-        keyboard = [ ]
+        keyboard = []
         persona_count = 0
 
         # randomise the personas
         random.shuffle(self.personas)
 
         for key in self.personas:
-            if persona_count< 10:
+            if persona_count < 10:
                 keyboard.append(
                     [
-                        InlineKeyboardButton(key['name'], callback_data=key["name"]),
+                        InlineKeyboardButton(
+                            key['name'], callback_data=key["name"]),
                     ],
                 )
                 persona_count += 1
@@ -248,7 +256,7 @@ Learn more about Inquire at https://inquire.run
         persona = await self.get(update, context)
 
         if persona == 'Not found':
-            await update.message.reply_text("You are currently not chatting with a persona. To get started start typing `@inquireai_bot` followed by the persona you want to chat with (e.g. `@inquireai_bot math-teacher`). Any message after will be answered!", parse_mode="Markdown")            
+            await update.message.reply_text("You are currently not chatting with a persona. To get started start typing `@inquireai_bot` followed by the persona you want to chat with (e.g. `@inquireai_bot math-teacher`). Any message after will be answered!", parse_mode="Markdown")
         else:
             await update.message.reply_text(f"You are currently chatting with a {persona} bot")
 
@@ -271,7 +279,7 @@ Learn more about Inquire at https://inquire.run
         await self.put(query.data, update, context)
 
         # get the persona
-        persona = await self.get(update, context) 
+        persona = await self.get(update, context)
 
         await query.edit_message_text(text=f"You are now chatting with a {persona} bot, any chat will be returned with an answer")
 
@@ -298,7 +306,7 @@ Learn more about Inquire at https://inquire.run
             if len(query) <= 1:
                 await update.message.reply_text("Specify a query after such as `/chat who are you?`", parse_mode="Markdown")
                 return
-        
+
         query = update.message.text
 
         url = self.inquireApi + "/inquiries"
@@ -366,14 +374,15 @@ Learn more about Inquire at https://inquire.run
             return
 
         # search personas for the query
-        results = [ ]
+        results = []
         for key in self.personas:
             if query.lower() in key['name'].lower():
                 results.append(
                     InlineQueryResultArticle(
                         id=str(uuid4()),
                         title=key['name'],
-                        input_message_content=InputTextMessageContent(f"/set {key['name']}"),
+                        input_message_content=InputTextMessageContent(
+                            f"/set {key['name']}"),
                         description=f"{key['description']}",
                     ),
                 )

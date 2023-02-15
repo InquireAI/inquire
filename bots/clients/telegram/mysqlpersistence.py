@@ -20,7 +20,8 @@
 
 
 import json
-from logging import getLogger
+import logging
+from pythonjsonlogger import jsonlogger
 from typing import Any, Dict, List, Optional, Tuple
 
 from sqlalchemy import create_engine
@@ -29,6 +30,7 @@ from sqlalchemy.sql import text
 from telegram.ext import DictPersistence
 
 CDCData = Tuple[List[Tuple[str, float, Dict[str, Any]]], Dict[str, str]]
+
 
 class MySQLPersistence(DictPersistence):
     """Using MySQL database to make user/chat/bot data persistent across reboots.
@@ -58,48 +60,62 @@ class MySQLPersistence(DictPersistence):
             if not url.startswith("mysql://"):
                 raise TypeError(f"{url} isn't a valid MySQL database URL.")
             engine = create_engine(url)
-            self._session = scoped_session(sessionmaker(bind=engine, autoflush=False))
+            self._session = scoped_session(
+                sessionmaker(bind=engine, autoflush=False))
 
         elif session:
             if not isinstance(session, scoped_session):
-                raise TypeError("session must needs to be `sqlalchemy.orm.scoped_session` object")
+                raise TypeError(
+                    "session must needs to be `sqlalchemy.orm.scoped_session` object")
             self._session = session
 
         else:
             raise TypeError("You must need to provide either url or session.")
 
-        self.logger = getLogger(__name__)
+        self.logger = logging.getLogger(__name__)
+        logHandler = logging.StreamHandler()
+        formatter = jsonlogger.JsonFormatter()
+        logHandler.setFormatter(formatter)
+        self.logger.addHandler(logHandler)
 
         self.on_flush = on_flush
         self.__init_database()
         try:
             self.logger.info("Loading database....")
-            
+
             # chat data
-            chat_data_ = self._session.execute(text("SELECT chat_data FROM Persistence")).first()
+            chat_data_ = self._session.execute(
+                text("SELECT chat_data FROM Persistence")).first()
             chat_data = chat_data_[0] if chat_data_ is not None else {}
             chat_data_json = json.loads(chat_data) if chat_data else {}
 
             # user data
-            user_data_ = self._session.execute(text("SELECT user_data FROM Persistence")).first()
+            user_data_ = self._session.execute(
+                text("SELECT user_data FROM Persistence")).first()
             user_data = user_data_[0] if user_data_ is not None else {}
             user_data_json = json.loads(user_data) if user_data else {}
 
             # bot data
-            bot_data_ = self._session.execute(text("SELECT bot_data FROM Persistence")).first()
+            bot_data_ = self._session.execute(
+                text("SELECT bot_data FROM Persistence")).first()
             bot_data = bot_data_[0] if bot_data_ is not None else {}
             bot_data_json = json.loads(bot_data) if bot_data else {}
 
             # conversations data
             # converstations is always "null" in the database
-            conversations_data_ = self._session.execute(text("SELECT conversations FROM Persistence")).first()
-            conversations_data = conversations_data_[0] if conversations_data_ is not None else {}
+            conversations_data_ = self._session.execute(
+                text("SELECT conversations FROM Persistence")).first()
+            conversations_data = conversations_data_[
+                0] if conversations_data_ is not None else {}
             conversations_json_data = {}
 
             # callback data
-            callback_data_ = self._session.execute(text("SELECT callback_data FROM Persistence")).first()
-            callback_data = callback_data_[0] if callback_data_ is not None else {}
-            callback_data_json = json.loads(callback_data) if callback_data else {}
+            callback_data_ = self._session.execute(
+                text("SELECT callback_data FROM Persistence")).first()
+            callback_data = callback_data_[
+                0] if callback_data_ is not None else {}
+            callback_data_json = json.loads(
+                callback_data) if callback_data else {}
 
             self.logger.info("Database loaded successfully!")
 
@@ -121,7 +137,7 @@ class MySQLPersistence(DictPersistence):
             if not callback_data:
                 insert_qry = "INSERT INTO Persistence (callback_data) VALUES ('{}')"
                 self._session.execute(text(insert_qry))
-            
+
             self._session.commit()
 
             super().__init__(
@@ -171,7 +187,7 @@ class MySQLPersistence(DictPersistence):
     def _update_database(self) -> None:
         self.logger.debug("Updating database...")
         try:
-            # update chat data 
+            # update chat data
             insert_qry = "UPDATE Persistence SET chat_data = :jsondata"
             params = {"jsondata": json.dumps(self.chat_data_json)}
             self._session.execute(text(insert_qry), params)

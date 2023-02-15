@@ -2,6 +2,8 @@ from clients.telegram.commands import Commands
 
 import os
 import logging
+from pythonjsonlogger import jsonlogger
+
 import traceback
 
 import requests
@@ -28,13 +30,19 @@ from clients.telegram.mysqlpersistence import MySQLPersistence
 import dotenv
 dotenv.load_dotenv()
 
+
 class Telegram:
     def __init__(self):
         # Enable logging
         logging.basicConfig(
             format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
         )
+
         self.logger = logging.getLogger(__name__)
+        logHandler = logging.StreamHandler()
+        formatter = jsonlogger.JsonFormatter()
+        logHandler.setFormatter(formatter)
+        self.logger.addHandler(logHandler)
 
         # enviroment variables
         self.telegramApiKey = os.environ.get('TELEGRAM_API_KEY')
@@ -73,39 +81,53 @@ set - Set the persona to talk to
 
         # Create the Application and pass it your bot's token.
         self.application = Application.builder().token(self.telegramApiKey).rate_limiter(AIORateLimiter(
-                overall_max_rate=1, overall_time_period=1, group_max_rate=1, group_time_period=1, max_retries=0
-            )).concurrent_updates(True).arbitrary_callback_data(True).persistence(MySQLPersistence(url=self.dbURI)).build()
+            overall_max_rate=1, overall_time_period=1, group_max_rate=1, group_time_period=1, max_retries=0
+        )).concurrent_updates(True).arbitrary_callback_data(True).persistence(MySQLPersistence(url=self.dbURI)).build()
 
-        # direct handlers 
-        self.application.add_handler(CommandHandler("start", self.start_command))
+        # direct handlers
+        self.application.add_handler(
+            CommandHandler("start", self.start_command))
         # Create a new set of commands for each distinct chat
         base_persona = "chat"
-        self.commands = Commands(self.application, base_persona, self.personas, (self.inquireApiKey, self.inquireApi))
-        
+        self.commands = Commands(self.application, base_persona,
+                                 self.personas, (self.inquireApiKey, self.inquireApi))
+
         # add handlers
         # direct handlers
-        self.application.add_handler(CommandHandler("help", self.commands.help_command))
-        self.application.add_handler(CommandHandler("random", self.commands.random_personas_command))
-        self.application.add_handler(CommandHandler("set", self.commands.set_persona_command))
-        self.application.add_handler(CommandHandler("chat", self.commands.chat_command))
-        self.application.add_handler(CommandHandler("all", self.commands.list_all_command))
-        self.application.add_handler(CommandHandler("persona", self.commands.current_persona_command))
+        self.application.add_handler(CommandHandler(
+            "help", self.commands.help_command))
+        self.application.add_handler(CommandHandler(
+            "random", self.commands.random_personas_command))
+        self.application.add_handler(CommandHandler(
+            "set", self.commands.set_persona_command))
+        self.application.add_handler(CommandHandler(
+            "chat", self.commands.chat_command))
+        self.application.add_handler(CommandHandler(
+            "all", self.commands.list_all_command))
+        self.application.add_handler(CommandHandler(
+            "persona", self.commands.current_persona_command))
 
         # inline handlers
-        self.application.add_handler(CallbackQueryHandler(self.commands.set_persona_callback))
+        self.application.add_handler(CallbackQueryHandler(
+            self.commands.set_persona_callback))
 
-        # generic command handler 
-        self.application.add_handler(MessageHandler(filters.COMMAND, self.commands.set_persona_command))
+        # generic command handler
+        self.application.add_handler(MessageHandler(
+            filters.COMMAND, self.commands.set_persona_command))
 
-        # general chat handler 
-        self.application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self.commands.query_persona))
+        # general chat handler
+        self.application.add_handler(MessageHandler(
+            filters.TEXT & ~filters.COMMAND, self.commands.query_persona))
 
         # chat stats handler
-        self.application.add_handler(ChatMemberHandler(self.start_command, ChatMemberHandler.CHAT_MEMBER))
-        self.application.add_handler(ChatMemberHandler(self.track_chats, ChatMemberHandler.MY_CHAT_MEMBER))
+        self.application.add_handler(ChatMemberHandler(
+            self.start_command, ChatMemberHandler.CHAT_MEMBER))
+        self.application.add_handler(ChatMemberHandler(
+            self.track_chats, ChatMemberHandler.MY_CHAT_MEMBER))
 
         # inline query handler, this is run when you type: @botusername <query>
-        self.application.add_handler(InlineQueryHandler(self.commands.inline_query))
+        self.application.add_handler(
+            InlineQueryHandler(self.commands.inline_query))
 
         # Register error handlers
         self.application.add_error_handler(self.error_handler)
@@ -137,15 +159,16 @@ set - Set the persona to talk to
             deep_link = command[1]
             await self.commands.set_deeplink_persona(deep_link, update, context)
         else:
-            self.logger.info(f"""Bot Started from: {update.effective_chat.id}""")
+            self.logger.info(
+                f"""Bot Started from: {update.effective_chat.id}""")
 
             # set the base persona to just chat
             await self.commands.put("chat", update, context)
 
             await update.message.reply_text(f"""Inquire is a conversational chatbot that can take the form of just about any persona. For example, you can talk to a doctor, a lawyer, a therapist, or even a fictional character (or set to `chat` to just have a normal conversation). Inquire is a work in progress, so please be patient as we add more personas. Check out the /help command for more information or sign up for an unrestricted account at https://inquire.chat.""")
 
-
     # Extract the status change from a ChatMemberUpdated object
+
     def extract_status_change(self, chat_member_update: ChatMemberUpdated) -> Optional[Tuple[bool, bool]]:
         """
         Extract the status change from a ChatMemberUpdated object
@@ -153,7 +176,8 @@ set - Set the persona to talk to
         :return: Tuple of (was_member, is_member)
         """
         status_change = chat_member_update.difference().get("status")
-        old_is_member, new_is_member = chat_member_update.difference().get("is_member", (None, None))
+        old_is_member, new_is_member = chat_member_update.difference().get("is_member",
+                                                                           (None, None))
 
         if status_change is None:
             return None
@@ -199,7 +223,8 @@ set - Set the persona to talk to
                 self.logger.info(f"New group: {chat.id}")
                 self.start_command(update, context)
             elif was_member and not is_member:
-                context.bot_data.setdefault("group_ids", set()).discard(chat.id)
+                context.bot_data.setdefault(
+                    "group_ids", set()).discard(chat.id)
                 self.logger.info(f"Removed group: {chat.id}")
 
     # Error handler to capture errors
@@ -226,13 +251,16 @@ set - Set the persona to talk to
             message_message = message['message']
 
             if message_code == "NOT_FOUND":
-                self.logger.error(f"""Persona Not Found: {context.chat_data}""")
+                self.logger.error(
+                    f"""Persona Not Found: {context.chat_data}""")
                 await update.message.reply_text('Persona Not Found, please use /list to see available personas')
             if message_code == 'INVALID_SUBSCRIPTION' and message_message == 'Limit has been reached and subscription not found':
-                self.logger.error(f"""Subscription Limit Reached: {context.chat_data}""")
+                self.logger.error(
+                    f"""Subscription Limit Reached: {context.chat_data}""")
                 await update.message.reply_text(f"""@{update.message.from_user.username}  your subscription limit has been reached, please sign up at https://inquire.run for only $5/mo to continue using Inquire""")
             if message_code == 'INVALID_SUBSCRIPTION' and message_message == 'Subscription not found':
-                self.logger.error(f"""Subscription Not Found: {context.chat_data}""")
+                self.logger.error(
+                    f"""Subscription Not Found: {context.chat_data}""")
                 await update.message.reply_text(f"""@{update.message.from_user.username} your subscription is not found, please check your account at https://inquire.run""")
             if message_code == 'QUOTA_REACHED':
                 self.logger.error(f"""Quota Reached: {context.chat_data}""")
@@ -243,7 +271,8 @@ set - Set the persona to talk to
 
         # traceback.format_exception returns the usual python message about an exception, but as a
         # list of strings rather than a single string, so we have to join them together.
-        tb_list = traceback.format_exception(None, context.error, context.error.__traceback__)
+        tb_list = traceback.format_exception(
+            None, context.error, context.error.__traceback__)
         tb_string = "".join(tb_list)
 
         # Build the message with some markup and additional information about what happened.
@@ -259,5 +288,6 @@ set - Set the persona to talk to
         )
 
         # Log errors
-        self.logger.error(msg="Exception while handling an update:", exc_info=context.error)
+        self.logger.error(
+            msg="Exception while handling an update:", exc_info=context.error)
         self.logger.error(msg=user_message)

@@ -20,6 +20,7 @@ RUN pip install python-telegram-bot[rate-limiter]
 RUN pip install python-telegram-bot[callback-data]
 RUN pip install sqlalchemy
 RUN pip3 install mysqlclient
+RUN pip install python-json-logger
 
 # The code to run when container is started:
 ENTRYPOINT ["python", "server.py"]
