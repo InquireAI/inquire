@@ -33,12 +33,9 @@ dotenv.load_dotenv()
 
 class Telegram:
     def __init__(self):
-        # Enable logging
-        logging.basicConfig(
-            level=logging.INFO
-        )
 
         self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(level=logging.INFO)
         logHandler = logging.StreamHandler()
         formatter = jsonlogger.JsonFormatter()
         logHandler.setFormatter(formatter)
