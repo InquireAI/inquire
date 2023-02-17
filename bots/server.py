@@ -22,8 +22,11 @@ class CustomJsonFormatter(jsonlogger.JsonFormatter):
 
 if __name__ == "__main__":
     # start telegram bot
-    logging.basicConfig(level=logging.DEBUG)
     logHandler = logging.StreamHandler()
-    formatter = CustomJsonFormatter('%(time)s %(level)s %(msg)s')
+    formatter = CustomJsonFormatter('%(level)s %(time)s %(msg)s')
     logHandler.setFormatter(formatter)
+    logging.basicConfig(level=logging.DEBUG, handlers=[
+        logHandler
+    ])
+
     telegram = Telegram()
