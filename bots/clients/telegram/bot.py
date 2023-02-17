@@ -35,11 +35,6 @@ class Telegram:
     def __init__(self):
 
         self.logger = logging.getLogger(__name__)
-        self.logger.setLevel(level=logging.INFO)
-        logHandler = logging.StreamHandler()
-        formatter = jsonlogger.JsonFormatter()
-        logHandler.setFormatter(formatter)
-        self.logger.addHandler(logHandler)
 
         # enviroment variables
         self.telegramApiKey = os.environ.get('TELEGRAM_API_KEY')
@@ -140,7 +135,6 @@ set - Set the persona to talk to
         :param context: CallbackContext object
         """
         # if in a group chat, set the menu button, which is changed via /setcommands in @botfather
-        print(update.effective_chat)
         if update.effective_chat.type == "ChatType.PRIVATE":
             await self.application.bot.set_chat_menu_button(update.effective_chat.id)
 

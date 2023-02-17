@@ -73,11 +73,6 @@ class MySQLPersistence(DictPersistence):
             raise TypeError("You must need to provide either url or session.")
 
         self.logger = logging.getLogger(__name__)
-        self.logger.setLevel(level=logging.INFO)
-        logHandler = logging.StreamHandler()
-        formatter = jsonlogger.JsonFormatter()
-        logHandler.setFormatter(formatter)
-        self.logger.addHandler(logHandler)
 
         self.on_flush = on_flush
         self.__init_database()
