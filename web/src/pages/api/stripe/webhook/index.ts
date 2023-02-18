@@ -1,17 +1,17 @@
 import { type NextApiRequest, type NextApiResponse } from "next";
-import { env } from "../../../../env/server.mjs";
-import type { Stripe } from "../../../../server/stripe/client";
-import { stripe } from "../../../../server/stripe/client";
-import { prisma } from "../../../../server/db/client";
+import { env } from "@/env/server.mjs";
+import type { Stripe } from "@/server/stripe/client";
+import { stripe } from "@/server/stripe/client";
+import { prisma } from "@/server/db/client";
 import { buffer } from "micro";
-import { handleCustomerSubscriptionUpdated } from "../../../../server/stripe/webhook/customer-subscription-updated";
-import { handleCustomerSubscriptionDeleted } from "../../../../server/stripe/webhook/customer-subscription-deleted";
-import { handleCheckoutSessionCompleted } from "../../../../server/stripe/webhook/checkout-session-completed";
-import { handleCheckoutSessionExpired } from "../../../../server/stripe/webhook/checkout-session-expired";
-import { handleProductCreated } from "../../../../server/stripe/webhook/product-created";
-import { handleProductUpdated } from "../../../../server/stripe/webhook/product-updated";
-import { handlePriceCreated } from "../../../../server/stripe/webhook/price-created";
-import { handlePriceUpdated } from "../../../../server/stripe/webhook/price-updated";
+import { handleCustomerSubscriptionUpdated } from "@/server/stripe/webhook/customer-subscription-updated";
+import { handleCustomerSubscriptionDeleted } from "@/server/stripe/webhook/customer-subscription-deleted";
+import { handleCheckoutSessionCompleted } from "@/server/stripe/webhook/checkout-session-completed";
+import { handleCheckoutSessionExpired } from "@/server/stripe/webhook/checkout-session-expired";
+import { handleProductCreated } from "@/server/stripe/webhook/product-created";
+import { handleProductUpdated } from "@/server/stripe/webhook/product-updated";
+import { handlePriceCreated } from "@/server/stripe/webhook/price-created";
+import { handlePriceUpdated } from "@/server/stripe/webhook/price-updated";
 
 export const config = {
   api: {
