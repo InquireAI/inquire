@@ -10,6 +10,8 @@ import { updateInquiryWithPlanetScale } from "../../inquiries/update-inquiry-pla
 import { UpdateInquiryHandler } from "../../inquiries/update-inquiry.interface";
 import { connect } from "@planetscale/database";
 import { fetch } from "undici";
+import { logger } from "../../utils/logger";
+import { randomUUID } from "crypto";
 
 export const conn = connect({
   fetch,
@@ -55,6 +57,9 @@ export const main: EventBridgeHandler<
   InquiryRequested,
   void
 > = async (event) => {
+  logger.setOptions({
+    baseLogArgs: { requestId: randomUUID() },
+  });
   await processInquiry(
     {
       id: event.detail.id,

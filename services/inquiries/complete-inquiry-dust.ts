@@ -29,9 +29,9 @@ export const completeInquiryWithDust = async (
       }
     );
 
-    logger.info(`Created dust run with id: ${newRun.run.run_id}`, {});
+    logger.info(`Created dust run with id: ${newRun.run.run_id}`);
 
-    logger.info(`Polling dust run for status`, {});
+    logger.info(`Polling dust run for status`);
 
     const startTime = new Date().getTime();
 
@@ -52,7 +52,7 @@ export const completeInquiryWithDust = async (
       );
 
       if (updatedRun.run.status.run === "running") {
-        logger.info(`Dust run is running`, {});
+        logger.info(`Dust run is running`);
 
         await setTimeoutAsync(waitTime);
 
@@ -66,10 +66,12 @@ export const completeInquiryWithDust = async (
         throw new DustError(`Dust run: ${newRun.run.run_id} failed`);
 
       if (updatedRun.run.status.run === "succeeded") {
-        logger.info(`Dust run succeeded`, {});
+        logger.info(`Dust run: ${newRun.run.run_id} succeeded`);
         return updatedRun.run.results[0][0].value.completion.text;
       }
     }
+
+    throw new DustError(`Dust run: ${newRun.run.run_id} timedout`);
   } catch (error) {
     logger.error("Dust run failed", { err: error });
     if (error instanceof DustError) throw error;

@@ -72,14 +72,14 @@ export const updateInquiryWithPlanetScale: UpdateInquiryWithPlanetScaleHandler =
     const setFragmentAndArgs = createSetFragmentAndArgs(args);
 
     if (setFragmentAndArgs !== undefined) {
-      logger.info("SET query not empty. executing UPDATE", {});
+      logger.info("SET query not empty. executing UPDATE");
       const { fragment, args: setArgs } = setFragmentAndArgs;
 
       await ctx.conn.execute(
         `UPDATE Inquiry ${fragment} WHERE id = ? LIMIT 1`,
         setArgs.concat([id])
       );
-      logger.info("UPDATE query succeeded", {});
+      logger.info("UPDATE query succeeded");
     }
 
     const result = await ctx.conn.execute(
@@ -88,7 +88,7 @@ export const updateInquiryWithPlanetScale: UpdateInquiryWithPlanetScaleHandler =
       { as: "object" }
     );
 
-    logger.info("Got updated row", {});
+    logger.info("Got updated row");
 
     const inquiry = result.rows[0] as Inquiry;
 

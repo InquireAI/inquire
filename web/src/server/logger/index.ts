@@ -81,22 +81,34 @@ export interface ILogger {
   error(message: string, args?: { [k: string]: any }): void;
 }
 
+type LoggerOptions = {
+  baseLogArgs?: { [k: string]: any };
+};
+
 export class Logger implements ILogger {
-  constructor(private log: PinoLogger) {}
+  constructor(private log: PinoLogger, private options?: LoggerOptions) {}
+
+  private getLogArgs(args?: { [k: string]: any }) {
+    return { ...args, ...this.options?.baseLogArgs };
+  }
 
   debug(message: string, args?: DebugArgs) {
-    this.log.debug(args, message);
+    this.log.debug(this.getLogArgs(args), message);
   }
 
   info(message: string, args?: InfoArgs) {
-    this.log.info(args, message);
+    this.log.info(this.getLogArgs(args), message);
   }
 
   warn(message: string, args?: WarnArgs) {
-    this.log.warn(args, message);
+    this.log.warn(this.getLogArgs(args), message);
   }
 
   error(message: string, args?: ErrorArgs) {
-    this.log.error(args, message);
+    this.log.error(this.getLogArgs(args), message);
+  }
+
+  setOptions(options: LoggerOptions) {
+    this.options = options;
   }
 }

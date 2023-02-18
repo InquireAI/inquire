@@ -21,7 +21,6 @@ const pino = Pino({
   },
   mixin() {
     return {
-      requestId: randomUUID(),
       app: "website",
     };
   },
@@ -36,7 +35,9 @@ export type NextApiRequestWithLogger = NextApiRequest & { logger: ILogger };
 
 export function withLogger(handler: NextApiHandlerWithLogger) {
   return async function f(req: NextApiRequest, res: NextApiResponse) {
-    const logger = new Logger(pino);
+    const logger = new Logger(pino, {
+      baseLogArgs: { requestId: randomUUID() },
+    });
 
     const logRequest = req as unknown as NextApiRequestWithLogger;
     logRequest.logger = logger;
