@@ -52,6 +52,8 @@ Learn more about Inquire at https://inquire.run
 
     # Send a message to a chat
     async def send_message(self, update: Update, text: str, **kwargs):
+        self.logger.info("Sending message")
+
         """
         Send a message to a chat, splitting it into multiple messages if it's too long see https://github.com/python-telegram-bot/python-telegram-bot/issues/768
         :param update: Update object
@@ -62,8 +64,12 @@ Learn more about Inquire at https://inquire.run
 
         MAX_TEXT_LENGTH = 4096
         if len(text) <= MAX_TEXT_LENGTH:
-            return await update.message.reply_text(text, **kwargs, parse_mode="Markdown")
+            self.logger.info("Message is below max length. Sending reply")
+            msg = await update.message.reply_text(text, **kwargs, parse_mode="Markdown")
+            self.logger.info("Reply sent")
+            return msg
 
+        self.logger.info("Message is above max size. Sending in parts.")
         parts = []
         while len(text) > 0:
             if len(text) > MAX_TEXT_LENGTH:
@@ -82,7 +88,9 @@ Learn more about Inquire at https://inquire.run
         msg = None
         for part in parts:
             msg = await self.send_message(update, part, **kwargs)
+            self.logger.info("Message sent")
             time.sleep(1)
+        self.logger.info("All message parts sent")
         return msg  # return only the last message
 
     # Put chat related data https://github.com/python-telegram-bot/python-telegram-bot/wiki/Storing-bot,-user-and-chat-related-data
@@ -136,6 +144,7 @@ Learn more about Inquire at https://inquire.run
 
     # Set deeplink persona
     async def set_deeplink_persona(self, new_persona, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        self.logger.info('Setting deeplink persona')
         """
         Set the deeplink persona
         :param update: Update object
@@ -150,6 +159,7 @@ Learn more about Inquire at https://inquire.run
         persona = await self.get(update, context)
 
         await update.message.reply_text(f"You are now chatting with a {persona} bot, any chat will be returned with an answer")
+        self.logger.info('Deep link persona set')
 
     # Sets the persona for a chat
     async def set_persona_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -158,6 +168,8 @@ Learn more about Inquire at https://inquire.run
         :param update: Update object
         :param context: CallbackContext object
         """
+        self.logger.info('Setting persona')
+
         await self.application.bot.send_chat_action(update.effective_chat.id, "typing")
 
         chat_data = update.message.text.split('/')[1].split(' ')
@@ -197,6 +209,8 @@ Learn more about Inquire at https://inquire.run
         else:
             await update.message.reply_text(f"You are now chatting with a {persona} bot, any chat will be returned with an answer")
 
+        self.logger.info('Persona set')
+
     # List a random 10 personas for the user
     async def random_personas_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """
@@ -204,6 +218,8 @@ Learn more about Inquire at https://inquire.run
         :param update: Update object
         :param context: CallbackContext object
         """
+        self.logger.info('Setting random persona')
+
         keyboard = []
         persona_count = 0
 
@@ -225,6 +241,8 @@ Learn more about Inquire at https://inquire.run
         reply_markup = InlineKeyboardMarkup(keyboard)
         await update.message.reply_text("List of 10 Random Personas", reply_markup=reply_markup)
 
+        self.logger.info('Random persona sets')
+
     # List all commands and personas that can be used
     async def list_all_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """
@@ -236,6 +254,8 @@ Learn more about Inquire at https://inquire.run
             await self.send_message(update, f.read())
             # await update.message.reply_text(f.read())
 
+        self.logger.info('List command message sent')
+
     # Sends the current persona to the user
     async def current_persona_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """
@@ -243,6 +263,8 @@ Learn more about Inquire at https://inquire.run
         :param update: Update object
         :param context: CallbackContext object
         """
+        self.logger.info('Getting current persona')
+
         # get the persona
         persona = await self.get(update, context)
 
@@ -250,6 +272,8 @@ Learn more about Inquire at https://inquire.run
             await update.message.reply_text("You are currently not chatting with a persona. To get started start typing `@inquireai_bot` followed by the persona you want to chat with (e.g. `@inquireai_bot math-teacher`). Any message after will be answered!", parse_mode="Markdown")
         else:
             await update.message.reply_text(f"You are currently chatting with a {persona} bot")
+
+        self.logger.info('Sent current persona message')
 
     # When a user selects a persona from the list set it
     async def set_persona_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -287,6 +311,8 @@ Learn more about Inquire at https://inquire.run
         :param update: Update object
         :param context: CallbackContext object
         """
+        self.logger.info('Completing inquiry')
+
         await self.application.bot.send_chat_action(update.effective_chat.id, "typing")
 
         query = update.message.text
@@ -318,8 +344,12 @@ Learn more about Inquire at https://inquire.run
         response = requests.post(url, headers=headers, data=payload)
         content = json.loads(response.content)
 
+        self.logger.info('Inquiry completion started')
+
         # poll the API until the response is ready
         poll_url = self.inquireApi + "/inquiries/" + content['data']['id']
+
+        self.logger.info('Begin polling inquiry status')
         try:
             poll = polling2.poll(
                 lambda: requests.get(
@@ -330,10 +360,13 @@ Learn more about Inquire at https://inquire.run
                 step=0.5,
                 timeout=30
             )
+            self.logger.info('Inquiry polling completed')
             await self.send_message(update, poll.json()['data']['result'])
         except polling2.TimeoutException:
             await self.send_message(update, 'Sorry, I am having trouble answering your question. Please try again later.')
             raise Exception("Timeout waiting for response")
+
+        self.logger.info('Sent completed inquiry')
 
     # Chat command to handle chats in groups
     async def chat_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -342,6 +375,7 @@ Learn more about Inquire at https://inquire.run
         :param update: Update object
         :param context: CallbackContext object
         """
+        self.logger.info('Handling chat command')
         await self.application.bot.send_chat_action(update.effective_chat.id, "typing")
 
         # get the persona
@@ -352,6 +386,8 @@ Learn more about Inquire at https://inquire.run
         else:
             await self.query_persona(update, context)
 
+        self.logger.info('Chat command completed')
+
     # Handle the inline query
     async def inline_query(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """
@@ -359,6 +395,7 @@ Learn more about Inquire at https://inquire.run
         :param update: Update object
         :param context: CallbackContext object
         """
+        self.logger.info('Handling inline query')
         query = update.inline_query.query
 
         if query == "":
@@ -379,3 +416,5 @@ Learn more about Inquire at https://inquire.run
                 )
 
         await update.inline_query.answer(results)
+
+        self.logger.info('Inline query handled')
