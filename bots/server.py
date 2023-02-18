@@ -1,7 +1,7 @@
 from clients.telegram.bot import Telegram
 from pythonjsonlogger import jsonlogger
 import logging
-from datetime import datetime
+import datetime
 import dotenv
 dotenv.load_dotenv()
 
