@@ -18,6 +18,7 @@ const pino = Pino({
   mixin() {
     return {
       requestId: randomUUID(),
+      app: "inquiry-completer",
     };
   },
 });

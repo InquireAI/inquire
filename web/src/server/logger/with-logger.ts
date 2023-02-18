@@ -22,6 +22,7 @@ const pino = Pino({
   mixin() {
     return {
       requestId: randomUUID(),
+      app: "website",
     };
   },
 });
