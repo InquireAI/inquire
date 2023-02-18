@@ -1,5 +1,4 @@
 import logging
-from pythonjsonlogger import jsonlogger
 import requests
 from uuid import uuid4
 

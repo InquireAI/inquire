@@ -11,6 +11,8 @@ class CustomJsonFormatter(jsonlogger.JsonFormatter):
         super(CustomJsonFormatter, self).add_fields(
             log_record, record, message_dict)
 
+        log_record['msg'] = record.message
+
         if not log_record.get('time'):
             # this doesn't use record.created, so it is slightly off
             now = int((datetime.datetime.utcnow() -

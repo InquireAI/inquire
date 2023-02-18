@@ -21,7 +21,6 @@
 
 import json
 import logging
-from pythonjsonlogger import jsonlogger
 from typing import Any, Dict, List, Optional, Tuple
 
 from sqlalchemy import create_engine
