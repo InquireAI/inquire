@@ -29,11 +29,16 @@ export const customerRouter = router({
       },
     });
 
-    if (!customer)
+    if (!customer) {
+      ctx.logger.info(
+        `Could not find billing info for user: ${ctx.session.user.id}`
+      );
+
       throw new TRPCError({
         code: "NOT_FOUND",
         message: "Billing information not found",
       });
+    }
 
     return {
       ...customer,
@@ -55,22 +60,37 @@ export const customerRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
-      const subscription = await ctx.prisma.subscription.findUnique({
+      const subscription = await ctx.prisma.subscription.findFirst({
         where: {
           id: input.subscriptionId,
+          customer: {
+            userId: ctx.session.user.id,
+          },
         },
       });
 
-      if (!subscription)
+      if (!subscription) {
+        ctx.logger.info(
+          `Could not find subscription: ${input.subscriptionId} belonging to ${ctx.session.user.id}`
+        );
         throw new TRPCError({
           code: "NOT_FOUND",
           message: `Subscription with id ${input.subscriptionId} not found`,
         });
+      }
+
+      ctx.logger.info(
+        `Found subscription: ${input.subscriptionId} belong to ${ctx.session.user.id}`
+      );
 
       // allow customer to still use service until the end of the period they have already paid for
       await stripe.subscriptions.update(subscription.id, {
         cancel_at_period_end: true,
       });
+
+      ctx.logger.info(
+        `Successfully cancelled subscription: ${input.subscriptionId} for user: ${ctx.session.user.id}`
+      );
 
       return null;
     }),
@@ -81,21 +101,36 @@ export const customerRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
-      const subscription = await ctx.prisma.subscription.findUnique({
+      const subscription = await ctx.prisma.subscription.findFirst({
         where: {
           id: input.subscriptionId,
+          customer: {
+            userId: ctx.session.user.id,
+          },
         },
       });
 
-      if (!subscription)
+      if (!subscription) {
+        ctx.logger.info(
+          `Could not find subscription: ${input.subscriptionId} belonging to ${ctx.session.user.id}`
+        );
         throw new TRPCError({
           code: "NOT_FOUND",
           message: `Subscription with id ${input.subscriptionId} not found`,
         });
+      }
+
+      ctx.logger.info(
+        `Found subscription: ${input.subscriptionId} belong to ${ctx.session.user.id}`
+      );
 
       await stripe.subscriptions.update(subscription.id, {
         cancel_at_period_end: false,
       });
+
+      ctx.logger.info(
+        `Successfully reactivated subscription: ${input.subscriptionId} for user: ${ctx.session.user.id}`
+      );
 
       return null;
     }),

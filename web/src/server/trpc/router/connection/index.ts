@@ -22,11 +22,19 @@ export const connectionRouter = router({
         },
       });
 
-      if (!connection)
+      if (!connection) {
+        ctx.logger.warn(
+          `Could not find connection with connectionUserId: ${input.connectionUserId} and connectionType: ${input.connectionType} for user: ${ctx.session.user.id}`
+        );
         throw new TRPCError({
           code: "NOT_FOUND",
           cause: "Could not find connection",
         });
+      }
+
+      ctx.logger.info(
+        `Found connection with connectionUserId: ${input.connectionUserId} and connectionType: ${input.connectionType} for user: ${ctx.session.user.id}`
+      );
 
       await ctx.prisma.connection.delete({
         where: {
@@ -36,5 +44,9 @@ export const connectionRouter = router({
           },
         },
       });
+
+      ctx.logger.info(
+        `Deleted connection with connectionUserId: ${input.connectionUserId} and connectionType: ${input.connectionType} for user: ${ctx.session.user.id}`
+      );
     }),
 });

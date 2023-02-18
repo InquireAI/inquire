@@ -1,4 +1,5 @@
 import Pino from "pino";
+import { randomUUID } from "crypto";
 
 const pino = Pino({
   level:
@@ -13,6 +14,11 @@ const pino = Pino({
         level: label.toUpperCase(),
       };
     },
+  },
+  mixin() {
+    return {
+      requestId: randomUUID(),
+    };
   },
 });
 

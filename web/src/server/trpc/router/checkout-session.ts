@@ -28,23 +28,38 @@ export const checkoutSessionRouter = router({
         },
       });
 
-      if (!user)
+      if (!user) {
+        ctx.logger.warn(
+          `Could not retrieve user with id: ${ctx.session.user.id}`
+        );
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Invalid user",
         });
+      }
 
-      if (!user.customer)
+      if (!user.customer) {
+        // this is an error level log because the customer should get created for the user on sign up
+        ctx.logger.error(
+          `User: ${ctx.session.user.id} does not have a customer`
+        );
         throw new TRPCError({
-          code: "BAD_REQUEST",
+          code: "INTERNAL_SERVER_ERROR",
           message: "User is missing a stripe customer",
         });
+      }
 
-      if (user.customer.subscriptions.length)
+      if (user.customer.subscriptions.length) {
+        ctx.logger.error(
+          `User: ${ctx.session.user.id} is already subscribed and can not subscribe again`
+        );
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: `User is already subscribed can not subscribe again`,
         });
+      }
+
+      ctx.logger.info(`User: ${ctx.session.user.id} has valid customer`);
 
       const stripeCheckoutSession: Stripe.Checkout.Session =
         await stripe.checkout.sessions.create({
@@ -61,11 +76,16 @@ export const checkoutSessionRouter = router({
         });
 
       if (!stripeCheckoutSession.url) {
+        ctx.logger.error(`Checkout session created without a url`);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Checkout session created without a url",
         });
       }
+
+      ctx.logger.info(
+        `Checkout session: ${stripeCheckoutSession.id} created in stripe`
+      );
 
       const checkoutSession = await ctx.prisma.checkoutSession.create({
         data: {
@@ -78,6 +98,8 @@ export const checkoutSessionRouter = router({
           status: stripeCheckoutSession.status,
         },
       });
+
+      ctx.logger.info(`Checkout session: ${checkoutSession.id} created in db`);
 
       return checkoutSession;
     }),
@@ -103,17 +125,28 @@ export const checkoutSessionRouter = router({
         },
       });
 
-      if (!user)
+      if (!user) {
+        ctx.logger.warn(
+          `Could not retrieve user with id: ${ctx.session.user.id}`
+        );
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Invalid user",
         });
+      }
 
-      if (!user.customer)
+      if (!user.customer) {
+        // this is an error level log because the customer should get created for the user on sign up
+        ctx.logger.error(
+          `User: ${ctx.session.user.id} does not have a customer`
+        );
         throw new TRPCError({
-          code: "BAD_REQUEST",
+          code: "INTERNAL_SERVER_ERROR",
           message: "User is missing a stripe customer",
         });
+      }
+
+      ctx.logger.info(`User: ${ctx.session.user.id} has valid customer`);
 
       const stripeCheckoutSession: Stripe.Checkout.Session =
         await stripe.checkout.sessions.create({
@@ -127,11 +160,17 @@ export const checkoutSessionRouter = router({
           cancel_url: `${getBaseUrl()}${input.cancelUrl}`,
         });
 
-      if (!stripeCheckoutSession.url)
+      if (!stripeCheckoutSession.url) {
+        ctx.logger.error(`Checkout session created without a url`);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Checkout session created without a url",
         });
+      }
+
+      ctx.logger.info(
+        `Checkout session: ${stripeCheckoutSession.id} created in stripe`
+      );
 
       const checkoutSession = await ctx.prisma.checkoutSession.create({
         data: {
@@ -144,6 +183,8 @@ export const checkoutSessionRouter = router({
           status: stripeCheckoutSession.status,
         },
       });
+
+      ctx.logger.info(`Checkout session: ${checkoutSession.id} created in db`);
 
       return checkoutSession;
     }),

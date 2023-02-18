@@ -9,12 +9,15 @@ export const userRouter = router({
       },
     });
 
-    if (!user)
+    if (!user) {
+      ctx.logger.info(`Could not find user: ${ctx.session.user.id}`);
       throw new TRPCError({
         code: "NOT_FOUND",
         message: "User not found",
       });
+    }
 
+    ctx.logger.info(`Retrieved user: ${user.id}`);
     return user;
   }),
   connections: protectedProcedure.query(async ({ ctx }) => {
@@ -23,6 +26,8 @@ export const userRouter = router({
         userId: ctx.session.user.id,
       },
     });
+
+    ctx.logger.info(`Retrieved connections for user: ${ctx.session.user.id}`);
 
     return connections;
   }),

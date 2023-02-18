@@ -61,12 +61,19 @@ export const telegramRouter = router({
           secretKey: env.TELEGRAM_SECRET_KEY,
         })
       ) {
+        ctx.logger.warn(
+          `Invalid telegram hash provided from user: ${ctx.session.user.id}`
+        );
         throw new TRPCError({
           code: "FORBIDDEN",
           message:
             "Failed to authorize your telegram account. Please try again",
         });
       }
+
+      ctx.logger.info(
+        `Telegram hash check passed from user: ${ctx.session.user.id}`
+      );
 
       await ctx.prisma.connection.create({
         data: {
@@ -75,6 +82,12 @@ export const telegramRouter = router({
           connectionUserId: input.id.toString(),
         },
       });
+
+      ctx.logger.warn(
+        `Connection created with connectionUserId: ${input.id.toString()} and connectionType: TELEGRAM for user: ${
+          ctx.session.user.id
+        }`
+      );
 
       return null;
     }),

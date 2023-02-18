@@ -3,6 +3,7 @@ import type { ILogger } from "./index";
 import { Logger } from "./index";
 import Pino from "pino";
 import { env } from "../../env/server.mjs";
+import { randomUUID } from "crypto";
 
 const pino = Pino({
   level:
@@ -17,6 +18,11 @@ const pino = Pino({
         level: label.toUpperCase(),
       };
     },
+  },
+  mixin() {
+    return {
+      requestId: randomUUID(),
+    };
   },
 });
 
@@ -46,18 +52,36 @@ export function withLogger(handler: NextApiHandlerWithLogger) {
       },
     });
 
-    await handler(logRequest, res);
+    try {
+      await handler(logRequest, res);
+    } catch (error) {
+      logger.error("Request failed with 500 status code", {
+        request: {
+          path: req.url,
+          method: req.method,
+          host: req.headers["host"],
+          userAgent: req.headers["user-agent"],
+          scheme: "https",
+          ip: req.headers["x-forwarded-for"],
+          statusCode: 500,
+        },
+      });
 
-    logger.info("End Request", {
-      request: {
-        path: req.url,
-        method: req.method,
-        host: req.headers["host"],
-        userAgent: req.headers["user-agent"],
-        scheme: "https",
-        ip: req.headers["x-forwarded-for"],
-        statusCode: res.statusCode,
-      },
-    });
+      res.status(500);
+
+      throw error;
+    } finally {
+      logger.info("End Request", {
+        request: {
+          path: req.url,
+          method: req.method,
+          host: req.headers["host"],
+          userAgent: req.headers["user-agent"],
+          scheme: "https",
+          ip: req.headers["x-forwarded-for"],
+          statusCode: res.statusCode,
+        },
+      });
+    }
   };
 }

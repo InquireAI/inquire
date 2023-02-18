@@ -29,7 +29,7 @@ if __name__ == "__main__":
     logHandler = logging.StreamHandler()
     formatter = CustomJsonFormatter('%(level)s %(time)s %(msg)s')
     logHandler.setFormatter(formatter)
-    logging.basicConfig(level=logging.DEBUG, handlers=[
+    logging.basicConfig(level=logging.INFO, handlers=[
         logHandler
     ])
 
