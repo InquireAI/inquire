@@ -113,6 +113,9 @@ export function WebStack({ stack }: StackContext) {
       ? `${stack.stage}.inquire.run`
       : undefined;
 
+  const inquireUrlAlias =
+    stack.stage === "prod" ? "www.inquire.run" : undefined;
+
   const defaultEnv = {
     DATABASE_URL: env.DATABASE_URL,
     NODE_ENV: "production",
@@ -154,17 +157,8 @@ export function WebStack({ stack }: StackContext) {
     permissions: [eventBus],
     customDomain: inquireUrl
       ? {
-          isExternalDomain: true,
           domainName: inquireUrl,
-          cdk: {
-            certificate: Certificate.fromCertificateArn(
-              stack,
-              "InquireCert",
-              stack.stage !== "prod"
-                ? "arn:aws:acm:us-east-1:719393270237:certificate/69072da1-0847-4ae6-b7be-e244d405d6a8"
-                : "arn:aws:acm:us-east-1:719393270237:certificate/1a58cc71-4295-4e5b-9dc5-390e8e6c7a70"
-            ),
-          },
+          domainAlias: inquireUrlAlias,
         }
       : undefined,
     cdk: {
