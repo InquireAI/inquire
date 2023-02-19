@@ -160,7 +160,9 @@ export function WebStack({ stack }: StackContext) {
             certificate: Certificate.fromCertificateArn(
               stack,
               "InquireCert",
-              "arn:aws:acm:us-east-1:719393270237:certificate/69072da1-0847-4ae6-b7be-e244d405d6a8"
+              stack.stage !== "prod"
+                ? "arn:aws:acm:us-east-1:719393270237:certificate/69072da1-0847-4ae6-b7be-e244d405d6a8"
+                : "arn:aws:acm:us-east-1:719393270237:certificate/1a58cc71-4295-4e5b-9dc5-390e8e6c7a70"
             ),
           },
         }
