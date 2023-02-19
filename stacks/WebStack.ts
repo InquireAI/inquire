@@ -60,7 +60,7 @@ export function WebStack({ stack }: StackContext) {
     stack,
     "InquiryRequestedHandler",
     {
-      timeout: "30 seconds",
+      timeout: "1 minute",
       handler: "services/functions/inquiry-requested/handler.main",
       logRetention: "one_month",
       environment: {

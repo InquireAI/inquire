@@ -10,7 +10,7 @@ interface DustQueryArgs extends CompleteInquiryHandlerArgs {
 
 export class DustError extends Error {}
 
-const MAX_RETRY_TIME = 25_000;
+const MAX_RETRY_TIME = 45_000;
 
 export const completeInquiryWithDust = async (
   args: DustQueryArgs,

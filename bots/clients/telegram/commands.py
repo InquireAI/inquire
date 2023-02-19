@@ -358,7 +358,7 @@ Learn more about Inquire at https://inquire.run
                 ),
                 check_success=self.is_correct_response,
                 step=0.5,
-                timeout=30
+                timeout=45
             )
             self.logger.info('Inquiry polling completed')
             await self.send_message(update, poll.json()['data']['result'])
