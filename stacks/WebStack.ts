@@ -117,9 +117,6 @@ export function WebStack({ stack }: StackContext) {
       ? `${stack.stage}.inquire.run`
       : undefined;
 
-  const inquireUrlAlias =
-    stack.stage === "prod" ? "www.inquire.run" : undefined;
-
   const defaultEnv = {
     DATABASE_URL: env.DATABASE_URL,
     NODE_ENV: "production",
