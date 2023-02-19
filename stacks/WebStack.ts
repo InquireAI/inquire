@@ -4,6 +4,7 @@ import {
   NextjsSite,
   Function,
   use,
+  Bucket,
 } from "sst/constructs";
 import { z } from "zod";
 import {
@@ -166,7 +167,6 @@ export function WebStack({ stack }: StackContext) {
       : undefined,
     cdk: {
       distribution: {
-        enableLogging: true,
         defaultBehavior: {
           originRequestPolicy,
         },
