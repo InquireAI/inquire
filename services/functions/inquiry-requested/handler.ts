@@ -12,6 +12,8 @@ import { connect } from "@planetscale/database";
 import { fetch } from "undici";
 import { logger } from "../../utils/logger";
 import { randomUUID } from "crypto";
+import middy from "@middy/core";
+import { loggerMiddleware } from "../../middleware/logger-middleware";
 
 export const conn = connect({
   fetch,
@@ -52,7 +54,7 @@ export const updateInquiry: UpdateInquiryHandler = (id, args) => {
 };
 
 /* c8 ignore next 22 */
-export const main: EventBridgeHandler<
+export const handler: EventBridgeHandler<
   "InquiryRequested",
   InquiryRequested,
   void
@@ -77,3 +79,7 @@ export const main: EventBridgeHandler<
     }
   );
 };
+
+export const main = middy(handler);
+
+main.use(loggerMiddleware());
