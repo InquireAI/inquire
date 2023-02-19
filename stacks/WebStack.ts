@@ -155,7 +155,7 @@ export function WebStack({ stack }: StackContext) {
     customDomain: inquireUrl
       ? {
           isExternalDomain: true,
-          domainName: `${stack.stage}.inquire.run`,
+          domainName: inquireUrl,
           cdk: {
             certificate: Certificate.fromCertificateArn(
               stack,
