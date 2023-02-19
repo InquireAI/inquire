@@ -166,6 +166,7 @@ export function WebStack({ stack }: StackContext) {
       : undefined,
     cdk: {
       distribution: {
+        enableLogging: true,
         defaultBehavior: {
           originRequestPolicy,
         },
