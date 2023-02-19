@@ -14,6 +14,7 @@ import {
 import { Certificate } from "aws-cdk-lib/aws-certificatemanager";
 import { LoggingStack } from "./LoggingStack";
 import * as logs from "aws-cdk-lib/aws-logs";
+import * as route53 from "aws-cdk-lib/aws-route53";
 
 const EnvSchema = z.object({
   BASE_URL: z.string().optional(),
@@ -106,6 +107,9 @@ export function WebStack({ stack }: StackContext) {
     }
   );
 
+  const hostedZone = route53.HostedZone.fromLookup(stack, "HostedZone", {
+    domainName: "inquire.run",
+  });
   const inquireUrl =
     stack.stage === "prod"
       ? "inquire.run"
@@ -158,7 +162,9 @@ export function WebStack({ stack }: StackContext) {
     customDomain: inquireUrl
       ? {
           domainName: inquireUrl,
-          domainAlias: inquireUrlAlias,
+          cdk: {
+            hostedZone,
+          },
         }
       : undefined,
     cdk: {
