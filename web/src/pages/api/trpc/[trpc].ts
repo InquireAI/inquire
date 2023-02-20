@@ -10,11 +10,9 @@ export default withLogger(
   createNextApiHandler({
     router: appRouter,
     createContext,
-    onError:
-      env.NODE_ENV === "development"
-        ? ({ path, error }) => {
-            console.error(`❌ tRPC failed on ${path}: ${error}`);
-          }
-        : undefined,
+    onError: ({ path, error, ctx }) => {
+      if (!ctx) console.error(`tRPC failed on ${path}: ${error}`);
+      else ctx.logger.error(`tRPC failed on ${path}`, { err: error });
+    },
   })
 );

@@ -56,19 +56,21 @@ export function withLogger(handler: NextApiHandlerWithLogger) {
 
     try {
       await handler(logRequest, res);
-    } catch (error) {
-      logger.error("Request failed with 500 status code", {
-        request: {
-          path: req.url,
-          method: req.method,
-          host: req.headers["host"],
-          userAgent: req.headers["user-agent"],
-          scheme: "https",
-          ip: req.headers["x-forwarded-for"],
-          statusCode: 500,
-        },
-      });
 
+      if (res.statusCode >= 500) {
+        logger.error("Request failed with 500 status code", {
+          request: {
+            path: req.url,
+            method: req.method,
+            host: req.headers["host"],
+            userAgent: req.headers["user-agent"],
+            scheme: "https",
+            ip: req.headers["x-forwarded-for"],
+            statusCode: 500,
+          },
+        });
+      }
+    } catch (error) {
       res.status(500);
 
       throw error;
