@@ -110,6 +110,7 @@ export function WebStack({ stack }: StackContext) {
   const hostedZone = route53.HostedZone.fromLookup(stack, "HostedZone", {
     domainName: "inquire.run",
   });
+
   const inquireUrl =
     stack.stage === "prod"
       ? "inquire.run"
@@ -159,6 +160,7 @@ export function WebStack({ stack }: StackContext) {
     customDomain: inquireUrl
       ? {
           domainName: inquireUrl,
+          domainAlias: stack.stage === "prod" ? "www.inquire.run" : undefined,
           cdk: {
             hostedZone,
           },
