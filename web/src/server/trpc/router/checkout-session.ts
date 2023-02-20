@@ -155,6 +155,9 @@ export const checkoutSessionRouter = router({
           setup_intent_data: {
             metadata: { subscriptionId: input.subscriptionId },
           },
+          automatic_tax: {
+            enabled: true,
+          },
           payment_method_types: ["card"],
           success_url: `${getBaseUrl()}${input.successUrl}`,
           cancel_url: `${getBaseUrl()}${input.cancelUrl}`,
