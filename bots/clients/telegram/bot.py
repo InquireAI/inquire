@@ -210,7 +210,6 @@ set - Set the persona to talk to
         """
         # handle codes and errors
         message = None
-        self.logger.info(context.error.args)
         try:
             (error_code, message) = context.error.args
         except:

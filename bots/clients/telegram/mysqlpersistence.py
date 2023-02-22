@@ -194,7 +194,6 @@ class MySQLPersistence(DictPersistence):
 
             # update bot data
             insert_qry = "UPDATE Persistence SET bot_data = :jsondata"
-            self.logger.info(self.bot_data_json)
             params = {"jsondata": json.dumps(self.bot_data_json)}
             self._session.execute(text(insert_qry), params)
 
