@@ -45,7 +45,7 @@ export function BotStack({ stack }: StackContext) {
     essential: true,
     environment: {
       TELEGRAM_API_KEY: env.TELEGRAM_API_KEY,
-      INQUIRE_API: `${inquireUrl}/api/v1`,
+      INQUIRE_API: `${inquireUrl}/api/v1` || `https://dev.inquire.run/api/v1`,
       INQUIRE_API_KEY: env.INQUIRE_API_KEY,
       DB_URI: env.DB_URI,
     },

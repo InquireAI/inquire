@@ -21,6 +21,20 @@ const SignIn: NextPage = () => {
             />
             <p>Sign In With Google</p>
           </button>
+          <button
+            className="flex flex-row justify-evenly gap-4 rounded bg-white p-5 font-medium"
+            onClick={() =>
+              signIn("github", { callbackUrl: "/account/billing" })
+            }
+          >
+            <Image
+              src="/github-mark.svg"
+              height={25}
+              width={25}
+              alt="Google Logo"
+            />
+            <p>Sign In With GitHub</p>
+          </button>
         </div>
       </div>
     </main>

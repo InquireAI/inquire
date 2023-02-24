@@ -16,6 +16,8 @@ export const serverSchema = z.object({
   NEXTAUTH_URL: z.string(),
   GOOGLE_CLIENT_ID: z.string(),
   GOOGLE_CLIENT_SECRET: z.string(),
+  GITHUB_CLIENT_ID: z.string(),
+  GITHUB_CLIENT_SECRET: z.string(),
   TELEGRAM_SECRET_KEY: z.string(),
 
   STRIPE_API_KEY: z.string(),

@@ -6,5 +6,9 @@
     "us-east-1d",
     "us-east-1e",
     "us-east-1f"
-  ]
+  ],
+  "hosted-zone:account=719393270237:domainName=inquire.run:region=us-east-1": {
+    "Id": "/hostedzone/Z09780542ZQXB1EZH9V7I",
+    "Name": "inquire.run."
+  }
 }

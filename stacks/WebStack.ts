@@ -53,7 +53,7 @@ const EnvSchema = z.object({
   USER_INQUIRY_LIMIT: z.string().transform((str) => parseInt(str, 10)),
 });
 
-export function WebStack({ stack }: StackContext) {
+export function WebStack({ stack, app }: StackContext) {
   const env = EnvSchema.parse(process.env);
 
   const { lambdaDestination } = use(LoggingStack);
@@ -175,13 +175,18 @@ export function WebStack({ stack }: StackContext) {
     },
   });
 
-  nextSite.cdk.function?.logGroup.addSubscriptionFilter("SubscriptionFilter", {
-    destination: lambdaDestination,
-    filterPattern: logs.FilterPattern.allEvents(),
-  });
+  if (app.mode === "deploy") {
+    nextSite.cdk.function?.logGroup.addSubscriptionFilter(
+      "SubscriptionFilter",
+      {
+        destination: lambdaDestination,
+        filterPattern: logs.FilterPattern.allEvents(),
+      }
+    );
+  }
 
   return {
-    inquireUrl: `https://${inquireUrl}` || (nextSite.url as string),
+    inquireUrl: `https://${inquireUrl}` || nextSite.url || undefined,
     nextSite,
     eventBus,
   };
