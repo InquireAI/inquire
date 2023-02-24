@@ -150,10 +150,11 @@ export function WebStack({ stack, app }: StackContext) {
   let emailIdentity;
 
   if (stack.stage === "prod" || stack.stage === "dev") {
-    emailIdentity = new ses.EmailIdentity(stack, "EmailIdentity", {
-      identity: ses.Identity.publicHostedZone(hostedZone),
-      dkimIdentity: ses.DkimIdentity.easyDkim(),
-    });
+    emailIdentity = ses.EmailIdentity.fromEmailIdentityName(
+      stack,
+      "EmailIdentity",
+      "inquire.run"
+    );
   }
 
   const nextSite = new NextjsSite(stack, "NextSite", {
