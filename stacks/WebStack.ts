@@ -29,6 +29,9 @@ const EnvSchema = z.object({
   // google auth
   GOOGLE_CLIENT_ID: z.string(),
   GOOGLE_CLIENT_SECRET: z.string(),
+  // github auth
+  GITHUB_CLIENT_ID: z.string(),
+  GITHUB_CLIENT_SECRET: z.string(),
   // telegram
   TELEGRAM_SECRET_KEY: z.string(),
   NEXT_PUBLIC_TELEGRAM_BOT_NAME: z.string(),
@@ -126,6 +129,8 @@ export function WebStack({ stack, app }: StackContext) {
     NEXTAUTH_URL: env.NEXTAUTH_URL,
     GOOGLE_CLIENT_ID: env.GOOGLE_CLIENT_ID,
     GOOGLE_CLIENT_SECRET: env.GOOGLE_CLIENT_SECRET,
+    GITHUB_CLIENT_ID: env.GITHUB_CLIENT_ID,
+    GITHUB_CLIENT_SECRET: env.GITHUB_CLIENT_SECRET,
     TELEGRAM_SECRET_KEY: env.TELEGRAM_SECRET_KEY,
     STRIPE_API_KEY: env.STRIPE_API_KEY,
     STRIPE_PRICE_ID: env.STRIPE_PRICE_ID,
