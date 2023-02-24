@@ -4,17 +4,16 @@ import {
   NextjsSite,
   Function,
   use,
-  Bucket,
 } from "sst/constructs";
 import { z } from "zod";
 import {
   OriginRequestHeaderBehavior,
   OriginRequestPolicy,
 } from "aws-cdk-lib/aws-cloudfront";
-import { Certificate } from "aws-cdk-lib/aws-certificatemanager";
 import { LoggingStack } from "./LoggingStack";
 import * as logs from "aws-cdk-lib/aws-logs";
 import * as route53 from "aws-cdk-lib/aws-route53";
+import * as ses from "aws-cdk-lib/aws-ses";
 
 const EnvSchema = z.object({
   BASE_URL: z.string().optional(),
@@ -147,6 +146,15 @@ export function WebStack({ stack, app }: StackContext) {
     NEXT_PUBLIC_ALGOLIA_SEARCH_KEY: env.NEXT_PUBLIC_ALGOLIA_SEARCH_KEY,
     NEXT_PUBLIC_TELEGRAM_BOT_NAME: env.NEXT_PUBLIC_TELEGRAM_BOT_NAME,
   };
+
+  let emailIdentity;
+
+  if (stack.stage === "prod" || stack.stage === "dev") {
+    emailIdentity = new ses.EmailIdentity(stack, "EmailIdentity", {
+      identity: ses.Identity.publicHostedZone(hostedZone),
+      dkimIdentity: ses.DkimIdentity.easyDkim(),
+    });
+  }
 
   const nextSite = new NextjsSite(stack, "NextSite", {
     path: "web",
