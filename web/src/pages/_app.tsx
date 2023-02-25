@@ -11,8 +11,6 @@ import "react-loading-skeleton/dist/skeleton.css";
 import type { NextPage } from "next";
 import type { ReactElement } from "react";
 
-export { reportWebVitals } from "next-axiom";
-
 export type NextPageWithLayout<P = Record<string, never>, IP = P> = NextPage<
   P,
   IP
