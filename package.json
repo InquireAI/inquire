@@ -21,7 +21,7 @@
   },
   "dependencies": {
     "constructs": "10.1.156",
-    "sst": "^2.0.16",
+    "sst": "2.0.37",
     "zod": "^3.20.2"
   },
   "workspaces": [
