@@ -33,6 +33,11 @@ const EnvSchema = z.object({
   GITHUB_CLIENT_SECRET: z.string(),
   // telegram
   TELEGRAM_SECRET_KEY: z.string(),
+
+  // ses smtp
+  SES_SMTP_USERNAME: z.string(),
+  SES_SMTP_PASSWORD: z.string(),
+
   NEXT_PUBLIC_TELEGRAM_BOT_NAME: z.string(),
   // stripe
   STRIPE_API_KEY: z.string(),
@@ -130,6 +135,8 @@ export function WebStack({ stack, app }: StackContext) {
     GOOGLE_CLIENT_SECRET: env.GOOGLE_CLIENT_SECRET,
     GITHUB_CLIENT_ID: env.GITHUB_CLIENT_ID,
     GITHUB_CLIENT_SECRET: env.GITHUB_CLIENT_SECRET,
+    SES_SMTP_USERNAME: env.SES_SMTP_USERNAME,
+    SES_SMTP_PASSWORD: env.SES_SMTP_PASSWORD,
     TELEGRAM_SECRET_KEY: env.TELEGRAM_SECRET_KEY,
     STRIPE_API_KEY: env.STRIPE_API_KEY,
     STRIPE_PRICE_ID: env.STRIPE_PRICE_ID,

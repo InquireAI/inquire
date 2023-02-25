@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "build": "next build",
-    "dev": "sst env \"next dev -p 80\"",
+    "dev": "next dev -p 80",
     "postinstall": "prisma generate",
     "lint": "next lint",
     "start": "next start",
@@ -30,6 +30,7 @@
     "next": "13.0.2",
     "next-auth": "^4.18.3",
     "next-axiom": "^0.16.0",
+    "nodemailer": "^6.9.1",
     "openai": "^3.1.0",
     "pino": "^8.9.0",
     "react": "18.2.0",

@@ -1,8 +1,8 @@
 import NextAuth, { type NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import GitHubProvider from "next-auth/providers/github";
+import EmailProvider from "next-auth/providers/email";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
-
 import { env } from "@/env/server.mjs";
 import { prisma } from "@/server/db/client";
 import { stripe } from "@/server/stripe/client";
@@ -11,6 +11,7 @@ export const authOptions: NextAuthOptions = {
   // Include user.id on session
   pages: {
     signIn: "/auth/signin",
+    verifyRequest: "/auth/verify-request",
   },
   events: {
     async signIn({ user, isNewUser }) {
@@ -50,6 +51,10 @@ export const authOptions: NextAuthOptions = {
     GitHubProvider({
       clientId: env.GITHUB_CLIENT_ID,
       clientSecret: env.GITHUB_CLIENT_SECRET,
+    }),
+    EmailProvider({
+      from: "no-reply@inquire.run",
+      server: `smtp://${env.SES_SMTP_USERNAME}:${env.SES_SMTP_PASSWORD}@email-smtp.us-east-1.amazonaws.com:587`,
     }),
   ],
 };

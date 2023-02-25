@@ -155,8 +155,8 @@ const Home: NextPage = () => {
         />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <main className="flex min-h-screen flex-grow flex-col bg-gradient-to-tr from-neutral-300 to-neutral-100">
-        <div className="flex flex-grow bg-[url('/background_pattern.svg')]">
+      <main className="flex min-h-screen flex-grow flex-col bg-neutral-200 bg-[url('/background_pattern.svg')]">
+        <div className="flex flex-grow ">
           <div className="px-10 xl:px-40">
             <Navbar />
             <div className="flex flex-grow flex-col items-center gap-4 text-neutral-900 xl:flex-row">

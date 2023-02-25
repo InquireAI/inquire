@@ -7,17 +7,23 @@ import { z } from "zod";
  */
 export const serverSchema = z.object({
   BASE_URL: z.string().optional(),
+
   DATABASE_URL: z.string().url(),
+
   NODE_ENV: z.enum(["development", "test", "production"]),
+
   NEXTAUTH_SECRET:
     process.env.NODE_ENV === "production"
       ? z.string().min(1)
       : z.string().min(1).optional(),
   NEXTAUTH_URL: z.string(),
+
   GOOGLE_CLIENT_ID: z.string(),
   GOOGLE_CLIENT_SECRET: z.string(),
+
   GITHUB_CLIENT_ID: z.string(),
   GITHUB_CLIENT_SECRET: z.string(),
+
   TELEGRAM_SECRET_KEY: z.string(),
 
   STRIPE_API_KEY: z.string(),
@@ -32,6 +38,9 @@ export const serverSchema = z.object({
   ALGOLIA_SEARCH_KEY: z.string(),
 
   EVENT_BUS_NAME: z.string(),
+
+  SES_SMTP_USERNAME: z.string(),
+  SES_SMTP_PASSWORD: z.string(),
 });
 
 /**
