@@ -1,5 +1,5 @@
 import { render } from "@react-email/render";
-import Email from "emails/magic-link";
+import Email from "../../../emails/magic-link";
 import { createTransport } from "nodemailer";
 
 type Args = {

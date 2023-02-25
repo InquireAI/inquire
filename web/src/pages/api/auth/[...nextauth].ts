@@ -57,7 +57,7 @@ export const authOptions: NextAuthOptions = {
       sendVerificationRequest(params) {
         const { identifier, url } = params;
         const { host } = new URL(url);
-        sendVerificationRequest({
+        return sendVerificationRequest({
           from: "no-reply@inquire.run",
           host,
           magicLink: url,
