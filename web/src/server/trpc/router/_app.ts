@@ -1,8 +1,8 @@
 import { router } from "../trpc";
-import { userRouter } from "./user";
 import { customerRouter } from "./customer";
 import { checkoutSessionRouter } from "./checkout-session";
 import { connectionRouter } from "./connection";
+import { userRouter } from "./user/router";
 
 export const appRouter = router({
   user: userRouter,
